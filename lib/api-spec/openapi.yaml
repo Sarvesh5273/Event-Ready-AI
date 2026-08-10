@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: sessions
+    description: EventReady AI wedding-guest outfit decision sessions
 paths:
   /healthz:
     get:
@@ -24,6 +26,133 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /sessions:
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Create a new EventReady session
+      description: >-
+        Creates a new stateless session for the Wedding Guest flow. Returns a
+        signed session token that must be sent back on every subsequent call.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /sessions/{sessionId}/analyze:
+    post:
+      operationId: startSessionAnalysis
+      tags: [sessions]
+      summary: Start Skin Analysis + Apparel VTO processing for a session
+      description: >-
+        Starts the (replayed, in Demo Mode) processing pipeline. Returns
+        immediately with an updated signed token; the client polls
+        getSessionStatus for progress. Never blocks on the full pipeline.
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeInput"
+      responses:
+        "200":
+          description: Analysis started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          description: Invalid or mismatched session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /sessions/{sessionId}/status:
+    get:
+      operationId: getSessionStatus
+      tags: [sessions]
+      summary: Poll processing status for a session
+      description: >-
+        Verifies the signed session token and returns the current processing
+        step. The client polls this endpoint every few seconds while
+        status is "processing".
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current session status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          description: Invalid or mismatched session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+  /sessions/{sessionId}/report:
+    get:
+      operationId: getSessionReport
+      tags: [sessions]
+      summary: Get the final EventReady recommendation report
+      description: >-
+        Returns the full recommendation report once the session status is
+        "ready". Computes outfit selection and confidence scoring using the
+        explainable v0 rule engine.
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: EventReady recommendation report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventReadyReport"
+        "400":
+          description: Invalid session token or session not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +162,296 @@ components:
           type: string
       required:
         - status
-
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    StyleVibe:
+      type: string
+      enum: [classic, bold]
+    StyleVibeOrEither:
+      type: string
+      enum: [classic, bold, either]
+    BudgetTier:
+      type: string
+      enum: [low, mid, high]
+    SessionMode:
+      type: string
+      description: >-
+        "demo" replays fixed, previously-captured YouCam API results for the
+        Maya demo persona. "live" is reserved for real YouCam API calls
+        (not yet implemented in this build).
+      enum: [demo, live]
+    SessionStatus:
+      type: string
+      enum: [created, processing, ready, error]
+    GarmentCategory:
+      type: string
+      enum: [full_body, upper_body, lower_body]
+    ColorFamily:
+      type: string
+      enum:
+        [
+          navy,
+          emerald,
+          sage,
+          black,
+          rose,
+          champagne,
+          lavender,
+          teal,
+          burgundy,
+        ]
+    Undertone:
+      type: string
+      enum: [cool, warm, neutral]
+    FabricFinish:
+      type: string
+      enum: [matte, soft_sheen, high_shine]
+    Silhouette:
+      type: string
+      enum:
+        [midi_dress, slip_dress, jumpsuit, blazer_set, maxi_dress, wrap_dress]
+    SkinSignalLevel:
+      type: string
+      enum: [low, medium, high, unknown]
+    ReasonCode:
+      type: string
+      enum:
+        - wedding_guest_match
+        - style_vibe_match
+        - budget_match
+        - cool_tone_supports_redness
+        - matte_finish_supports_oiliness
+        - contrast_supports_tired_eye_area
+        - soft_color_supports_low_radiance
+        - bold_color_matches_vibe
+        - classic_silhouette_matches_vibe
+        - high_shine_camera_caution
+        - warm_tone_redness_caution
+        - budget_mismatch
+        - style_vibe_mismatch
+    VtoTaskStatus:
+      type: string
+      enum: [queued, running, success, error]
+    UserPreferences:
+      type: object
+      properties:
+        occasion:
+          type: string
+          enum: [wedding_guest]
+        styleVibe:
+          $ref: "#/components/schemas/StyleVibe"
+        budgetTier:
+          $ref: "#/components/schemas/BudgetTier"
+      required:
+        - occasion
+        - styleVibe
+        - budgetTier
+    SessionInput:
+      type: object
+      properties:
+        mode:
+          $ref: "#/components/schemas/SessionMode"
+        preferences:
+          $ref: "#/components/schemas/UserPreferences"
+      required:
+        - mode
+        - preferences
+    AnalyzeInput:
+      type: object
+      properties:
+        sessionToken:
+          type: string
+      required:
+        - sessionToken
+    Session:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        sessionToken:
+          type: string
+          description: Opaque, HMAC-signed token. Must be echoed back on every call.
+        mode:
+          $ref: "#/components/schemas/SessionMode"
+        preferences:
+          $ref: "#/components/schemas/UserPreferences"
+        status:
+          $ref: "#/components/schemas/SessionStatus"
+        currentStep:
+          type: number
+          description: Index (0-4) into `steps` of the currently active/last-completed step.
+        steps:
+          type: array
+          items:
+            type: string
+        errorMessage:
+          type: ["string", "null"]
+      required:
+        - sessionId
+        - sessionToken
+        - mode
+        - preferences
+        - status
+        - currentStep
+        - steps
+        - errorMessage
+    CatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        garmentCategory:
+          $ref: "#/components/schemas/GarmentCategory"
+        imageUrl:
+          type: string
+        priceTier:
+          $ref: "#/components/schemas/BudgetTier"
+        styleVibe:
+          $ref: "#/components/schemas/StyleVibeOrEither"
+        colorFamily:
+          $ref: "#/components/schemas/ColorFamily"
+        undertone:
+          $ref: "#/components/schemas/Undertone"
+        fabricFinish:
+          $ref: "#/components/schemas/FabricFinish"
+        silhouette:
+          $ref: "#/components/schemas/Silhouette"
+        occasionTags:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - garmentCategory
+        - imageUrl
+        - priceTier
+        - styleVibe
+        - colorFamily
+        - undertone
+        - fabricFinish
+        - silhouette
+        - occasionTags
+    NormalizedSkinSignals:
+      type: object
+      properties:
+        redness:
+          $ref: "#/components/schemas/SkinSignalLevel"
+        oiliness:
+          $ref: "#/components/schemas/SkinSignalLevel"
+        darkCircles:
+          $ref: "#/components/schemas/SkinSignalLevel"
+        radiance:
+          $ref: "#/components/schemas/SkinSignalLevel"
+        moisture:
+          $ref: "#/components/schemas/SkinSignalLevel"
+        texture:
+          $ref: "#/components/schemas/SkinSignalLevel"
+      required:
+        - redness
+        - oiliness
+        - darkCircles
+        - radiance
+        - moisture
+        - texture
+    OutfitCandidate:
+      type: object
+      properties:
+        item:
+          $ref: "#/components/schemas/CatalogItem"
+        selectionReasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasonCode"
+      required:
+        - item
+        - selectionReasons
+    VtoResult:
+      type: object
+      properties:
+        catalogItemId:
+          type: string
+        status:
+          $ref: "#/components/schemas/VtoTaskStatus"
+        resultImageUrl:
+          type: ["string", "null"]
+        errorMessage:
+          type: ["string", "null"]
+      required:
+        - catalogItemId
+        - status
+        - resultImageUrl
+        - errorMessage
+    OutfitScore:
+      type: object
+      properties:
+        catalogItemId:
+          type: string
+        confidenceScore:
+          type: number
+        reasonCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasonCode"
+        cautionCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasonCode"
+        userFacingReasons:
+          type: array
+          items:
+            type: string
+        userFacingCautions:
+          type: array
+          items:
+            type: string
+      required:
+        - catalogItemId
+        - confidenceScore
+        - reasonCodes
+        - cautionCodes
+        - userFacingReasons
+        - userFacingCautions
+    EventReadyReport:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        mode:
+          $ref: "#/components/schemas/SessionMode"
+        recommendedCatalogItemId:
+          type: string
+        skinSignals:
+          $ref: "#/components/schemas/NormalizedSkinSignals"
+        selectedOutfits:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutfitCandidate"
+        vtoResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/VtoResult"
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutfitScore"
+        prepTips:
+          type: array
+          items:
+            type: string
+      required:
+        - sessionId
+        - mode
+        - recommendedCatalogItemId
+        - skinSignals
+        - selectedOutfits
+        - vtoResults
+        - scores
+        - prepTips

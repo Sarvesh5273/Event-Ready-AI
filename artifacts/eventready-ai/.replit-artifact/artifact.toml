@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "EventReady AI"
+description = "EventReady AI is an occasion-first wedding guest outfit decision assistant. Users pick a style vibe and budget, use a demo persona (or upload their own selfie and full-body photo), and see a curated selection of 3 outfit try-ons with an explainable confidence score and reasons for the recommended look, powered by a rule-based engine and replayed YouCam Skin Analysis / Apparel Virtual Try-On outputs in Demo Mode."
+version = "1.0.0"
+id = "artifacts/eventready-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20982
+
+[services.development]
+run = "pnpm --filter @workspace/eventready-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/eventready-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/eventready-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20982"
+BASE_PATH = "/"

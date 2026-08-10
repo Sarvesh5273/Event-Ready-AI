@@ -1,0 +1,2 @@
+- [Orval path+query param collision](orval-param-collision.md) — mixing a path param + query param on one operation can break Orval codegen; use a header param instead.
+- [Stateless-token session polling race](stateless-token-session-polling.md) — don't enable status polling until the state-starting mutation resolves; guard poll responses to only move state forward.
