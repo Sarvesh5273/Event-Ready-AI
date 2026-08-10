@@ -40,7 +40,7 @@ export const BudgetTier = {
 } as const;
 
 /**
- * "demo" replays fixed, previously-captured YouCam API results for the Maya demo persona. "live" is reserved for real YouCam API calls (not yet implemented in this build).
+ * "demo" replays fixed, previously-captured YouCam API results for the Maya demo persona. "live" runs real YouCam Skin Analysis + Apparel VTO API calls against the user's own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.
  */
 export type SessionMode = typeof SessionMode[keyof typeof SessionMode];
 
@@ -153,6 +153,24 @@ export const VtoTaskStatus = {
   error: 'error',
 } as const;
 
+export type VideoTaskStatus = typeof VideoTaskStatus[keyof typeof VideoTaskStatus];
+
+
+export const VideoTaskStatus = {
+  success: 'success',
+  error: 'error',
+  skipped: 'skipped',
+} as const;
+
+/**
+ * Optional bonus short animated clip generated from the recommended outfit's successful try-on image (YouCam AI Image to Video Generator). Live Mode only.
+ */
+export interface EventReadyVideo {
+  status: VideoTaskStatus;
+  /** @nullable */
+  videoUrl: string | null;
+}
+
 export type UserPreferencesOccasion = typeof UserPreferencesOccasion[keyof typeof UserPreferencesOccasion];
 
 
@@ -256,5 +274,6 @@ export interface EventReadyReport {
   vtoResults: VtoResult[];
   scores: OutfitScore[];
   prepTips: string[];
+  video: EventReadyVideo | null;
 }
 

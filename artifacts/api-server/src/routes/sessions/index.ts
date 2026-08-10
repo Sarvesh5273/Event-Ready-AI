@@ -18,7 +18,7 @@ import { advanceLiveSession, startLiveAnalysis } from "../../lib/session/livePro
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
 import { selectOutfits } from "../../lib/scoring/selectOutfits";
-import { scoreOutfits } from "../../lib/scoring/scoreOutfits";
+import { pickRecommendedCatalogItemId, scoreOutfits } from "../../lib/scoring/scoreOutfits";
 import { isLiveModeAvailable } from "../../lib/youcam/client";
 import {
   DEMO_RAW_SKIN_SCORES,
@@ -218,17 +218,19 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     vtoResults,
   });
 
-  const recommended = [...scores].sort((a, b) => b.confidenceScore - a.confidenceScore)[0];
+  const recommendedCatalogItemId = pickRecommendedCatalogItemId(scores, vtoResults) ?? selectedOutfits[0]?.item.id ?? "";
 
   return {
     sessionId: payload.sessionId,
     mode: payload.mode,
-    recommendedCatalogItemId: recommended?.catalogItemId ?? selectedOutfits[0]?.item.id ?? "",
+    recommendedCatalogItemId,
     skinSignals,
     selectedOutfits,
     vtoResults,
     scores,
     prepTips: PREP_TIPS,
+    // Demo Mode never runs live video generation.
+    video: null,
   };
 }
 
@@ -253,24 +255,28 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
   });
 
   // Only recommend an outfit whose try-on actually succeeded — never point
-  // the user at a hero image that couldn't be generated.
-  const successfulCatalogItemIds = new Set(
-    vtoResults.filter((v) => v.status === "success").map((v) => v.catalogItemId),
-  );
-  const recommended = [...scores]
-    .filter((s) => successfulCatalogItemIds.has(s.catalogItemId))
-    .sort((a, b) => b.confidenceScore - a.confidenceScore)[0];
+  // the user at a hero image that couldn't be generated. Also the exact
+  // same rule `liveProcessing.ts` used to decide which outfit's video to
+  // generate, so the two are always in agreement.
+  const recommendedCatalogItemId =
+    pickRecommendedCatalogItemId(scores, vtoResults) ?? live.selectedOutfits[0]?.item.id ?? "";
 
   return {
     sessionId: payload.sessionId,
     mode: payload.mode,
-    recommendedCatalogItemId:
-      recommended?.catalogItemId ?? live.selectedOutfits[0]?.item.id ?? "",
+    recommendedCatalogItemId,
     skinSignals: live.skinSignals,
     selectedOutfits: live.selectedOutfits,
     vtoResults,
     scores,
     prepTips: PREP_TIPS,
+    // By the time the report is fetched (`status === "ready"`), the video
+    // task is guaranteed to be terminal — see `advanceLiveSession`'s
+    // `videoTerminal` gate — so `live.video` here is always non-null and
+    // never "queued"/"running".
+    video: live.video
+      ? { status: live.video.status === "success" || live.video.status === "error" ? live.video.status : "skipped", videoUrl: live.video.videoUrl }
+      : null,
   };
 }
 

@@ -2,16 +2,19 @@ import { logger } from "../logger";
 import { weddingGuestCatalog } from "../catalog/weddingGuestCatalog";
 import { NEUTRAL_SKIN_SIGNALS, normalizeSkinSignals, type RawSkinScores } from "../scoring/skinSignals";
 import { selectOutfits } from "../scoring/selectOutfits";
+import { pickRecommendedCatalogItemId, scoreOutfits } from "../scoring/scoreOutfits";
 import { readGarmentImage } from "../youcam/garmentAssets";
 import { SKIN_DST_ACTIONS, checkYouCamSkinAnalysisStatus, startYouCamSkinAnalysis } from "../youcam/skinAnalysis";
 import { checkYouCamClothesVtoStatus, startYouCamClothesVto } from "../youcam/clothesVto";
-import { getCached, setCachedSuccess, skinCacheKey, vtoCacheKey } from "../cache/replayCache";
+import { checkYouCamImageToVideoStatus, startYouCamImageToVideo } from "../youcam/imageToVideo";
+import { getCached, setCachedSuccess, skinCacheKey, videoCacheKey, vtoCacheKey } from "../cache/replayCache";
 import {
   clearPendingLiveUpload,
   peekPendingLiveUpload,
   storePendingLiveUpload,
 } from "./liveUploadStore";
-import type { LiveSessionState, LiveVtoTaskState, SessionPayload } from "./sessionToken";
+import type { LiveSessionState, LiveVideoState, LiveVtoTaskState, SessionPayload } from "./sessionToken";
+import type { VtoResult } from "../types";
 
 const OUTFIT_COUNT = 3;
 
@@ -44,6 +47,7 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
     skinSignals: null,
     selectedOutfits: null,
     vtoTasks: null,
+    video: null,
   };
 
   const cached = getCached<RawSkinScores>(skinCacheKey(input.selfieBytes, SKIN_DST_ACTIONS));
@@ -99,16 +103,128 @@ export async function advanceLiveSession(payload: SessionPayload): Promise<Sessi
       : await checkRunningVtoTasks(payload.sessionId, live);
   }
 
-  const next: SessionPayload = { ...payload, live };
-
   const allVtoTerminal =
     live.vtoTasks !== null && live.vtoTasks.length > 0 && live.vtoTasks.every((t) => t.status === "success" || t.status === "error");
+
+  // Once every outfit's try-on has resolved, generate one bonus video clip
+  // for the top-recommended outfit only (never all of them — bounds cost).
+  // This runs as an extra beat appended to the pipeline, so it delays the
+  // "ready" transition rather than the report being built without it.
   if (allVtoTerminal) {
-    next.status = "ready";
     clearPendingLiveUpload(payload.sessionId);
+
+    if (!live.video) {
+      live = initVideoTask(payload, live);
+    }
+    if (live.video?.status === "queued") {
+      live = await startVideoTask(payload.sessionId, live);
+    } else if (live.video?.status === "running") {
+      live = await checkVideoTask(payload.sessionId, live);
+    }
+  }
+
+  const next: SessionPayload = { ...payload, live };
+
+  const videoTerminal =
+    live.video === null ||
+    live.video.status === "success" ||
+    live.video.status === "error" ||
+    live.video.status === "skipped";
+
+  if (allVtoTerminal && videoTerminal) {
+    next.status = "ready";
   }
 
   return next;
+}
+
+/**
+ * Decides which outfit (if any) the bonus video should animate, using the
+ * exact same scoring + "only a successful try-on" rule the report builder
+ * uses (`pickRecommendedCatalogItemId`), so the video is always of the
+ * outfit the report actually recommends.
+ */
+function initVideoTask(payload: SessionPayload, live: LiveSessionState): LiveSessionState {
+  const items = live.selectedOutfits ?? [];
+  const vtoResults: VtoResult[] = (live.vtoTasks ?? []).map((t) => ({
+    catalogItemId: t.catalogItemId,
+    status: t.status === "queued" || t.status === "running" ? "error" : t.status,
+    resultImageUrl: t.resultImageUrl,
+    errorMessage: t.errorMessage,
+  }));
+  const scores = scoreOutfits({
+    items: items.map((o) => o.item),
+    preferences: payload.preferences,
+    skinSignals: live.skinSignals ?? NEUTRAL_SKIN_SIGNALS,
+    vtoResults,
+  });
+
+  const recommendedCatalogItemId = pickRecommendedCatalogItemId(scores, vtoResults);
+  const recommendedImageUrl = recommendedCatalogItemId
+    ? vtoResults.find((v) => v.catalogItemId === recommendedCatalogItemId)?.resultImageUrl ?? null
+    : null;
+
+  if (!recommendedCatalogItemId || !recommendedImageUrl) {
+    // No outfit's try-on succeeded — nothing to animate.
+    return {
+      ...live,
+      video: { catalogItemId: null, status: "skipped", taskId: null, videoUrl: null, errorMessage: null },
+    };
+  }
+
+  return {
+    ...live,
+    video: { catalogItemId: recommendedCatalogItemId, status: "queued", taskId: null, videoUrl: null, errorMessage: null },
+  };
+}
+
+async function startVideoTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
+  const video = live.video;
+  if (!video || video.status !== "queued") return live;
+
+  // video.catalogItemId is guaranteed set whenever status is "queued" (see initVideoTask).
+  const srcImageUrl = (live.vtoTasks ?? []).find((t) => t.catalogItemId === video.catalogItemId)?.resultImageUrl;
+  if (!srcImageUrl) {
+    return { ...live, video: { ...video, status: "error", errorMessage: "Try-on image was unexpectedly missing." } };
+  }
+
+  const cacheKey = videoCacheKey(srcImageUrl);
+  const cached = getCached<{ videoUrl: string }>(cacheKey);
+  if (cached) {
+    return { ...live, video: { ...video, status: "success", videoUrl: cached.videoUrl } };
+  }
+
+  try {
+    const { taskId } = await startYouCamImageToVideo(srcImageUrl);
+    return { ...live, video: { ...video, status: "running", taskId } };
+  } catch (err) {
+    logger.warn({ err, sessionId, catalogItemId: video.catalogItemId }, "Failed to start YouCam Image to Video task");
+    return { ...live, video: { ...video, status: "error", errorMessage: "The video couldn't be generated right now." } };
+  }
+}
+
+async function checkVideoTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
+  const video = live.video;
+  if (!video || video.status !== "running" || !video.taskId) return live;
+
+  try {
+    const result = await checkYouCamImageToVideoStatus(video.taskId);
+
+    if (result.status === "success" && result.videoUrl) {
+      const srcImageUrl = (live.vtoTasks ?? []).find((t) => t.catalogItemId === video.catalogItemId)?.resultImageUrl;
+      if (srcImageUrl) setCachedSuccess(videoCacheKey(srcImageUrl), { videoUrl: result.videoUrl });
+      return { ...live, video: { ...video, status: "success", videoUrl: result.videoUrl } };
+    }
+
+    if (result.status === "error") {
+      return { ...live, video: { ...video, status: "error", errorMessage: result.errorMessage ?? "The video couldn't be generated." } };
+    }
+
+    return live; // still running — check again next poll
+  } catch (err) {
+    logger.warn({ err, sessionId, catalogItemId: video.catalogItemId }, "Image to Video status check errored");
+    return { ...live, video: { ...video, status: "error", errorMessage: "The video couldn't be generated." } };
+  }
 }
 
 async function checkSkinTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {

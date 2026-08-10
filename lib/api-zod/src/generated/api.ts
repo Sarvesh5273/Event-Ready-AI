@@ -22,7 +22,7 @@ export const HealthCheckResponse = zod.object({
  * @summary Create a new EventReady session
  */
 export const CreateSessionBody = zod.object({
-  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" is reserved for real YouCam API calls (not yet implemented in this build).'),
+  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" runs real YouCam Skin Analysis + Apparel VTO API calls against the user\'s own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.'),
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
@@ -33,7 +33,7 @@ export const CreateSessionBody = zod.object({
 export const CreateSessionResponse = zod.object({
   "sessionId": zod.string(),
   "sessionToken": zod.string().describe('Opaque, HMAC-signed token. Must be echoed back on every call.'),
-  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" is reserved for real YouCam API calls (not yet implemented in this build).'),
+  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" runs real YouCam Skin Analysis + Apparel VTO API calls against the user\'s own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.'),
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
@@ -69,7 +69,7 @@ export const StartSessionAnalysisBody = zod.object({
 export const StartSessionAnalysisResponse = zod.object({
   "sessionId": zod.string(),
   "sessionToken": zod.string().describe('Opaque, HMAC-signed token. Must be echoed back on every call.'),
-  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" is reserved for real YouCam API calls (not yet implemented in this build).'),
+  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" runs real YouCam Skin Analysis + Apparel VTO API calls against the user\'s own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.'),
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
@@ -97,7 +97,7 @@ export const GetSessionStatusHeader = zod.object({
 export const GetSessionStatusResponse = zod.object({
   "sessionId": zod.string(),
   "sessionToken": zod.string().describe('Opaque, HMAC-signed token. Must be echoed back on every call.'),
-  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" is reserved for real YouCam API calls (not yet implemented in this build).'),
+  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" runs real YouCam Skin Analysis + Apparel VTO API calls against the user\'s own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.'),
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
@@ -124,7 +124,7 @@ export const GetSessionReportHeader = zod.object({
 
 export const GetSessionReportResponse = zod.object({
   "sessionId": zod.string(),
-  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" is reserved for real YouCam API calls (not yet implemented in this build).'),
+  "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" runs real YouCam Skin Analysis + Apparel VTO API calls against the user\'s own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.'),
   "recommendedCatalogItemId": zod.string(),
   "skinSignals": zod.object({
   "redness": zod.enum(['low', 'medium', 'high', 'unknown']),
@@ -164,7 +164,11 @@ export const GetSessionReportResponse = zod.object({
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
 })),
-  "prepTips": zod.array(zod.string())
+  "prepTips": zod.array(zod.string()),
+  "video": zod.union([zod.object({
+  "status": zod.enum(['success', 'error', 'skipped']),
+  "videoUrl": zod.string().nullable()
+}).describe('Optional bonus short animated clip generated from the recommended outfit\'s successful try-on image (YouCam AI Image to Video Generator). Live Mode only.'),zod.null()])
 })
 
 

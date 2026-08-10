@@ -86,6 +86,24 @@ export async function youCamPost<T>(path: string, body: unknown): Promise<T> {
   return youCamRequest<T>(path, { method: "POST", body: JSON.stringify(body) });
 }
 
+/**
+ * Raw authenticated fetch for endpoints whose response envelope does not
+ * follow the standard `{status, data}` wrapper (e.g. the AI Video Generator
+ * status-check endpoint, which per docs.perfectcorp.com returns `{url}`
+ * directly). Callers parse the body themselves rather than going through
+ * `parseEnvelope`.
+ */
+export async function youCamFetchRaw(path: string, init: RequestInit): Promise<Response> {
+  return fetch(`${getBaseUrl()}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${getApiKey()}`,
+      "Content-Type": "application/json",
+      ...init.headers,
+    },
+  });
+}
+
 interface FileApiUploadRequest {
   method: string;
   url: string;

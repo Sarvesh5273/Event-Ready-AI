@@ -65,3 +65,8 @@ export function skinCacheKey(selfieBytes: Buffer, dstActions: readonly string[])
 export function vtoCacheKey(fullBodyBytes: Buffer, garmentBytes: Buffer, garmentCategory: string): string {
   return `vto:${sha256Hex(fullBodyBytes, garmentBytes, garmentCategory)}`;
 }
+
+/** Key for an Image-to-Video result: hash of the source (VTO result) image URL. */
+export function videoCacheKey(srcImageUrl: string): string {
+  return `video:${sha256Hex(srcImageUrl)}`;
+}

@@ -11,6 +11,21 @@ export interface LiveVtoTaskState {
 }
 
 /**
+ * Bonus Image-to-Video task state for the single recommended outfit, run
+ * after all Apparel VTO tasks resolve. "skipped" means no outfit's try-on
+ * succeeded, so there was nothing to animate.
+ */
+export type LiveVideoStatus = "queued" | "running" | "success" | "error" | "skipped";
+
+export interface LiveVideoState {
+  catalogItemId: string | null;
+  status: LiveVideoStatus;
+  taskId: string | null;
+  videoUrl: string | null;
+  errorMessage: string | null;
+}
+
+/**
  * Live Mode pipeline state. Only ever populated for `mode: "live"` sessions.
  * Deliberately holds no raw image bytes and no YouCam API key — just task
  * ids, statuses, and normalized results, all safe to round-trip through a
@@ -23,6 +38,8 @@ export interface LiveSessionState {
   skinSignals: NormalizedSkinSignals | null;
   selectedOutfits: OutfitCandidate[] | null;
   vtoTasks: LiveVtoTaskState[] | null;
+  /** Null until all VTO tasks are terminal — see `liveProcessing.ts`. */
+  video: LiveVideoState | null;
 }
 
 /**

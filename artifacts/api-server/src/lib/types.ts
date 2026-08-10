@@ -96,6 +96,19 @@ export interface OutfitScore {
   userFacingCautions: string[];
 }
 
+export type VideoTaskStatus = "success" | "error" | "skipped";
+
+/**
+ * Optional bonus short clip animating the recommended outfit's successful
+ * try-on image (YouCam AI Image to Video Generator). Live Mode only —
+ * always `null` in Demo Mode, and only ever "skipped" if no outfit's
+ * try-on succeeded to animate in the first place.
+ */
+export interface EventReadyVideo {
+  status: VideoTaskStatus;
+  videoUrl: string | null;
+}
+
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
@@ -105,4 +118,5 @@ export interface EventReadyReport {
   vtoResults: VtoResult[];
   scores: OutfitScore[];
   prepTips: string[];
+  video: EventReadyVideo | null;
 }

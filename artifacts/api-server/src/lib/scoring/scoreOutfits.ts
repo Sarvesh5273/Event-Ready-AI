@@ -106,3 +106,20 @@ export function scoreOutfits({ items, preferences, skinSignals, vtoResults }: Sc
     };
   });
 }
+
+/**
+ * Picks the single highest-confidence outfit whose try-on actually
+ * succeeded — never recommends a hero image that couldn't be generated.
+ * Shared by the report builder and the Live Mode pipeline (which needs to
+ * know the same answer early, to know which outfit's image to animate into
+ * a video) so the two never disagree about which outfit is "the" pick.
+ */
+export function pickRecommendedCatalogItemId(scores: OutfitScore[], vtoResults: VtoResult[]): string | null {
+  const successfulCatalogItemIds = new Set(
+    vtoResults.filter((v) => v.status === "success").map((v) => v.catalogItemId),
+  );
+  const recommended = [...scores]
+    .filter((s) => successfulCatalogItemIds.has(s.catalogItemId))
+    .sort((a, b) => b.confidenceScore - a.confidenceScore)[0];
+  return recommended?.catalogItemId ?? null;
+}

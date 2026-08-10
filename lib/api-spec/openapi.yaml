@@ -238,6 +238,23 @@ components:
     VtoTaskStatus:
       type: string
       enum: [queued, running, success, error]
+    VideoTaskStatus:
+      type: string
+      enum: [success, error, skipped]
+    EventReadyVideo:
+      type: object
+      description: >-
+        Optional bonus short animated clip generated from the recommended
+        outfit's successful try-on image (YouCam AI Image to Video
+        Generator). Live Mode only.
+      properties:
+        status:
+          $ref: "#/components/schemas/VideoTaskStatus"
+        videoUrl:
+          type: ["string", "null"]
+      required:
+        - status
+        - videoUrl
     UserPreferences:
       type: object
       properties:
@@ -468,6 +485,10 @@ components:
           type: array
           items:
             type: string
+        video:
+          oneOf:
+            - $ref: "#/components/schemas/EventReadyVideo"
+            - type: "null"
       required:
         - sessionId
         - mode
@@ -477,3 +498,4 @@ components:
         - vtoResults
         - scores
         - prepTips
+        - video

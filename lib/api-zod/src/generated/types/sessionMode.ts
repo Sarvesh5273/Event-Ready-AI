@@ -7,7 +7,7 @@
  */
 
 /**
- * "demo" replays fixed, previously-captured YouCam API results for the Maya demo persona. "live" is reserved for real YouCam API calls (not yet implemented in this build).
+ * "demo" replays fixed, previously-captured YouCam API results for the Maya demo persona. "live" runs real YouCam Skin Analysis + Apparel VTO API calls against the user's own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.
  */
 export type SessionMode = typeof SessionMode[keyof typeof SessionMode];
 
