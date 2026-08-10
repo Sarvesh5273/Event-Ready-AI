@@ -1,0 +1,234 @@
+Used
+Purchased
+Obtained
+Timestamp	Description	
+Transaction
+Unit Balance
+(Subscription)
+Unit Balance
+(Pay as you go)
+2026/08/10 20:11:16
+API_Image To Video(v2)
+-10
+0
+925
+2026/08/10 20:11:04
+API_Cloth(v4)
+-2
+0
+935
+2026/08/10 20:11:03
+API_Skin Tone Analysis
++20
+0
+937
+2026/08/10 20:11:02
+API_SD_Skin Analysis
++12
+0
+917
+2026/08/10 20:11:01
+API_Skin Tone Analysis
+-20
+0
+905
+2026/08/10 20:11:00
+API_SD_Skin Analysis
+-12
+0
+925
+2026/08/10 19:29:03
+API_Skin Tone Analysis
+-20
+0
+937
+2026/08/10 18:47:13
+API_SD_Skin Analysis
++12
+0
+957
+2026/08/10 18:47:12
+API_SD_Skin Analysis
+-12
+0
+945
+2026/08/10 18:46:32
+API_SD_Skin Analysis
++12
+0
+957
+2026/08/10 18:46:30
+API_SD_Skin Analysis
+-12
+0
+945
+2026/08/10 18:46:09
+API_SD_Skin Analysis
++12
+0
+957
+2026/08/10 18:46:07
+API_SD_Skin Analysis
+-12
+0
+945
+2026/08/10 18:35:06
+API_Image To Video(v2)
+-10
+0
+957
+2026/08/10 18:34:52
+API_Cloth(v4)
+-2
+0
+967
+2026/08/10 18:34:31
+API_SD_Skin Analysis
++12
+0
+969
+2026/08/10 18:34:30
+API_SD_Skin Analysis
+-12
+0
+957
+2026/08/10 18:08:27
+API_Image To Video(v2)
+-10
+0
+969
+2026/08/10 18:08:07
+API_Cloth(v4)
+-2
+0
+979
+2026/08/10 18:08:06
+API_Cloth(v4)
+-2
+0
+981
+2026/08/10 18:08:05
+API_Cloth(v4)
+-2
+0
+983
+2026/08/10 18:08:03
+API_SD_Skin Analysis
++12
+0
+985
+2026/08/10 18:08:02
+API_SD_Skin Analysis
+-12
+0
+973
+2026/08/10 18:06:43
+API_Image To Video(v2)
+-10
+0
+985
+2026/08/10 18:06:30
+API_Cloth(v4)
+-2
+0
+995
+2026/08/10 18:06:22
+API_SD_Skin Analysis
++12
+0
+997
+2026/08/10 18:06:20
+API_SD_Skin Analysis
+-12
+0
+985
+2026/08/10 17:51:49
+API_Image To Video(v2)
+-10
+0
+997
+2026/08/10 17:51:35
+API_Cloth(v4)
+-2
+0
+1,007
+2026/08/10 17:51:30
+API_SD_Skin Analysis
++12
+0
+1,009
+2026/08/10 17:51:28
+API_SD_Skin Analysis
+-12
+0
+997
+2026/08/10 17:38:05
+API_SD_Skin Analysis
++12
+0
+1,009
+2026/08/10 17:38:03
+API_SD_Skin Analysis
+-12
+0
+997
+2026/08/10 16:55:50
+Free tries for API
++40
+0
+1,009
+2026/08/10 16:51:38
+API_Image To Video(v2)
+-10
+0
+969
+2026/08/10 16:40:54
+API_Image To Video(v2)
+-10
+0
+979
+2026/08/10 16:40:33
+API_Cloth(v4)
+-2
+0
+989
+2026/08/10 16:40:33
+API_Cloth(v4)
+-2
+0
+991
+2026/08/10 16:40:33
+API_Cloth(v4)
+-2
+0
+993
+2026/08/10 16:40:21
+API_SD_Skin Analysis
++12
+0
+995
+2026/08/10 16:40:20
+API_SD_Skin Analysis
+-12
+0
+983
+2026/08/10 16:39:18
+API_SD_Skin Analysis
++12
+0
+995
+2026/08/10 16:39:16
+API_SD_Skin Analysis
+-12
+0
+983
+2026/08/10 16:27:55
+API_Image To Video(v2)
+-5
+0
+995
+2026/08/10 12:53:11
+Redeem code units
++1,000
+0
+1,000
