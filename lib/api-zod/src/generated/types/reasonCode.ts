@@ -20,6 +20,8 @@ export const ReasonCode = {
   bold_color_matches_vibe: 'bold_color_matches_vibe',
   classic_silhouette_matches_vibe: 'classic_silhouette_matches_vibe',
   high_shine_camera_caution: 'high_shine_camera_caution',
+  matte_finish_supports_texture: 'matte_finish_supports_texture',
+  high_shine_texture_caution: 'high_shine_texture_caution',
   warm_tone_redness_caution: 'warm_tone_redness_caution',
   budget_mismatch: 'budget_mismatch',
   style_vibe_mismatch: 'style_vibe_mismatch',

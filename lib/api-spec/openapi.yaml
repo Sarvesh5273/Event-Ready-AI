@@ -192,6 +192,16 @@ components:
     GarmentCategory:
       type: string
       enum: [full_body, upper_body, lower_body]
+    GarmentSource:
+      type: string
+      description: >-
+        "catalog" recommends from the curated wedding-guest catalog
+        (default). "custom" lets the user try on and get a skin/color
+        compatibility read for a garment they already have in mind, uploaded
+        as their own photo. Live Mode only — Demo Mode sessions always
+        behave as "catalog", since there's no pre-captured demo asset for an
+        arbitrary upload.
+      enum: [catalog, custom]
     ColorFamily:
       type: string
       enum:
@@ -232,6 +242,8 @@ components:
         - bold_color_matches_vibe
         - classic_silhouette_matches_vibe
         - high_shine_camera_caution
+        - matte_finish_supports_texture
+        - high_shine_texture_caution
         - warm_tone_redness_caution
         - budget_mismatch
         - style_vibe_mismatch
@@ -276,6 +288,8 @@ components:
           $ref: "#/components/schemas/SessionMode"
         preferences:
           $ref: "#/components/schemas/UserPreferences"
+        garmentSource:
+          $ref: "#/components/schemas/GarmentSource"
       required:
         - mode
         - preferences
@@ -288,6 +302,10 @@ components:
           $ref: "#/components/schemas/UploadedImage"
         fullBodyImage:
           $ref: "#/components/schemas/UploadedImage"
+        garmentImage:
+          $ref: "#/components/schemas/UploadedImage"
+        garmentCategory:
+          $ref: "#/components/schemas/GarmentCategory"
       required:
         - sessionToken
     UploadedImage:
@@ -319,6 +337,8 @@ components:
           $ref: "#/components/schemas/SessionMode"
         preferences:
           $ref: "#/components/schemas/UserPreferences"
+        garmentSource:
+          $ref: "#/components/schemas/GarmentSource"
         status:
           $ref: "#/components/schemas/SessionStatus"
         currentStep:
@@ -335,6 +355,7 @@ components:
         - sessionToken
         - mode
         - preferences
+        - garmentSource
         - status
         - currentStep
         - steps
@@ -458,6 +479,73 @@ components:
         - cautionCodes
         - userFacingReasons
         - userFacingCautions
+    CustomGarmentScore:
+      type: object
+      description: >-
+        Skin/color compatibility read for a garment the user uploaded
+        themselves — a narrower signal than OutfitScore, since there's no
+        occasion/style/budget preference to check a self-picked garment
+        against and fabric finish can't be reliably read from a photo.
+      properties:
+        confidenceScore:
+          type: number
+        reasonCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasonCode"
+        cautionCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasonCode"
+        userFacingReasons:
+          type: array
+          items:
+            type: string
+        userFacingCautions:
+          type: array
+          items:
+            type: string
+      required:
+        - confidenceScore
+        - reasonCodes
+        - cautionCodes
+        - userFacingReasons
+        - userFacingCautions
+    CustomGarmentResult:
+      type: object
+      description: Present on the report only when `flow` is "custom".
+      properties:
+        garmentCategory:
+          $ref: "#/components/schemas/GarmentCategory"
+        colorFamily:
+          $ref: "#/components/schemas/ColorFamily"
+        undertone:
+          $ref: "#/components/schemas/Undertone"
+        imageUrl:
+          type: string
+          description: >-
+            Same-origin API URL (including a signed access token as a query
+            param) that serves the user's own uploaded garment photo, for
+            display.
+        vtoStatus:
+          $ref: "#/components/schemas/VtoTaskStatus"
+        vtoResultImageUrl:
+          type: ["string", "null"]
+        vtoErrorMessage:
+          type: ["string", "null"]
+        score:
+          oneOf:
+            - $ref: "#/components/schemas/CustomGarmentScore"
+            - type: "null"
+      required:
+        - garmentCategory
+        - colorFamily
+        - undertone
+        - imageUrl
+        - vtoStatus
+        - vtoResultImageUrl
+        - vtoErrorMessage
+        - score
     EventReadyReport:
       type: object
       properties:
@@ -465,8 +553,11 @@ components:
           type: string
         mode:
           $ref: "#/components/schemas/SessionMode"
+        flow:
+          $ref: "#/components/schemas/GarmentSource"
         recommendedCatalogItemId:
           type: string
+          description: Empty string when `flow` is "custom" — nothing catalog-based to recommend.
         skinSignals:
           $ref: "#/components/schemas/NormalizedSkinSignals"
         selectedOutfits:
@@ -489,9 +580,15 @@ components:
           oneOf:
             - $ref: "#/components/schemas/EventReadyVideo"
             - type: "null"
+        customGarment:
+          description: Non-null only when `flow` is "custom".
+          oneOf:
+            - $ref: "#/components/schemas/CustomGarmentResult"
+            - type: "null"
       required:
         - sessionId
         - mode
+        - flow
         - recommendedCatalogItemId
         - skinSignals
         - selectedOutfits
@@ -499,3 +596,4 @@ components:
         - scores
         - prepTips
         - video
+        - customGarment

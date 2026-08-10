@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GarmentSource } from './garmentSource';
 import type { SessionMode } from './sessionMode';
 import type { SessionStatus } from './sessionStatus';
 import type { UserPreferences } from './userPreferences';
@@ -15,6 +16,7 @@ export interface Session {
   sessionToken: string;
   mode: SessionMode;
   preferences: UserPreferences;
+  garmentSource: GarmentSource;
   status: SessionStatus;
   /** Index (0-4) into `steps` of the currently active/last-completed step. */
   currentStep: number;

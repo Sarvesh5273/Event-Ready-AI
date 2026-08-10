@@ -27,7 +27,8 @@ export const CreateSessionBody = zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
   "budgetTier": zod.enum(['low', 'mid', 'high'])
-})
+}),
+  "garmentSource": zod.enum(['catalog', 'custom']).optional().describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.')
 })
 
 export const CreateSessionResponse = zod.object({
@@ -39,6 +40,7 @@ export const CreateSessionResponse = zod.object({
   "styleVibe": zod.enum(['classic', 'bold']),
   "budgetTier": zod.enum(['low', 'mid', 'high'])
 }),
+  "garmentSource": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
   "status": zod.enum(['created', 'processing', 'ready', 'error']),
   "currentStep": zod.number().describe('Index (0-4) into `steps` of the currently active\/last-completed step.'),
   "steps": zod.array(zod.string()),
@@ -63,7 +65,12 @@ export const StartSessionAnalysisBody = zod.object({
   "fullBodyImage": zod.object({
   "base64Data": zod.string().describe('Raw image bytes, base64-encoded (no data URL prefix).'),
   "contentType": zod.string().describe('MIME type of the image, e.g. \"image\/jpeg\".')
-}).optional().describe('Raw image bytes for Live Mode uploads, base64-encoded and sent inline in the JSON request body. Required on `startSessionAnalysis` only when the session\'s mode is \"live\"; Demo Mode sessions never send these (the demo persona\'s photos are fixed, pre-captured assets).')
+}).optional().describe('Raw image bytes for Live Mode uploads, base64-encoded and sent inline in the JSON request body. Required on `startSessionAnalysis` only when the session\'s mode is \"live\"; Demo Mode sessions never send these (the demo persona\'s photos are fixed, pre-captured assets).'),
+  "garmentImage": zod.object({
+  "base64Data": zod.string().describe('Raw image bytes, base64-encoded (no data URL prefix).'),
+  "contentType": zod.string().describe('MIME type of the image, e.g. \"image\/jpeg\".')
+}).optional().describe('Raw image bytes for Live Mode uploads, base64-encoded and sent inline in the JSON request body. Required on `startSessionAnalysis` only when the session\'s mode is \"live\"; Demo Mode sessions never send these (the demo persona\'s photos are fixed, pre-captured assets).'),
+  "garmentCategory": zod.enum(['full_body', 'upper_body', 'lower_body']).optional()
 })
 
 export const StartSessionAnalysisResponse = zod.object({
@@ -75,6 +82,7 @@ export const StartSessionAnalysisResponse = zod.object({
   "styleVibe": zod.enum(['classic', 'bold']),
   "budgetTier": zod.enum(['low', 'mid', 'high'])
 }),
+  "garmentSource": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
   "status": zod.enum(['created', 'processing', 'ready', 'error']),
   "currentStep": zod.number().describe('Index (0-4) into `steps` of the currently active\/last-completed step.'),
   "steps": zod.array(zod.string()),
@@ -103,6 +111,7 @@ export const GetSessionStatusResponse = zod.object({
   "styleVibe": zod.enum(['classic', 'bold']),
   "budgetTier": zod.enum(['low', 'mid', 'high'])
 }),
+  "garmentSource": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
   "status": zod.enum(['created', 'processing', 'ready', 'error']),
   "currentStep": zod.number().describe('Index (0-4) into `steps` of the currently active\/last-completed step.'),
   "steps": zod.array(zod.string()),
@@ -125,7 +134,8 @@ export const GetSessionReportHeader = zod.object({
 export const GetSessionReportResponse = zod.object({
   "sessionId": zod.string(),
   "mode": zod.enum(['demo', 'live']).describe('\"demo\" replays fixed, previously-captured YouCam API results for the Maya demo persona. \"live\" runs real YouCam Skin Analysis + Apparel VTO API calls against the user\'s own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.'),
-  "recommendedCatalogItemId": zod.string(),
+  "flow": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
+  "recommendedCatalogItemId": zod.string().describe('Empty string when `flow` is \"custom\" — nothing catalog-based to recommend.'),
   "skinSignals": zod.object({
   "redness": zod.enum(['low', 'medium', 'high', 'unknown']),
   "oiliness": zod.enum(['low', 'medium', 'high', 'unknown']),
@@ -148,7 +158,7 @@ export const GetSessionReportResponse = zod.object({
   "silhouette": zod.enum(['midi_dress', 'slip_dress', 'jumpsuit', 'blazer_set', 'maxi_dress', 'wrap_dress']),
   "occasionTags": zod.array(zod.string())
 }),
-  "selectionReasons": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch']))
+  "selectionReasons": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch']))
 })),
   "vtoResults": zod.array(zod.object({
   "catalogItemId": zod.string(),
@@ -159,8 +169,8 @@ export const GetSessionReportResponse = zod.object({
   "scores": zod.array(zod.object({
   "catalogItemId": zod.string(),
   "confidenceScore": zod.number(),
-  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch'])),
-  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch'])),
+  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch'])),
+  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch'])),
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
 })),
@@ -168,7 +178,23 @@ export const GetSessionReportResponse = zod.object({
   "video": zod.union([zod.object({
   "status": zod.enum(['success', 'error', 'skipped']),
   "videoUrl": zod.string().nullable()
-}).describe('Optional bonus short animated clip generated from the recommended outfit\'s successful try-on image (YouCam AI Image to Video Generator). Live Mode only.'),zod.null()])
+}).describe('Optional bonus short animated clip generated from the recommended outfit\'s successful try-on image (YouCam AI Image to Video Generator). Live Mode only.'),zod.null()]),
+  "customGarment": zod.union([zod.object({
+  "garmentCategory": zod.enum(['full_body', 'upper_body', 'lower_body']),
+  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy']),
+  "undertone": zod.enum(['cool', 'warm', 'neutral']),
+  "imageUrl": zod.string().describe('Same-origin API URL (including a signed access token as a query param) that serves the user\'s own uploaded garment photo, for display.'),
+  "vtoStatus": zod.enum(['queued', 'running', 'success', 'error']),
+  "vtoResultImageUrl": zod.string().nullable(),
+  "vtoErrorMessage": zod.string().nullable(),
+  "score": zod.union([zod.object({
+  "confidenceScore": zod.number(),
+  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch'])),
+  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch'])),
+  "userFacingReasons": zod.array(zod.string()),
+  "userFacingCautions": zod.array(zod.string())
+}).describe('Skin\/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there\'s no occasion\/style\/budget preference to check a self-picked garment against and fabric finish can\'t be reliably read from a photo.'),zod.null()])
+}).describe('Present on the report only when `flow` is \"custom\".'),zod.null()]).describe('Non-null only when `flow` is \"custom\".')
 })
 
 

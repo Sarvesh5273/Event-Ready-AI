@@ -5,10 +5,12 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GarmentSource } from './garmentSource';
 import type { SessionMode } from './sessionMode';
 import type { UserPreferences } from './userPreferences';
 
 export interface SessionInput {
   mode: SessionMode;
   preferences: UserPreferences;
+  garmentSource?: GarmentSource;
 }

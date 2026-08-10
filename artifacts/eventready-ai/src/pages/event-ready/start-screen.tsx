@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, User } from 'lucide-react';
 import { DEMO_PERSONA_NAME, DEMO_PERSONA_FULL_BODY_URL } from '@/lib/demoAssets';
 
-export function StartScreen({ onStart, onUseDemoPersona }: StartScreenProps) {
+export function StartScreen({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-hidden">
       {/* Decorative background elements */}
@@ -52,6 +52,14 @@ export function StartScreen({ onStart, onUseDemoPersona }: StartScreenProps) {
               <span>Use demo persona</span>
             </button>
           </div>
+
+          <button
+            onClick={onStartCustom}
+            data-testid="button-start-custom"
+            className="mt-6 text-sm font-medium text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+          >
+            Already picked something? Check it before you buy
+          </button>
         </motion.div>
 
         {/* Visual Showcase */}

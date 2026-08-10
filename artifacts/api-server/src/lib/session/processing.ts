@@ -1,4 +1,4 @@
-import type { SessionStatusValue } from "../types";
+import type { GarmentSource, SessionStatusValue } from "../types";
 import type { LiveSessionState, SessionPayload } from "./sessionToken";
 
 /** The 4 sequential steps shown on the Processing screen, in order. */
@@ -30,8 +30,25 @@ export interface EffectiveState {
  * Maps a Live Mode pipeline's current progress onto step indices.
  * Returns the step index and whether the bonus video step should be appended.
  */
-function computeLiveStep(live: LiveSessionState): { step: number; includeVideoStep: boolean } {
+function computeLiveStep(live: LiveSessionState, garmentSource: GarmentSource): { step: number; includeVideoStep: boolean } {
   if (!live.skinResolved) return { step: 0, includeVideoStep: false };
+
+  if (garmentSource === "custom") {
+    const vto = live.custom?.vto;
+    if (!vto) return { step: 1, includeVideoStep: false }; // custom state not initialized yet
+
+    const terminal = vto.status === "success" || vto.status === "error";
+    if (!terminal) {
+      return { step: vto.status === "running" ? 2 : 1, includeVideoStep: false };
+    }
+
+    const videoInProgress = live.video?.status === "queued" || live.video?.status === "running";
+    if (videoInProgress) {
+      return { step: PROCESSING_STEPS.length, includeVideoStep: true };
+    }
+
+    return { step: PROCESSING_STEPS.length - 1, includeVideoStep: false };
+  }
 
   const vtoTasks = live.vtoTasks ?? [];
   if (vtoTasks.length === 0) return { step: 1, includeVideoStep: false }; // outfits not selected/VTO not started yet
@@ -78,7 +95,7 @@ export function computeEffectiveState(payload: SessionPayload, nowMs: number): E
   // status === "processing"
   if (payload.mode === "live") {
     if (payload.live) {
-      const { step, includeVideoStep } = computeLiveStep(payload.live);
+      const { step, includeVideoStep } = computeLiveStep(payload.live, payload.garmentSource);
       const steps = includeVideoStep ? [...PROCESSING_STEPS, LIVE_VIDEO_STEP] : PROCESSING_STEPS;
       return { status: "processing", currentStep: step, steps };
     }

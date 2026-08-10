@@ -4,6 +4,8 @@ import { NEUTRAL_SKIN_SIGNALS, normalizeSkinSignals, type RawSkinScores } from "
 import { selectOutfits } from "../scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../scoring/scoreOutfits";
 import { readGarmentImage } from "../youcam/garmentAssets";
+import { extractGarmentColor } from "../youcam/garmentColor";
+import { storeGarmentImage } from "./garmentImageStore";
 import { SKIN_DST_ACTIONS, checkYouCamSkinAnalysisStatus, startYouCamSkinAnalysis } from "../youcam/skinAnalysis";
 import { checkYouCamClothesVtoStatus, startYouCamClothesVto } from "../youcam/clothesVto";
 import { checkYouCamImageToVideoStatus, startYouCamImageToVideo } from "../youcam/imageToVideo";
@@ -13,16 +15,24 @@ import {
   peekPendingLiveUpload,
   storePendingLiveUpload,
 } from "./liveUploadStore";
-import type { LiveSessionState, LiveVideoState, LiveVtoTaskState, SessionPayload } from "./sessionToken";
-import type { VtoResult } from "../types";
+import type { CustomGarmentLiveState, LiveSessionState, LiveVideoState, LiveVtoTaskState, SessionPayload } from "./sessionToken";
+import type { GarmentCategory, VtoResult } from "../types";
 
 const OUTFIT_COUNT = 3;
+/** Constant `catalogItemId` used for the single custom-garment VTO/video task. */
+const CUSTOM_GARMENT_ID = "custom";
 
 export interface StartLiveAnalysisInput {
   selfieBytes: Buffer;
   selfieContentType: string;
   fullBodyBytes: Buffer;
   fullBodyContentType: string;
+  /** Present only when `payload.garmentSource === "custom"`. */
+  garment?: {
+    bytes: Buffer;
+    contentType: string;
+    category: GarmentCategory;
+  };
 }
 
 /**
@@ -39,6 +49,8 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
     input.selfieContentType,
     input.fullBodyBytes,
     input.fullBodyContentType,
+    input.garment?.bytes,
+    input.garment?.contentType,
   );
 
   let live: LiveSessionState = {
@@ -47,6 +59,7 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
     skinSignals: null,
     selectedOutfits: null,
     vtoTasks: null,
+    custom: null,
     video: null,
   };
 
@@ -66,6 +79,28 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
     }
   }
 
+  if (payload.garmentSource === "custom" && input.garment) {
+    // Stored separately from the token (see `garmentImageStore.ts`) and
+    // served back via its own endpoint — never embedded here.
+    storeGarmentImage(payload.sessionId, input.garment.bytes, input.garment.contentType);
+
+    // Color extraction runs locally (no extra YouCam call) so it's safe to
+    // do eagerly here rather than spreading it across polls.
+    const { colorFamily, undertone } = await extractGarmentColor(input.garment.bytes).catch((err) => {
+      logger.warn({ err, sessionId: payload.sessionId }, "Garment color extraction failed — defaulting to navy/cool");
+      return { colorFamily: "navy" as const, undertone: "cool" as const };
+    });
+    live = {
+      ...live,
+      custom: {
+        garmentCategory: input.garment.category,
+        colorFamily,
+        undertone,
+        vto: { catalogItemId: CUSTOM_GARMENT_ID, status: "queued", taskId: null, resultImageUrl: null, errorMessage: null },
+      },
+    };
+  }
+
   const next: SessionPayload = {
     ...payload,
     status: "processing",
@@ -78,15 +113,19 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
 }
 
 /**
- * Advances a Live Mode session by exactly one step of real work per call:
- * at most one Skin Analysis status check, then (once resolved) at most one
- * "start" or one status check per outstanding VTO task. Never blocks
- * waiting for a task to finish — safe and expected to be called from every
- * `/status` poll as well as once from `/analyze`.
+ * Advances a Live Mode session by exactly one step of real work per call.
+ * Dispatches to the catalog (3-outfit) or custom (single-garment) pipeline
+ * based on `garmentSource` — the two never run for the same session. Never
+ * blocks waiting for a task to finish — safe and expected to be called from
+ * every `/status` poll as well as once from `/analyze`.
  */
 export async function advanceLiveSession(payload: SessionPayload): Promise<SessionPayload> {
   if (!payload.live) return payload;
-  let live = payload.live;
+  return payload.garmentSource === "custom" ? advanceCustomLiveSession(payload) : advanceCatalogLiveSession(payload);
+}
+
+async function advanceCatalogLiveSession(payload: SessionPayload): Promise<SessionPayload> {
+  let live = payload.live!;
 
   if (!live.skinResolved && live.skinTaskId) {
     live = await checkSkinTask(payload.sessionId, live);
@@ -139,6 +178,131 @@ export async function advanceLiveSession(payload: SessionPayload): Promise<Sessi
 }
 
 /**
+ * The "custom garment" mirror of `advanceCatalogLiveSession`: one VTO task
+ * instead of three, and no outfit-selection or scoring step (there's
+ * nothing to select — the user already supplied the one garment). The
+ * bonus video step is otherwise identical, reusing `initVideoTask`'s
+ * sibling `initCustomVideoTask` and the same `startVideoTask`/`checkVideoTask`
+ * helpers (generalized to also look up the custom VTO result image).
+ */
+async function advanceCustomLiveSession(payload: SessionPayload): Promise<SessionPayload> {
+  let live = payload.live!;
+
+  if (!live.skinResolved && live.skinTaskId) {
+    live = await checkSkinTask(payload.sessionId, live);
+  }
+
+  if (live.skinResolved && live.custom) {
+    live = live.custom.vto.status === "queued"
+      ? await startCustomVtoTask(payload.sessionId, live)
+      : live.custom.vto.status === "running"
+        ? await checkCustomVtoTask(payload.sessionId, live)
+        : live;
+  }
+
+  const vtoTerminal = live.custom !== null && (live.custom.vto.status === "success" || live.custom.vto.status === "error");
+
+  if (vtoTerminal) {
+    clearPendingLiveUpload(payload.sessionId);
+
+    if (!live.video) {
+      live = initCustomVideoTask(live);
+    }
+    if (live.video?.status === "queued") {
+      live = await startVideoTask(payload.sessionId, live);
+    } else if (live.video?.status === "running") {
+      live = await checkVideoTask(payload.sessionId, live);
+    }
+  }
+
+  const next: SessionPayload = { ...payload, live };
+
+  const videoTerminal =
+    live.video === null ||
+    live.video.status === "success" ||
+    live.video.status === "error" ||
+    live.video.status === "skipped";
+
+  if (vtoTerminal && videoTerminal) {
+    next.status = "ready";
+  }
+
+  return next;
+}
+
+async function startCustomVtoTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
+  const custom = live.custom;
+  if (!custom || custom.vto.status !== "queued") return live;
+
+  const pending = peekPendingLiveUpload(sessionId);
+  if (!pending?.garmentBytes || !pending.garmentContentType) {
+    logger.warn({ sessionId }, "No pending garment upload found — cannot start custom VTO task");
+    return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "error", errorMessage: "Your garment photo expired before try-on could start." } } };
+  }
+
+  try {
+    const cacheKey = vtoCacheKey(pending.fullBodyBytes, pending.garmentBytes, custom.garmentCategory);
+    const cached = getCached<{ resultImageUrl: string }>(cacheKey);
+    if (cached) {
+      return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "success", resultImageUrl: cached.resultImageUrl } } };
+    }
+
+    const { taskId } = await startYouCamClothesVto(
+      pending.fullBodyBytes,
+      pending.fullBodyContentType,
+      pending.garmentBytes,
+      pending.garmentContentType,
+      custom.garmentCategory,
+    );
+    return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "running", taskId } } };
+  } catch (err) {
+    logger.warn({ err, sessionId }, "Failed to start YouCam Apparel VTO task for custom garment");
+    return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "error", errorMessage: "This try-on couldn't be generated right now." } } };
+  }
+}
+
+async function checkCustomVtoTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
+  const custom = live.custom;
+  if (!custom || custom.vto.status !== "running" || !custom.vto.taskId) return live;
+
+  try {
+    const result = await checkYouCamClothesVtoStatus(custom.vto.taskId);
+
+    if (result.status === "success" && result.resultImageUrl) {
+      const pending = peekPendingLiveUpload(sessionId);
+      if (pending?.garmentBytes) {
+        setCachedSuccess(vtoCacheKey(pending.fullBodyBytes, pending.garmentBytes, custom.garmentCategory), { resultImageUrl: result.resultImageUrl });
+      }
+      return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "success", resultImageUrl: result.resultImageUrl } } };
+    }
+
+    if (result.status === "error") {
+      return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "error", errorMessage: result.errorMessage ?? "This try-on couldn't be generated." } } };
+    }
+
+    return live; // still running — check again next poll
+  } catch (err) {
+    logger.warn({ err, sessionId }, "Custom garment VTO status check errored");
+    return { ...live, custom: { ...custom, vto: { ...custom.vto, status: "error", errorMessage: "This try-on couldn't be generated." } } };
+  }
+}
+
+/** The custom-garment mirror of `initVideoTask` — always the single garment, no scoring needed to pick it. */
+function initCustomVideoTask(live: LiveSessionState): LiveSessionState {
+  const vto = live.custom?.vto;
+  if (!vto || vto.status !== "success" || !vto.resultImageUrl) {
+    return { ...live, video: { catalogItemId: null, status: "skipped", taskId: null, videoUrl: null, errorMessage: null } };
+  }
+  return { ...live, video: { catalogItemId: CUSTOM_GARMENT_ID, status: "queued", taskId: null, videoUrl: null, errorMessage: null } };
+}
+
+/** Resolves the successful try-on image to animate, for either the catalog or custom pipeline. */
+function findVtoResultImageUrl(live: LiveSessionState, catalogItemId: string): string | null | undefined {
+  if (catalogItemId === CUSTOM_GARMENT_ID) return live.custom?.vto.resultImageUrl;
+  return (live.vtoTasks ?? []).find((t) => t.catalogItemId === catalogItemId)?.resultImageUrl;
+}
+
+/**
  * Decides which outfit (if any) the bonus video should animate, using the
  * exact same scoring + "only a successful try-on" rule the report builder
  * uses (`pickRecommendedCatalogItemId`), so the video is always of the
@@ -182,8 +346,8 @@ async function startVideoTask(sessionId: string, live: LiveSessionState): Promis
   const video = live.video;
   if (!video || video.status !== "queued") return live;
 
-  // video.catalogItemId is guaranteed set whenever status is "queued" (see initVideoTask).
-  const srcImageUrl = (live.vtoTasks ?? []).find((t) => t.catalogItemId === video.catalogItemId)?.resultImageUrl;
+  // video.catalogItemId is guaranteed set whenever status is "queued" (see initVideoTask/initCustomVideoTask).
+  const srcImageUrl = findVtoResultImageUrl(live, video.catalogItemId!);
   if (!srcImageUrl) {
     return { ...live, video: { ...video, status: "error", errorMessage: "Try-on image was unexpectedly missing." } };
   }
@@ -211,7 +375,7 @@ async function checkVideoTask(sessionId: string, live: LiveSessionState): Promis
     const result = await checkYouCamImageToVideoStatus(video.taskId);
 
     if (result.status === "success" && result.videoUrl) {
-      const srcImageUrl = (live.vtoTasks ?? []).find((t) => t.catalogItemId === video.catalogItemId)?.resultImageUrl;
+      const srcImageUrl = findVtoResultImageUrl(live, video.catalogItemId!);
       if (srcImageUrl) setCachedSuccess(videoCacheKey(srcImageUrl), { videoUrl: result.videoUrl });
       return { ...live, video: { ...video, status: "success", videoUrl: result.videoUrl } };
     }

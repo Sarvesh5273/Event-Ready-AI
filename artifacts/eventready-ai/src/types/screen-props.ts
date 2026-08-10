@@ -1,8 +1,10 @@
-import type { StyleVibe, BudgetTier, EventReadyReport } from "@workspace/api-client-react";
+import type { StyleVibe, BudgetTier, EventReadyReport, GarmentCategory } from "@workspace/api-client-react";
 
 export interface StartScreenProps {
   onStart: () => void;
   onUseDemoPersona: () => void;
+  /** "Already have something in mind?" — jumps straight to the custom-garment upload flow. */
+  onStartCustom: () => void;
 }
 
 export interface PreferencesScreenProps {
@@ -17,6 +19,8 @@ export interface PreferencesScreenProps {
 }
 
 export interface PhotoUploadScreenProps {
+  /** "custom" adds a third (garment) upload + category picker and hides the demo-persona shortcut. */
+  flow: "catalog" | "custom";
   selfiePreviewUrl: string | null;
   fullBodyPreviewUrl: string | null;
   onSelfieSelected: (file: File | null) => void;
@@ -24,9 +28,14 @@ export interface PhotoUploadScreenProps {
   onUseDemoPersona: () => void;
   onContinue: () => void;
   onBack: () => void;
-  /** Disable the Continue button until both photos are chosen. */
+  /** Disable the Continue button until the required photos (and, for "custom", the garment photo) are chosen. */
   canContinue: boolean;
   isSubmitting: boolean;
+  /** Custom flow only. */
+  garmentPreviewUrl: string | null;
+  onGarmentSelected: (file: File | null) => void;
+  garmentCategory: GarmentCategory;
+  onGarmentCategoryChange: (category: GarmentCategory) => void;
 }
 
 export interface ProcessingScreenProps {

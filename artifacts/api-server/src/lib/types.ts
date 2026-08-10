@@ -31,17 +31,27 @@ export type Silhouette =
 export type SkinSignalLevel = "low" | "medium" | "high" | "unknown";
 export type VtoTaskStatus = "queued" | "running" | "success" | "error";
 
+/**
+ * "catalog" recommends from the curated wedding-guest catalog (the original
+ * flow). "custom" lets the user upload a garment they already have in mind
+ * and get a skin/color compatibility read on it — Live Mode only, since
+ * there's no pre-captured demo asset for an arbitrary upload.
+ */
+export type GarmentSource = "catalog" | "custom";
+
 export type ReasonCode =
   | "wedding_guest_match"
   | "style_vibe_match"
   | "budget_match"
   | "cool_tone_supports_redness"
   | "matte_finish_supports_oiliness"
+  | "matte_finish_supports_texture"
   | "contrast_supports_tired_eye_area"
   | "soft_color_supports_low_radiance"
   | "bold_color_matches_vibe"
   | "classic_silhouette_matches_vibe"
   | "high_shine_camera_caution"
+  | "high_shine_texture_caution"
   | "warm_tone_redness_caution"
   | "budget_mismatch"
   | "style_vibe_mismatch";
@@ -109,9 +119,42 @@ export interface EventReadyVideo {
   videoUrl: string | null;
 }
 
+/**
+ * Skin/color compatibility read for a garment the user uploaded themselves
+ * (the "custom" flow). Deliberately a NARROWER signal than `OutfitScore`:
+ * there's no occasion/style/budget preference to check a self-picked
+ * garment against, and fabric finish can't be reliably read from a photo,
+ * so this only ever reflects color/undertone-driven skin fit + try-on
+ * success. Keep it a distinct type (and distinct UI label) so it's never
+ * confused with the fuller catalog confidence score.
+ */
+export interface CustomGarmentScore {
+  confidenceScore: number;
+  reasonCodes: ReasonCode[];
+  cautionCodes: ReasonCode[];
+  userFacingReasons: string[];
+  userFacingCautions: string[];
+}
+
+/** Present on the report only when `flow` is "custom". */
+export interface CustomGarmentResult {
+  garmentCategory: GarmentCategory;
+  colorFamily: ColorFamily;
+  undertone: Undertone;
+  /** Data URL of the user's own uploaded garment photo, for display. */
+  imageUrl: string;
+  vtoStatus: VtoTaskStatus;
+  vtoResultImageUrl: string | null;
+  vtoErrorMessage: string | null;
+  /** Null only while try-on is still queued/running. */
+  score: CustomGarmentScore | null;
+}
+
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
+  flow: GarmentSource;
+  /** Empty string when `flow` is "custom" — nothing catalog-based to recommend. */
   recommendedCatalogItemId: string;
   skinSignals: NormalizedSkinSignals;
   selectedOutfits: OutfitCandidate[];
@@ -119,4 +162,6 @@ export interface EventReadyReport {
   scores: OutfitScore[];
   prepTips: string[];
   video: EventReadyVideo | null;
+  /** Non-null only when `flow` is "custom". */
+  customGarment: CustomGarmentResult | null;
 }

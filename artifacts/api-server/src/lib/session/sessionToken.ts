@@ -1,5 +1,16 @@
 import crypto from "node:crypto";
-import type { NormalizedSkinSignals, OutfitCandidate, SessionMode, SessionStatusValue, UserPreferences, VtoTaskStatus } from "../types";
+import type {
+  ColorFamily,
+  GarmentCategory,
+  GarmentSource,
+  NormalizedSkinSignals,
+  OutfitCandidate,
+  SessionMode,
+  SessionStatusValue,
+  Undertone,
+  UserPreferences,
+  VtoTaskStatus,
+} from "../types";
 
 /** Per-outfit Apparel VTO task state, tracked independently for each of the 3 selected outfits. */
 export interface LiveVtoTaskState {
@@ -26,10 +37,25 @@ export interface LiveVideoState {
 }
 
 /**
+ * Live Mode "custom garment" state: the single-item alternative to
+ * `selectedOutfits`/`vtoTasks` above, populated only when the session's
+ * `garmentSource` is "custom". `vto.catalogItemId` is always the constant
+ * "custom" so the shared VTO/video task-state shape can be reused as-is.
+ */
+export interface CustomGarmentLiveState {
+  garmentCategory: GarmentCategory;
+  colorFamily: ColorFamily;
+  undertone: Undertone;
+  vto: LiveVtoTaskState;
+}
+
+/**
  * Live Mode pipeline state. Only ever populated for `mode: "live"` sessions.
  * Deliberately holds no raw image bytes and no YouCam API key — just task
  * ids, statuses, and normalized results, all safe to round-trip through a
- * signed token the browser can see.
+ * signed token the browser can see. `selectedOutfits`/`vtoTasks` are used
+ * for the "catalog" garment source; `custom` is used for the "custom" one —
+ * exactly one of the two is ever populated for a given session.
  */
 export interface LiveSessionState {
   /** True once Skin Analysis has resolved (success OR graceful fallback) and outfits are selected. */
@@ -38,6 +64,7 @@ export interface LiveSessionState {
   skinSignals: NormalizedSkinSignals | null;
   selectedOutfits: OutfitCandidate[] | null;
   vtoTasks: LiveVtoTaskState[] | null;
+  custom: CustomGarmentLiveState | null;
   /** Null until all VTO tasks are terminal — see `liveProcessing.ts`. */
   video: LiveVideoState | null;
 }
@@ -50,11 +77,18 @@ export interface LiveSessionState {
  * which is advanced by one real YouCam status check per outstanding task,
  * per poll (see `./liveProcessing.ts`). Either way, no mutable state lives
  * on the server, so any server instance can verify and advance any token.
+ *
+ * Deliberately excludes the custom-garment photo itself (see
+ * `garmentImageStore.ts`) — embedding raw/base64 image bytes here would
+ * make this token, which is echoed back as a request header on every poll,
+ * large enough to trip HTTP header size limits.
  */
 export interface SessionPayload {
   sessionId: string;
   mode: SessionMode;
   preferences: UserPreferences;
+  /** Always "catalog" for Demo Mode sessions — see `createSessionPayload`. */
+  garmentSource: GarmentSource;
   status: SessionStatusValue;
   createdAt: string;
   analyzeStartedAt: string | null;
@@ -112,11 +146,18 @@ export function verifySessionToken(token: string | undefined | null): SessionPay
   }
 }
 
-export function createSessionPayload(mode: SessionMode, preferences: UserPreferences): SessionPayload {
+export function createSessionPayload(
+  mode: SessionMode,
+  preferences: UserPreferences,
+  garmentSource: GarmentSource = "catalog",
+): SessionPayload {
   return {
     sessionId: crypto.randomUUID(),
     mode,
     preferences,
+    // Demo Mode only ever replays the fixed catalog-flow persona — there's
+    // no pre-captured demo asset for an arbitrary custom-garment upload.
+    garmentSource: mode === "demo" ? "catalog" : garmentSource,
     status: "created",
     createdAt: new Date().toISOString(),
     analyzeStartedAt: null,

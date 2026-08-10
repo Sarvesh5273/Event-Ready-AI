@@ -5,10 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GarmentCategory } from './garmentCategory';
 import type { UploadedImage } from './uploadedImage';
 
 export interface AnalyzeInput {
   sessionToken: string;
   selfieImage?: UploadedImage;
   fullBodyImage?: UploadedImage;
+  garmentImage?: UploadedImage;
+  garmentCategory?: GarmentCategory;
 }

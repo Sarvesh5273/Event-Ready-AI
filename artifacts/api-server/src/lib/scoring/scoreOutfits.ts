@@ -1,8 +1,6 @@
-import type { CatalogItem, ColorFamily, NormalizedSkinSignals, OutfitScore, ReasonCode, UserPreferences, VtoResult } from "../types";
+import type { CatalogItem, NormalizedSkinSignals, OutfitScore, ReasonCode, UserPreferences, VtoResult } from "../types";
 import { REASON_COPY } from "./reasonCodes";
-
-const SOFT_PALETTE: ColorFamily[] = ["rose", "champagne", "lavender", "sage"];
-const HIGH_CONTRAST_PALETTE: ColorFamily[] = ["navy", "black", "burgundy", "teal"];
+import { computeSkinColorFit } from "./skinColorFit";
 
 export interface ScoreOutfitsInput {
   items: CatalogItem[];
@@ -59,42 +57,17 @@ export function scoreOutfits({ items, preferences, skinSignals, vtoResults }: Sc
       reasonCodes.push("budget_mismatch");
     }
 
-    let skinFit = 10;
-    if (item.undertone === "cool" && skinSignals.redness === "high") {
-      skinFit += 5;
-      reasonCodes.push("cool_tone_supports_redness");
-    }
-    if ((item.fabricFinish === "matte" || item.fabricFinish === "soft_sheen") && skinSignals.oiliness === "high") {
-      skinFit += 5;
-      reasonCodes.push("matte_finish_supports_oiliness");
-    }
-    if (skinSignals.darkCircles === "high" && HIGH_CONTRAST_PALETTE.includes(item.colorFamily)) {
-      skinFit += 5;
-      reasonCodes.push("contrast_supports_tired_eye_area");
-    }
-    if ((skinSignals.radiance === "low" || skinSignals.moisture === "low") && SOFT_PALETTE.includes(item.colorFamily)) {
-      skinFit += 5;
-      reasonCodes.push("soft_color_supports_low_radiance");
-    }
-    points += Math.min(25, skinFit);
+    const skinColorFit = computeSkinColorFit(item.colorFamily, item.undertone, item.fabricFinish, skinSignals);
+    points += skinColorFit.skinFitPoints;
+    reasonCodes.push(...skinColorFit.reasonCodes);
+    cautionCodes.push(...skinColorFit.cautionCodes);
 
     const vto = vtoResults.find((v) => v.catalogItemId === item.id);
     if (vto?.status === "success") {
       points += 10;
     }
 
-    let penalty = 0;
-    if (item.fabricFinish === "high_shine" && skinSignals.oiliness === "high") {
-      penalty += 10;
-      cautionCodes.push("high_shine_camera_caution");
-    }
-    if (item.undertone === "warm" && skinSignals.redness === "high") {
-      penalty += 10;
-      cautionCodes.push("warm_tone_redness_caution");
-    }
-    penalty = Math.min(20, penalty);
-
-    const confidenceScore = Math.max(0, Math.min(100, points - penalty));
+    const confidenceScore = Math.max(0, Math.min(100, points - skinColorFit.cautionPoints));
 
     return {
       catalogItemId: item.id,

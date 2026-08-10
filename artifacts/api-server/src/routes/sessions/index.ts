@@ -27,7 +27,9 @@ import {
   DEMO_VIDEO_URL,
 } from "../../lib/demo/replay";
 import { PREP_TIPS } from "../../lib/content/prepTips";
-import type { EventReadyReport, VtoResult } from "../../lib/types";
+import { scoreCustomGarment } from "../../lib/scoring/customGarmentScore";
+import { getGarmentImage } from "../../lib/session/garmentImageStore";
+import type { CustomGarmentResult, EventReadyReport, VtoResult } from "../../lib/types";
 
 const router: IRouter = Router();
 
@@ -39,6 +41,7 @@ function buildSessionResponse(payload: SessionPayload, nowMs: number) {
     sessionToken: signSessionToken(payload),
     mode: payload.mode,
     preferences: payload.preferences,
+    garmentSource: payload.garmentSource,
     status: effective.status,
     currentStep: effective.currentStep,
     steps: [...PROCESSING_STEPS],
@@ -53,7 +56,7 @@ router.post("/sessions", async (req, res): Promise<void> => {
     return;
   }
 
-  const payload = createSessionPayload(parsed.data.mode, parsed.data.preferences);
+  const payload = createSessionPayload(parsed.data.mode, parsed.data.preferences, parsed.data.garmentSource);
 
   req.log.info({ sessionId: payload.sessionId, mode: payload.mode }, "Created EventReady session");
   res.status(201).json(CreateSessionResponse.parse(buildSessionResponse(payload, Date.now())));
@@ -96,12 +99,25 @@ router.post("/sessions/:sessionId/analyze", async (req, res): Promise<void> => {
       return;
     }
 
+    if (payload.garmentSource === "custom" && (!body.data.garmentImage || !body.data.garmentCategory)) {
+      res.status(400).json({ error: "The custom garment flow requires both garmentImage and garmentCategory." });
+      return;
+    }
+
     try {
       const started = await startLiveAnalysis(payload, {
         selfieBytes: Buffer.from(body.data.selfieImage.base64Data, "base64"),
         selfieContentType: body.data.selfieImage.contentType,
         fullBodyBytes: Buffer.from(body.data.fullBodyImage.base64Data, "base64"),
         fullBodyContentType: body.data.fullBodyImage.contentType,
+        garment:
+          payload.garmentSource === "custom" && body.data.garmentImage && body.data.garmentCategory
+            ? {
+                bytes: Buffer.from(body.data.garmentImage.base64Data, "base64"),
+                contentType: body.data.garmentImage.contentType,
+                category: body.data.garmentCategory,
+              }
+            : undefined,
       });
       req.log.info({ sessionId: payload.sessionId }, "Started live YouCam analysis pipeline");
       res.status(200).json(StartSessionAnalysisResponse.parse(buildSessionResponse(started, Date.now())));
@@ -192,6 +208,34 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
   res.status(200).json(GetSessionReportResponse.parse(report));
 });
 
+// Serves the raw bytes of a Live Mode custom-garment upload for display on
+// the results screen. Deliberately outside the OpenAPI/zod-typed surface —
+// it's consumed directly as an `<img src>`, which can't attach the `token`
+// header the other endpoints use, so the token travels as a query param
+// here instead. See `garmentImageStore.ts` for why the image never lives
+// inside the session token itself.
+router.get("/sessions/:sessionId/garment-image", async (req, res): Promise<void> => {
+  const sessionId = typeof req.params.sessionId === "string" ? req.params.sessionId : "";
+  const tokenParam = req.query.token;
+  const token = typeof tokenParam === "string" ? tokenParam : (req.get("token") ?? undefined);
+
+  const payload = verifySessionToken(token);
+  if (!payload || payload.sessionId !== sessionId || payload.garmentSource !== "custom") {
+    res.status(404).end();
+    return;
+  }
+
+  const image = getGarmentImage(sessionId);
+  if (!image) {
+    res.status(404).end();
+    return;
+  }
+
+  res.setHeader("Cache-Control", "private, max-age=1800");
+  res.type(image.contentType);
+  res.send(image.bytes);
+});
+
 function buildDemoReport(payload: SessionPayload): EventReadyReport {
   const skinSignals = normalizeSkinSignals(DEMO_RAW_SKIN_SCORES);
   const replayCatalog = weddingGuestCatalog.filter((item) =>
@@ -224,6 +268,7 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
   return {
     sessionId: payload.sessionId,
     mode: payload.mode,
+    flow: "catalog",
     recommendedCatalogItemId,
     skinSignals,
     selectedOutfits,
@@ -236,12 +281,65 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     // of which outfit is ranked #1 by the scoring engine).
     // Served as a static public asset — zero API cost at runtime.
     video: { status: "success" as const, videoUrl: DEMO_VIDEO_URL },
+    customGarment: null,
   };
 }
 
 function buildLiveReport(payload: SessionPayload): EventReadyReport {
   const live = payload.live;
-  if (!live || !live.skinSignals || !live.selectedOutfits || !live.vtoTasks) {
+  if (!live || !live.skinSignals) {
+    throw new Error(`Live session ${payload.sessionId} reached "ready" without a complete pipeline state.`);
+  }
+
+  const videoStatus: "success" | "error" | "skipped" | null = live.video
+    ? live.video.status === "success" || live.video.status === "error"
+      ? live.video.status
+      : "skipped"
+    : null;
+  const video = live.video && videoStatus ? { status: videoStatus, videoUrl: live.video.videoUrl } : null;
+
+  if (payload.garmentSource === "custom") {
+    if (!live.custom) {
+      throw new Error(`Live custom-garment session ${payload.sessionId} reached "ready" without custom garment state.`);
+    }
+
+    const vtoTerminal = live.custom.vto.status === "success" || live.custom.vto.status === "error";
+    const score = vtoTerminal
+      ? scoreCustomGarment(live.custom.colorFamily, live.custom.undertone, live.skinSignals, live.custom.vto.status)
+      : null;
+
+    // Re-signing here is deterministic (same payload -> same HMAC) and
+    // matches the token already issued for this response, so the client
+    // can use it as-is without a second round trip.
+    const imageUrl = `/api/sessions/${payload.sessionId}/garment-image?token=${encodeURIComponent(signSessionToken(payload))}`;
+
+    const customGarment: CustomGarmentResult = {
+      garmentCategory: live.custom.garmentCategory,
+      colorFamily: live.custom.colorFamily,
+      undertone: live.custom.undertone,
+      imageUrl,
+      vtoStatus: live.custom.vto.status,
+      vtoResultImageUrl: live.custom.vto.resultImageUrl,
+      vtoErrorMessage: live.custom.vto.errorMessage,
+      score,
+    };
+
+    return {
+      sessionId: payload.sessionId,
+      mode: payload.mode,
+      flow: "custom",
+      recommendedCatalogItemId: "",
+      skinSignals: live.skinSignals,
+      selectedOutfits: [],
+      vtoResults: [],
+      scores: [],
+      prepTips: PREP_TIPS,
+      video,
+      customGarment,
+    };
+  }
+
+  if (!live.selectedOutfits || !live.vtoTasks) {
     throw new Error(`Live session ${payload.sessionId} reached "ready" without a complete pipeline state.`);
   }
 
@@ -269,6 +367,7 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
   return {
     sessionId: payload.sessionId,
     mode: payload.mode,
+    flow: "catalog",
     recommendedCatalogItemId,
     skinSignals: live.skinSignals,
     selectedOutfits: live.selectedOutfits,
@@ -279,9 +378,8 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     // task is guaranteed to be terminal — see `advanceLiveSession`'s
     // `videoTerminal` gate — so `live.video` here is always non-null and
     // never "queued"/"running".
-    video: live.video
-      ? { status: live.video.status === "success" || live.video.status === "error" ? live.video.status : "skipped", videoUrl: live.video.videoUrl }
-      : null,
+    video,
+    customGarment: null,
   };
 }
 

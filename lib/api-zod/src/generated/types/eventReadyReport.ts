@@ -5,7 +5,9 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { CustomGarmentResult } from './customGarmentResult';
 import type { EventReadyVideo } from './eventReadyVideo';
+import type { GarmentSource } from './garmentSource';
 import type { NormalizedSkinSignals } from './normalizedSkinSignals';
 import type { OutfitCandidate } from './outfitCandidate';
 import type { OutfitScore } from './outfitScore';
@@ -15,6 +17,8 @@ import type { VtoResult } from './vtoResult';
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
+  flow: GarmentSource;
+  /** Empty string when `flow` is "custom" — nothing catalog-based to recommend. */
   recommendedCatalogItemId: string;
   skinSignals: NormalizedSkinSignals;
   selectedOutfits: OutfitCandidate[];
@@ -22,4 +26,6 @@ export interface EventReadyReport {
   scores: OutfitScore[];
   prepTips: string[];
   video: EventReadyVideo | null;
+  /** Non-null only when `flow` is "custom". */
+  customGarment: CustomGarmentResult | null;
 }

@@ -28,7 +28,11 @@ function WeddingGuestFlow() {
       {flow.isDemoMode && <DemoModeBanner />}
 
       {flow.screen === 'start' && (
-        <StartScreen onStart={flow.startFlow} onUseDemoPersona={flow.startFlowWithDemoPersona} />
+        <StartScreen
+          onStart={flow.startFlow}
+          onUseDemoPersona={flow.startFlowWithDemoPersona}
+          onStartCustom={flow.startFlowCustom}
+        />
       )}
 
       {flow.screen === 'preferences' && (
@@ -45,6 +49,7 @@ function WeddingGuestFlow() {
 
       {flow.screen === 'photo' && (
         <PhotoUploadScreen
+          flow={flow.garmentSource}
           selfiePreviewUrl={flow.photos.selfiePreviewUrl}
           fullBodyPreviewUrl={flow.photos.fullBodyPreviewUrl}
           onSelfieSelected={flow.setSelfieFile}
@@ -52,8 +57,16 @@ function WeddingGuestFlow() {
           onUseDemoPersona={flow.useDemoPersonaFromPhotoScreen}
           onContinue={flow.continueFromPhotos}
           onBack={flow.goToStart}
-          canContinue={Boolean(flow.photos.selfieFile && flow.photos.fullBodyFile)}
+          canContinue={Boolean(
+            flow.photos.selfieFile &&
+              flow.photos.fullBodyFile &&
+              (flow.garmentSource === 'catalog' || flow.garment.file),
+          )}
           isSubmitting={flow.isCreatingSession}
+          garmentPreviewUrl={flow.garment.previewUrl}
+          onGarmentSelected={flow.setGarmentFile}
+          garmentCategory={flow.garmentCategory}
+          onGarmentCategoryChange={flow.setGarmentCategory}
         />
       )}
 

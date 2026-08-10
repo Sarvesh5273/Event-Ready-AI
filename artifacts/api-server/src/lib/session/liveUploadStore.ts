@@ -6,7 +6,9 @@
  *    write the replay cache entry (keyed on `sha256(selfieBytes + params)`);
  *  - the full-body bytes are needed again once outfits are selected, to
  *    start the 3 Apparel VTO tasks — which happens on a later `/status`
- *    poll, well after the original `/analyze` request has returned.
+ *    poll, well after the original `/analyze` request has returned;
+ *  - for the "custom" garment source, the garment bytes are needed again
+ *    the same way, to start the single Apparel VTO task.
  *
  * This bridges that gap for a single server instance without ever putting
  * image bytes in the token or a database. Entries are cleared as soon as
@@ -18,6 +20,9 @@ interface PendingLiveUpload {
   selfieContentType: string;
   fullBodyBytes: Buffer;
   fullBodyContentType: string;
+  /** Present only for the "custom" garment source. */
+  garmentBytes?: Buffer;
+  garmentContentType?: string;
   expiresAt: number;
 }
 
@@ -37,6 +42,8 @@ export function storePendingLiveUpload(
   selfieContentType: string,
   fullBodyBytes: Buffer,
   fullBodyContentType: string,
+  garmentBytes?: Buffer,
+  garmentContentType?: string,
 ): void {
   sweepExpired();
   store.set(sessionId, {
@@ -44,6 +51,8 @@ export function storePendingLiveUpload(
     selfieContentType,
     fullBodyBytes,
     fullBodyContentType,
+    garmentBytes,
+    garmentContentType,
     expiresAt: Date.now() + TTL_MS,
   });
 }

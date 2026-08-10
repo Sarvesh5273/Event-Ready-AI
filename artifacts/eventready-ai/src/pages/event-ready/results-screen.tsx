@@ -4,9 +4,14 @@ import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Star, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
 
 export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreenProps) {
-  
+
+  if (report.flow === 'custom') {
+    return <CustomGarmentResultsScreen report={report} onStartOver={onStartOver} />;
+  }
+
   // Find hero outfit
   const heroOutfit = report.selectedOutfits.find(o => o.item.id === report.recommendedCatalogItemId);
   const heroVto = report.vtoResults.find(v => v.catalogItemId === report.recommendedCatalogItemId);

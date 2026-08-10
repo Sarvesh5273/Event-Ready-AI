@@ -3,3 +3,4 @@
 - [YouCam Skin Analysis score direction](youcam-score-direction.md) — YouCam scores are healthy-direction (higher = healthier); invert once at the API boundary if your app's convention is concern-direction.
 - [Cross-artifact static asset reads](monorepo-cross-artifact-asset-read.md) — find monorepo root by walking up to `pnpm-workspace.yaml`, not a hardcoded `../../..` hop count (breaks between bundled and source execution).
 - [YouCam Image-to-Video status endpoint shape](youcam-image-to-video-status.md) — its status-check response docs are thin/inconsistent; parse defensively and default ambiguous 2xx responses to "still running".
+- [Stateless-token payload size](stateless-token-payload-size.md) — never embed raw/base64 images in a signed session token echoed back as an HTTP header; it silently trips HTTP 431.

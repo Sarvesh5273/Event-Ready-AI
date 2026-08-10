@@ -69,6 +69,17 @@ export const GarmentCategory = {
   lower_body: 'lower_body',
 } as const;
 
+/**
+ * "catalog" recommends from the curated wedding-guest catalog (default). "custom" lets the user try on and get a skin/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as "catalog", since there's no pre-captured demo asset for an arbitrary upload.
+ */
+export type GarmentSource = typeof GarmentSource[keyof typeof GarmentSource];
+
+
+export const GarmentSource = {
+  catalog: 'catalog',
+  custom: 'custom',
+} as const;
+
 export type ColorFamily = typeof ColorFamily[keyof typeof ColorFamily];
 
 
@@ -138,6 +149,8 @@ export const ReasonCode = {
   bold_color_matches_vibe: 'bold_color_matches_vibe',
   classic_silhouette_matches_vibe: 'classic_silhouette_matches_vibe',
   high_shine_camera_caution: 'high_shine_camera_caution',
+  matte_finish_supports_texture: 'matte_finish_supports_texture',
+  high_shine_texture_caution: 'high_shine_texture_caution',
   warm_tone_redness_caution: 'warm_tone_redness_caution',
   budget_mismatch: 'budget_mismatch',
   style_vibe_mismatch: 'style_vibe_mismatch',
@@ -187,6 +200,7 @@ export interface UserPreferences {
 export interface SessionInput {
   mode: SessionMode;
   preferences: UserPreferences;
+  garmentSource?: GarmentSource;
 }
 
 /**
@@ -203,6 +217,8 @@ export interface AnalyzeInput {
   sessionToken: string;
   selfieImage?: UploadedImage;
   fullBodyImage?: UploadedImage;
+  garmentImage?: UploadedImage;
+  garmentCategory?: GarmentCategory;
 }
 
 export interface Session {
@@ -211,6 +227,7 @@ export interface Session {
   sessionToken: string;
   mode: SessionMode;
   preferences: UserPreferences;
+  garmentSource: GarmentSource;
   status: SessionStatus;
   /** Index (0-4) into `steps` of the currently active/last-completed step. */
   currentStep: number;
@@ -265,9 +282,39 @@ export interface OutfitScore {
   userFacingCautions: string[];
 }
 
+/**
+ * Skin/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there's no occasion/style/budget preference to check a self-picked garment against and fabric finish can't be reliably read from a photo.
+ */
+export interface CustomGarmentScore {
+  confidenceScore: number;
+  reasonCodes: ReasonCode[];
+  cautionCodes: ReasonCode[];
+  userFacingReasons: string[];
+  userFacingCautions: string[];
+}
+
+/**
+ * Present on the report only when `flow` is "custom".
+ */
+export interface CustomGarmentResult {
+  garmentCategory: GarmentCategory;
+  colorFamily: ColorFamily;
+  undertone: Undertone;
+  /** Same-origin API URL (including a signed access token as a query param) that serves the user's own uploaded garment photo, for display. */
+  imageUrl: string;
+  vtoStatus: VtoTaskStatus;
+  /** @nullable */
+  vtoResultImageUrl: string | null;
+  /** @nullable */
+  vtoErrorMessage: string | null;
+  score: CustomGarmentScore | null;
+}
+
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
+  flow: GarmentSource;
+  /** Empty string when `flow` is "custom" — nothing catalog-based to recommend. */
   recommendedCatalogItemId: string;
   skinSignals: NormalizedSkinSignals;
   selectedOutfits: OutfitCandidate[];
@@ -275,5 +322,7 @@ export interface EventReadyReport {
   scores: OutfitScore[];
   prepTips: string[];
   video: EventReadyVideo | null;
+  /** Non-null only when `flow` is "custom". */
+  customGarment: CustomGarmentResult | null;
 }
 
