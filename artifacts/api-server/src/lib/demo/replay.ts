@@ -1,3 +1,4 @@
+import type { FacialColorTones } from "../color/season";
 import type { RawSkinScores } from "../scoring/skinSignals";
 import { PREP_TIPS } from "../content/prepTips";
 
@@ -25,6 +26,24 @@ export const DEMO_RAW_SKIN_SCORES: RawSkinScores = {
   radiance: 30,
   moisture: 55,
   texture: 45,
+};
+
+/**
+ * A real recorded YouCam Facial Colour Tones response for the demo persona
+ * selfie (`public/demo/persona-selfie.jpg`) — captured from a live call, not
+ * invented, exactly like `DEMO_RAW_SKIN_SCORES` above. Replaying it keeps
+ * Demo Mode's palette identical to what Live Mode produces for the same
+ * photo, so the two modes can never tell the user different things about the
+ * same face.
+ */
+export const DEMO_FACIAL_TONES: FacialColorTones = {
+  skinColor: "#a68063",
+  hairColor: "#B56637",
+  hairColorName: "Auburn",
+  eyeColor: "#5e3d29",
+  eyeColorName: "Brown",
+  lipColor: "#d37770",
+  eyebrowColor: "#3e3834",
 };
 
 export const DEMO_VTO_IMAGE_BY_CATALOG_ID: Record<string, string> = {

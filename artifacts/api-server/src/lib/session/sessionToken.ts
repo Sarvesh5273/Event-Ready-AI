@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { FacialColorTones } from "../color/season";
 import type {
   ColorFamily,
   GarmentCategory,
@@ -44,8 +45,19 @@ export interface LiveVideoState {
  */
 export interface CustomGarmentLiveState {
   garmentCategory: GarmentCategory;
+  /**
+   * Descriptive labels for the uploaded garment. Used to *name* its colour
+   * in the report, never to decide whether it suits the wearer — that is
+   * `colorHex`'s job.
+   */
   colorFamily: ColorFamily;
   undertone: Undertone;
+  /**
+   * The garment's colour as actually sampled from the user's photo, or null
+   * when nothing usable could be sampled. Null means no colour compatibility
+   * verdict is offered rather than one being guessed.
+   */
+  colorHex: string | null;
   vto: LiveVtoTaskState;
 }
 
@@ -62,6 +74,17 @@ export interface LiveSessionState {
   skinResolved: boolean;
   skinTaskId: string | null;
   skinSignals: NormalizedSkinSignals | null;
+  /** True once Facial Colour Tones has resolved (success OR graceful fallback). */
+  toneResolved: boolean;
+  toneTaskId: string | null;
+  /**
+   * The measured facial colours, and *only* those — seven short hex strings.
+   * The seasonal palette derived from them is deliberately not stored here:
+   * it is a pure function of these values, so recomputing it costs nothing
+   * while storing it would put a few hundred extra bytes into a token that
+   * travels as a request header on every poll.
+   */
+  tones: FacialColorTones | null;
   selectedOutfits: OutfitCandidate[] | null;
   vtoTasks: LiveVtoTaskState[] | null;
   custom: CustomGarmentLiveState | null;

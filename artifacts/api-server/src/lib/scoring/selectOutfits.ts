@@ -1,3 +1,6 @@
+import { MAX_COLOR_POINTS, judgeGarmentColor } from "../color/match";
+import type { ColorAnalysis } from "../color/season";
+import { COLOR_VERDICT_REASON } from "./reasonCodes";
 import type { CatalogItem, NormalizedSkinSignals, OutfitCandidate, ReasonCode, UserPreferences } from "../types";
 
 interface ScoredCandidate {
@@ -6,10 +9,14 @@ interface ScoredCandidate {
   reasons: ReasonCode[];
 }
 
+/** Weight of the personal-colour term in shortlisting, in the same units as the rules below. */
+const COLOR_SELECTION_WEIGHT = 5;
+
 function scoreForSelection(
   item: CatalogItem,
   preferences: UserPreferences,
   skin: NormalizedSkinSignals,
+  colorAnalysis: ColorAnalysis | null,
 ): ScoredCandidate {
   let score = 0;
   const reasons: ReasonCode[] = [];
@@ -30,9 +37,15 @@ function scoreForSelection(
     reasons.push("budget_mismatch");
   }
 
-  if (item.undertone === "cool" && skin.redness === "high") {
-    score += 2;
-    reasons.push("cool_tone_supports_redness");
+  // Personal colour has to drive the shortlist, not just reorder it. Only
+  // three garments are ever tried on, so a garment cut here can never be
+  // recovered by scoring later — shortlisting on anything less than the real
+  // measurement would mean the best-suited piece may never be shown at all.
+  // It carries the heaviest weight here for the same reason.
+  const colorMatch = colorAnalysis ? judgeGarmentColor(item.colorHex, colorAnalysis) : null;
+  if (colorMatch) {
+    score += (colorMatch.points / MAX_COLOR_POINTS) * COLOR_SELECTION_WEIGHT;
+    reasons.push(COLOR_VERDICT_REASON[colorMatch.verdict]);
   }
 
   if ((item.fabricFinish === "matte" || item.fabricFinish === "soft_sheen") && skin.oiliness === "high") {
@@ -45,11 +58,6 @@ function scoreForSelection(
     reasons.push("high_shine_camera_caution");
   }
 
-  if (item.undertone === "warm" && skin.redness === "high") {
-    score -= 1;
-    reasons.push("warm_tone_redness_caution");
-  }
-
   return { item, score, reasons };
 }
 
@@ -57,6 +65,12 @@ export interface SelectOutfitsInput {
   catalog: CatalogItem[];
   preferences: UserPreferences;
   skinSignals: NormalizedSkinSignals;
+  /**
+   * The palette measured from the user's face, or null when no colour
+   * reading is available. When null, shortlisting silently falls back to
+   * style/budget/finish rather than substituting a guessed complexion.
+   */
+  colorAnalysis: ColorAnalysis | null;
   /** How many outfits to shortlist. Defaults to 3 (1 recommended + 2 comparisons). */
   count?: number;
 }
@@ -68,10 +82,10 @@ export interface SelectOutfitsInput {
  * silhouettes and color families — over always taking the single
  * highest-scoring item.
  */
-export function selectOutfits({ catalog, preferences, skinSignals, count = 3 }: SelectOutfitsInput): OutfitCandidate[] {
+export function selectOutfits({ catalog, preferences, skinSignals, colorAnalysis, count = 3 }: SelectOutfitsInput): OutfitCandidate[] {
   const eligible = catalog.filter((item) => item.occasionTags.includes(preferences.occasion));
   const scored = eligible
-    .map((item) => scoreForSelection(item, preferences, skinSignals))
+    .map((item) => scoreForSelection(item, preferences, skinSignals, colorAnalysis))
     .sort((a, b) => b.score - a.score);
 
   const picked: ScoredCandidate[] = [];

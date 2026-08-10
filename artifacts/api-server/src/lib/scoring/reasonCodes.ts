@@ -21,4 +21,21 @@ export const REASON_COPY: Record<ReasonCode, string> = {
   warm_tone_redness_caution: "A cooler tone may sit a little more evenly than this warm tone under event lighting.",
   budget_mismatch: "Sits outside your selected budget.",
   style_vibe_mismatch: "Leans a different direction than the vibe you chose.",
+  palette_hero_color: "This is one of your palette's strongest colors.",
+  palette_harmonious_color: "This color sits comfortably inside your palette.",
+  palette_neutral_color: "This color is neither a standout nor a problem for your palette.",
+  palette_clash_color: "This color pulls against your natural coloring.",
+  color_reading_unavailable: "We couldn't read your coloring from your photo, so this score reflects fit and style only.",
 };
+
+/**
+ * Reason chip for each verdict `judgeGarmentColor` can return. Shared by
+ * shortlisting and final scoring so the two can never describe the same
+ * garment's colour differently.
+ */
+export const COLOR_VERDICT_REASON = {
+  hero: "palette_hero_color",
+  harmonious: "palette_harmonious_color",
+  neutral: "palette_neutral_color",
+  clash: "palette_clash_color",
+} as const satisfies Record<string, ReasonCode>;

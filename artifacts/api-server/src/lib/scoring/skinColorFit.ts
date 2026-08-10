@@ -1,11 +1,9 @@
-import type { ColorFamily, FabricFinish, NormalizedSkinSignals, ReasonCode, Undertone } from "../types";
+import { hexToLab, labChroma } from "../color/lab";
+import type { FabricFinish, NormalizedSkinSignals, ReasonCode } from "../types";
 
-const SOFT_PALETTE: ColorFamily[] = ["rose", "champagne", "lavender", "sage"];
-const HIGH_CONTRAST_PALETTE: ColorFamily[] = ["navy", "black", "burgundy", "teal"];
-
-export interface SkinColorFitResult {
-  /** Already clamped to the 0-25 skinOutfitFit point budget. */
-  skinFitPoints: number;
+export interface FinishFitResult {
+  /** Already clamped to the 0-15 skin-concern point budget. */
+  finishFitPoints: number;
   /** Already clamped to the 0-20 cautionPenalty point budget. */
   cautionPoints: number;
   reasonCodes: ReasonCode[];
@@ -13,42 +11,47 @@ export interface SkinColorFitResult {
 }
 
 /**
- * The core "does this color/fabric work with this skin" rule ladder. Shared
- * by catalog scoring (`scoreOutfits.ts`, which knows the full hand-tagged
- * `fabricFinish`) and custom-garment scoring (`customGarmentScore.ts`, which
- * only knows a photo-derived color — pass `fabricFinish: null` there to skip
- * the fabric-driven rules rather than guessing). Keeping this in one place
- * means both paths use identical reasoning, not two hand-written heuristics
- * that could quietly drift apart.
+ * The skin-*concern* half of outfit fit: how a fabric's finish and a
+ * garment's depth interact with what Skin Analysis actually measured
+ * (oiliness, texture, dark circles, radiance, moisture).
+ *
+ * Deliberately says nothing about whether the colour suits the wearer. That
+ * question is now answered by `judgeGarmentColor`, which compares the
+ * garment's measured colour against the palette measured from the user's own
+ * face, instead of inferring it from a hand-typed undertone label. Splitting
+ * the two means the report can say a garment is a wonderful colour but a
+ * risky fabric — a distinction the old combined rule could not express.
+ *
+ * "Deep" and "soft" are read off the garment's measured colour rather than
+ * a curated list of colour-family names, so they work for an uploaded
+ * garment exactly as well as for a catalog one.
  */
-export function computeSkinColorFit(
-  colorFamily: ColorFamily,
-  undertone: Undertone,
+export function computeFinishFit(
+  colorHex: string | null,
   fabricFinish: FabricFinish | null,
   skinSignals: NormalizedSkinSignals,
-): SkinColorFitResult {
+): FinishFitResult {
   const reasonCodes: ReasonCode[] = [];
   const cautionCodes: ReasonCode[] = [];
+  const lab = colorHex ? hexToLab(colorHex) : null;
+  const isDeep = lab !== null && lab.l < 45;
+  const isSoft = lab !== null && lab.l >= 60 && labChroma(lab) < 25;
 
-  let skinFit = 10;
-  if (undertone === "cool" && skinSignals.redness === "high") {
-    skinFit += 5;
-    reasonCodes.push("cool_tone_supports_redness");
-  }
+  let fit = 5;
   if ((fabricFinish === "matte" || fabricFinish === "soft_sheen") && skinSignals.oiliness === "high") {
-    skinFit += 5;
+    fit += 5;
     reasonCodes.push("matte_finish_supports_oiliness");
   }
   if ((fabricFinish === "matte" || fabricFinish === "soft_sheen") && skinSignals.texture === "high") {
-    skinFit += 5;
+    fit += 5;
     reasonCodes.push("matte_finish_supports_texture");
   }
-  if (skinSignals.darkCircles === "high" && HIGH_CONTRAST_PALETTE.includes(colorFamily)) {
-    skinFit += 5;
+  if (skinSignals.darkCircles === "high" && isDeep) {
+    fit += 5;
     reasonCodes.push("contrast_supports_tired_eye_area");
   }
-  if ((skinSignals.radiance === "low" || skinSignals.moisture === "low") && SOFT_PALETTE.includes(colorFamily)) {
-    skinFit += 5;
+  if ((skinSignals.radiance === "low" || skinSignals.moisture === "low") && isSoft) {
+    fit += 5;
     reasonCodes.push("soft_color_supports_low_radiance");
   }
 
@@ -61,15 +64,12 @@ export function computeSkinColorFit(
     penalty += 10;
     cautionCodes.push("high_shine_texture_caution");
   }
-  if (undertone === "warm" && skinSignals.redness === "high") {
-    penalty += 10;
-    cautionCodes.push("warm_tone_redness_caution");
-  }
 
   return {
-    skinFitPoints: Math.min(25, skinFit),
+    finishFitPoints: Math.min(15, fit),
     cautionPoints: Math.min(20, penalty),
     reasonCodes,
     cautionCodes,
   };
 }
+

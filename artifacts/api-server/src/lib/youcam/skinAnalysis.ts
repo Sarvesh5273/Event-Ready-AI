@@ -60,13 +60,15 @@ export interface StartSkinAnalysisResult {
   taskId: string;
 }
 
-/** Uploads the selfie and starts a Skin Analysis task. Does not wait for it to finish. */
-export async function startYouCamSkinAnalysis(
-  selfieBytes: Buffer,
-  selfieContentType: string,
-): Promise<StartSkinAnalysisResult> {
-  const { fileId } = await uploadFileToYouCam(selfieBytes, selfieContentType, `selfie_${Date.now()}.jpg`);
-
+/**
+ * Starts a Skin Analysis task against an already-uploaded selfie.
+ *
+ * Split out from `startYouCamSkinAnalysis` so a caller that needs several
+ * tasks on the same photo — Skin Analysis and Facial Colour Tones both run
+ * on the selfie — can upload it once and start both against the same
+ * `file_id`, instead of pushing the same bytes to YouCam twice.
+ */
+export async function startYouCamSkinAnalysisWithFileId(fileId: string): Promise<StartSkinAnalysisResult> {
   const { task_id } = await youCamPost<CreateSkinTaskResponse>("/s2s/v2.0/task/skin-analysis", {
     src_file_id: fileId,
     dst_actions: [...SKIN_DST_ACTIONS],
@@ -74,6 +76,15 @@ export async function startYouCamSkinAnalysis(
   });
 
   return { taskId: task_id };
+}
+
+/** Uploads the selfie and starts a Skin Analysis task. Does not wait for it to finish. */
+export async function startYouCamSkinAnalysis(
+  selfieBytes: Buffer,
+  selfieContentType: string,
+): Promise<StartSkinAnalysisResult> {
+  const { fileId } = await uploadFileToYouCam(selfieBytes, selfieContentType, `selfie_${Date.now()}.jpg`);
+  return startYouCamSkinAnalysisWithFileId(fileId);
 }
 
 interface SkinTaskStatusResponse {

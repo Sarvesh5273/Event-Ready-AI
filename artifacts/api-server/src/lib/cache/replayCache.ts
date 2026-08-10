@@ -61,6 +61,11 @@ export function skinCacheKey(selfieBytes: Buffer, dstActions: readonly string[])
   return `skin:${sha256Hex(selfieBytes, JSON.stringify([...dstActions].sort()))}`;
 }
 
+/** Key for a Facial Colour Tones result: hash of the selfie bytes. */
+export function toneCacheKey(selfieBytes: Buffer): string {
+  return `tone:${sha256Hex(selfieBytes)}`;
+}
+
 /** Key for an Apparel VTO result: hash of the full-body photo + garment image + category. */
 export function vtoCacheKey(fullBodyBytes: Buffer, garmentBytes: Buffer, garmentCategory: string): string {
   return `vto:${sha256Hex(fullBodyBytes, garmentBytes, garmentCategory)}`;

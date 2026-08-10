@@ -1,4 +1,5 @@
 import { Jimp, intToRGBA } from "jimp";
+import { rgbToHex } from "../color/lab";
 import type { ColorFamily, Undertone } from "../types";
 
 /**
@@ -45,7 +46,9 @@ function nearestColorFamily(rgb: [number, number, number]): { colorFamily: Color
  * (and its associated `Undertone`). Runs entirely locally — no extra YouCam
  * API call or cost.
  */
-export async function extractGarmentColor(imageBytes: Buffer): Promise<{ colorFamily: ColorFamily; undertone: Undertone }> {
+export async function extractGarmentColor(
+  imageBytes: Buffer,
+): Promise<{ colorFamily: ColorFamily; undertone: Undertone; colorHex: string | null }> {
   const image = await Jimp.read(imageBytes);
   image.resize({ w: 32, h: 32 });
 
@@ -76,5 +79,14 @@ export async function extractGarmentColor(imageBytes: Buffer): Promise<{ colorFa
   // Every sampled pixel was background/shadow (e.g. a garment shot on pure
   // white) — fall back to a neutral mid-gray average rather than crashing.
   const avg: [number, number, number] = count > 0 ? [rSum / count, gSum / count, bSum / count] : [128, 128, 128];
-  return nearestColorFamily(avg);
+
+  // `colorHex` is the honest measurement and is what personal-colour
+  // matching runs on; it is null when nothing usable was sampled, so callers
+  // can decline to judge the colour rather than judging a made-up grey. The
+  // family/undertone labels alongside it are only ever used to *describe*
+  // the garment, never to infer whether it suits the wearer.
+  return {
+    ...nearestColorFamily(avg),
+    colorHex: count > 0 ? rgbToHex({ r: avg[0], g: avg[1], b: avg[2] }) : null,
+  };
 }

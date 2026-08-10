@@ -4,3 +4,5 @@
 - [Cross-artifact static asset reads](monorepo-cross-artifact-asset-read.md) — find monorepo root by walking up to `pnpm-workspace.yaml`, not a hardcoded `../../..` hop count (breaks between bundled and source execution).
 - [YouCam Image-to-Video status endpoint shape](youcam-image-to-video-status.md) — its status-check response docs are thin/inconsistent; parse defensively and default ambiguous 2xx responses to "still running".
 - [Stateless-token payload size](stateless-token-payload-size.md) — never embed raw/base64 images in a signed session token echoed back as an HTTP header; it silently trips HTTP 431.
+- [Colour season calibration](color-season-calibration.md) — LAB warm/cool classifiers read falsely warm; validate on a spread of archetypes, not single cases.
+- [YouCam API discovery](youcam-api-discovery.md) — fetch docs as `.md`; the feature-cost endpoint is not a capability inventory.

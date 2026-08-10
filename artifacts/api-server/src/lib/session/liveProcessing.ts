@@ -6,10 +6,13 @@ import { pickRecommendedCatalogItemId, scoreOutfits } from "../scoring/scoreOutf
 import { readGarmentImage } from "../youcam/garmentAssets";
 import { extractGarmentColor } from "../youcam/garmentColor";
 import { storeGarmentImage } from "./garmentImageStore";
-import { SKIN_DST_ACTIONS, checkYouCamSkinAnalysisStatus, startYouCamSkinAnalysis } from "../youcam/skinAnalysis";
+import { SKIN_DST_ACTIONS, checkYouCamSkinAnalysisStatus, startYouCamSkinAnalysisWithFileId } from "../youcam/skinAnalysis";
+import { checkYouCamSkinToneAnalysisStatus, startYouCamSkinToneAnalysis } from "../youcam/skinToneAnalysis";
+import { uploadFileToYouCam } from "../youcam/client";
+import { analyzeColorSeason, type FacialColorTones } from "../color/season";
 import { checkYouCamClothesVtoStatus, startYouCamClothesVto } from "../youcam/clothesVto";
 import { checkYouCamImageToVideoStatus, startYouCamImageToVideo } from "../youcam/imageToVideo";
-import { getCached, setCachedSuccess, skinCacheKey, videoCacheKey, vtoCacheKey } from "../cache/replayCache";
+import { getCached, setCachedSuccess, skinCacheKey, toneCacheKey, videoCacheKey, vtoCacheKey } from "../cache/replayCache";
 import {
   clearPendingLiveUpload,
   peekPendingLiveUpload,
@@ -57,27 +60,16 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
     skinResolved: false,
     skinTaskId: null,
     skinSignals: null,
+    toneResolved: false,
+    toneTaskId: null,
+    tones: null,
     selectedOutfits: null,
     vtoTasks: null,
     custom: null,
     video: null,
   };
 
-  const cached = getCached<RawSkinScores>(skinCacheKey(input.selfieBytes, SKIN_DST_ACTIONS));
-  if (cached) {
-    live = { ...live, skinResolved: true, skinSignals: normalizeSkinSignals(cached) };
-  } else {
-    try {
-      const { taskId } = await startYouCamSkinAnalysis(input.selfieBytes, input.selfieContentType);
-      live = { ...live, skinTaskId: taskId };
-    } catch (err) {
-      logger.warn(
-        { err, sessionId: payload.sessionId },
-        "Failed to start YouCam Skin Analysis — falling back to neutral signals",
-      );
-      live = { ...live, skinResolved: true, skinSignals: NEUTRAL_SKIN_SIGNALS };
-    }
-  }
+  live = await startSelfieTasks(payload.sessionId, live, input.selfieBytes, input.selfieContentType);
 
   if (payload.garmentSource === "custom" && input.garment) {
     // Stored separately from the token (see `garmentImageStore.ts`) and
@@ -86,9 +78,16 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
 
     // Color extraction runs locally (no extra YouCam call) so it's safe to
     // do eagerly here rather than spreading it across polls.
-    const { colorFamily, undertone } = await extractGarmentColor(input.garment.bytes).catch((err) => {
-      logger.warn({ err, sessionId: payload.sessionId }, "Garment color extraction failed — defaulting to navy/cool");
-      return { colorFamily: "navy" as const, undertone: "cool" as const };
+    const { colorFamily, undertone, colorHex } = await extractGarmentColor(input.garment.bytes).catch((err) => {
+      // A null `colorHex` means no colour judgement will be offered for this
+      // garment at all. The family/undertone labels are descriptive only and
+      // never feed the compatibility score, so a fallback label here cannot
+      // put words in the analysis's mouth.
+      logger.warn(
+        { err, sessionId: payload.sessionId },
+        "Garment colour extraction failed — no colour compatibility will be claimed for this garment",
+      );
+      return { colorFamily: "navy" as const, undertone: "neutral" as const, colorHex: null };
     });
     live = {
       ...live,
@@ -96,6 +95,7 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
         garmentCategory: input.garment.category,
         colorFamily,
         undertone,
+        colorHex,
         vto: { catalogItemId: CUSTOM_GARMENT_ID, status: "queued", taskId: null, resultImageUrl: null, errorMessage: null },
       },
     };
@@ -113,6 +113,62 @@ export async function startLiveAnalysis(payload: SessionPayload, input: StartLiv
 }
 
 /**
+ * Starts both selfie-derived YouCam tasks — Skin Analysis (skin *concerns*)
+ * and Facial Colour Tones (measured skin, hair and eye *colour*) — from a
+ * single upload of the photo, since both read the same face.
+ *
+ * The two are independent, so one failing must not take the other down.
+ * Skin concerns degrade to neutral signals. Colour tones degrade to null,
+ * which downstream means "no personal-colour reading available" rather than
+ * an error — see `checkToneTask` for why there is no neutral fallback for a
+ * complexion.
+ */
+async function startSelfieTasks(
+  sessionId: string,
+  live: LiveSessionState,
+  selfieBytes: Buffer,
+  selfieContentType: string,
+): Promise<LiveSessionState> {
+  const cachedSkin = getCached<RawSkinScores>(skinCacheKey(selfieBytes, SKIN_DST_ACTIONS));
+  const cachedTones = getCached<FacialColorTones>(toneCacheKey(selfieBytes));
+
+  let next: LiveSessionState = { ...live };
+  if (cachedSkin) next = { ...next, skinResolved: true, skinSignals: normalizeSkinSignals(cachedSkin) };
+  if (cachedTones) next = { ...next, toneResolved: true, tones: cachedTones };
+  if (cachedSkin && cachedTones) return next;
+
+  let fileId: string;
+  try {
+    fileId = (await uploadFileToYouCam(selfieBytes, selfieContentType, `selfie_${Date.now()}.jpg`)).fileId;
+  } catch (err) {
+    logger.warn({ err, sessionId }, "Selfie upload to YouCam failed — continuing without skin or colour analysis");
+    return { ...next, skinResolved: true, skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS, toneResolved: true };
+  }
+
+  if (!cachedSkin) {
+    try {
+      const { taskId } = await startYouCamSkinAnalysisWithFileId(fileId);
+      next = { ...next, skinTaskId: taskId };
+    } catch (err) {
+      logger.warn({ err, sessionId }, "Failed to start YouCam Skin Analysis — falling back to neutral signals");
+      next = { ...next, skinResolved: true, skinSignals: NEUTRAL_SKIN_SIGNALS };
+    }
+  }
+
+  if (!cachedTones) {
+    try {
+      const { taskId } = await startYouCamSkinToneAnalysis(fileId);
+      next = { ...next, toneTaskId: taskId };
+    } catch (err) {
+      logger.warn({ err, sessionId }, "Failed to start YouCam Facial Colour Tones — continuing without a palette");
+      next = { ...next, toneResolved: true };
+    }
+  }
+
+  return next;
+}
+
+/**
  * Advances a Live Mode session by exactly one step of real work per call.
  * Dispatches to the catalog (3-outfit) or custom (single-garment) pipeline
  * based on `garmentSource` — the two never run for the same session. Never
@@ -125,13 +181,19 @@ export async function advanceLiveSession(payload: SessionPayload): Promise<Sessi
 }
 
 async function advanceCatalogLiveSession(payload: SessionPayload): Promise<SessionPayload> {
-  let live = payload.live!;
+  let live = resolveStalledSelfieTasks(payload, payload.live!);
 
   if (!live.skinResolved && live.skinTaskId) {
     live = await checkSkinTask(payload.sessionId, live);
   }
 
-  if (live.skinResolved && !live.selectedOutfits) {
+  if (!live.toneResolved && live.toneTaskId) {
+    live = await checkToneTask(payload.sessionId, live);
+  }
+
+  // Outfit selection scores garments against the measured palette, so it has
+  // to wait for both readings rather than just the skin concerns.
+  if (live.skinResolved && live.toneResolved && !live.selectedOutfits) {
     live = selectLiveOutfits(payload, live);
   }
 
@@ -186,12 +248,19 @@ async function advanceCatalogLiveSession(payload: SessionPayload): Promise<Sessi
  * helpers (generalized to also look up the custom VTO result image).
  */
 async function advanceCustomLiveSession(payload: SessionPayload): Promise<SessionPayload> {
-  let live = payload.live!;
+  let live = resolveStalledSelfieTasks(payload, payload.live!);
 
   if (!live.skinResolved && live.skinTaskId) {
     live = await checkSkinTask(payload.sessionId, live);
   }
 
+  if (!live.toneResolved && live.toneTaskId) {
+    live = await checkToneTask(payload.sessionId, live);
+  }
+
+  // Unlike the catalog pipeline there is nothing to select, so the try-on —
+  // by far the slowest step — starts as soon as the skin read lands rather
+  // than waiting on the colour read running alongside it.
   if (live.skinResolved && live.custom) {
     live = live.custom.vto.status === "queued"
       ? await startCustomVtoTask(payload.sessionId, live)
@@ -223,7 +292,7 @@ async function advanceCustomLiveSession(payload: SessionPayload): Promise<Sessio
     live.video.status === "error" ||
     live.video.status === "skipped";
 
-  if (vtoTerminal && videoTerminal) {
+  if (vtoTerminal && videoTerminal && live.toneResolved) {
     next.status = "ready";
   }
 
@@ -320,6 +389,7 @@ function initVideoTask(payload: SessionPayload, live: LiveSessionState): LiveSes
     items: items.map((o) => o.item),
     preferences: payload.preferences,
     skinSignals: live.skinSignals ?? NEUTRAL_SKIN_SIGNALS,
+    colorAnalysis: live.tones ? analyzeColorSeason(live.tones) : null,
     vtoResults,
   });
 
@@ -415,11 +485,91 @@ async function checkSkinTask(sessionId: string, live: LiveSessionState): Promise
   }
 }
 
+/**
+ * Polls the Facial Colour Tones task.
+ *
+ * Note the asymmetry with `checkSkinTask`: that one falls back to neutral
+ * skin-concern signals, but there is no honest neutral complexion to invent
+ * here. Guessing one would hand the user a confidently wrong palette and a
+ * "your best colours" verdict we never actually measured, which is worse
+ * than having none. So a failure resolves the step with `tones` left null
+ * and the report drops the personal-colour section instead of faking it.
+ */
+async function checkToneTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
+  try {
+    const result = await checkYouCamSkinToneAnalysisStatus(live.toneTaskId!);
+
+    if (result.status === "success" && result.tones) {
+      const pending = peekPendingLiveUpload(sessionId);
+      if (pending) setCachedSuccess(toneCacheKey(pending.selfieBytes), result.tones);
+      return { ...live, toneResolved: true, tones: result.tones };
+    }
+
+    if (result.status === "error") {
+      logger.warn(
+        { sessionId, reason: result.errorMessage },
+        "YouCam Facial Colour Tones failed — continuing without a palette",
+      );
+      return { ...live, toneResolved: true };
+    }
+
+    return live; // still running — check again next poll
+  } catch (err) {
+    logger.warn({ err, sessionId }, "Facial Colour Tones status check errored — continuing without a palette");
+    return { ...live, toneResolved: true };
+  }
+}
+
+/**
+ * Longest we will wait for the selfie-derived tasks before giving up on
+ * them. YouCam tasks normally resolve in seconds; one that has not finished
+ * in two minutes is not going to.
+ */
+const SELFIE_TASK_TIMEOUT_MS = 2 * 60 * 1000;
+
+/**
+ * Stops the pipeline waiting forever on a selfie task that will never
+ * resolve. Two distinct hazards:
+ *
+ * 1. No task and no result — the case for sessions whose tokens were signed
+ *    before the colour step existed, whose `live` state has no tone fields
+ *    at all. Both read as absent, so the step is simply treated as done.
+ * 2. A task stuck `running` indefinitely. Polling alone has no upper bound,
+ *    so without a deadline a single wedged provider task would leave the
+ *    session spinning until the user gave up.
+ *
+ * The skin read degrades to neutral signals; the colour read degrades to no
+ * palette at all, for the reasons in `checkToneTask`.
+ */
+function resolveStalledSelfieTasks(payload: SessionPayload, live: LiveSessionState): LiveSessionState {
+  let next = live;
+
+  if (!next.toneResolved && !next.toneTaskId) {
+    next = { ...next, toneResolved: true };
+  }
+
+  const startedAt = payload.analyzeStartedAt ? Date.parse(payload.analyzeStartedAt) : NaN;
+  const timedOut = Number.isFinite(startedAt) && Date.now() - startedAt > SELFIE_TASK_TIMEOUT_MS;
+  if (!timedOut) return next;
+
+  if (!next.skinResolved) {
+    logger.warn({ sessionId: payload.sessionId }, "Skin Analysis timed out — falling back to neutral signals");
+    next = { ...next, skinResolved: true, skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS };
+  }
+  if (!next.toneResolved) {
+    logger.warn({ sessionId: payload.sessionId }, "Facial Colour Tones timed out — continuing without a palette");
+    next = { ...next, toneResolved: true };
+  }
+
+  return next;
+}
+
 function selectLiveOutfits(payload: SessionPayload, live: LiveSessionState): LiveSessionState {
   const selectedOutfits = selectOutfits({
     catalog: weddingGuestCatalog,
     preferences: payload.preferences,
     skinSignals: live.skinSignals ?? NEUTRAL_SKIN_SIGNALS,
+    colorAnalysis: live.tones ? analyzeColorSeason(live.tones) : null,
     count: OUTFIT_COUNT,
   });
 

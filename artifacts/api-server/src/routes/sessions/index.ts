@@ -1,3 +1,4 @@
+import { analyzeColorSeason } from "../../lib/color/season";
 import { Router, type IRouter } from "express";
 import {
   CreateSessionBody,
@@ -21,6 +22,7 @@ import { selectOutfits } from "../../lib/scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../../lib/scoring/scoreOutfits";
 import { isLiveModeAvailable } from "../../lib/youcam/client";
 import {
+  DEMO_FACIAL_TONES,
   DEMO_RAW_SKIN_SCORES,
   DEMO_REPLAY_CATALOG_ITEM_IDS,
   DEMO_VTO_IMAGE_BY_CATALOG_ID,
@@ -242,10 +244,15 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     (DEMO_REPLAY_CATALOG_ITEM_IDS as readonly string[]).includes(item.id),
   );
 
+  // Demo Mode replays a real recorded colour reading for the demo persona,
+  // so it exercises exactly the same shortlist-and-score path as Live Mode.
+  const colorAnalysis = analyzeColorSeason(DEMO_FACIAL_TONES);
+
   const selectedOutfits = selectOutfits({
     catalog: replayCatalog,
     preferences: payload.preferences,
     skinSignals,
+    colorAnalysis,
     count: replayCatalog.length,
   });
 
@@ -260,6 +267,7 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     items: selectedOutfits.map((outfit) => outfit.item),
     preferences: payload.preferences,
     skinSignals,
+    colorAnalysis,
     vtoResults,
   });
 
@@ -305,7 +313,12 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
 
     const vtoTerminal = live.custom.vto.status === "success" || live.custom.vto.status === "error";
     const score = vtoTerminal
-      ? scoreCustomGarment(live.custom.colorFamily, live.custom.undertone, live.skinSignals, live.custom.vto.status)
+      ? scoreCustomGarment(
+          live.custom.colorHex,
+          live.tones ? analyzeColorSeason(live.tones) : null,
+          live.skinSignals,
+          live.custom.vto.status,
+        )
       : null;
 
     // Re-signing here is deterministic (same payload -> same HMAC) and
@@ -354,6 +367,7 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     items: live.selectedOutfits.map((outfit) => outfit.item),
     preferences: payload.preferences,
     skinSignals: live.skinSignals,
+    colorAnalysis: live.tones ? analyzeColorSeason(live.tones) : null,
     vtoResults,
   });
 

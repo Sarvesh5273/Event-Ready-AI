@@ -154,6 +154,11 @@ export const ReasonCode = {
   warm_tone_redness_caution: 'warm_tone_redness_caution',
   budget_mismatch: 'budget_mismatch',
   style_vibe_mismatch: 'style_vibe_mismatch',
+  palette_hero_color: 'palette_hero_color',
+  palette_harmonious_color: 'palette_harmonious_color',
+  palette_neutral_color: 'palette_neutral_color',
+  palette_clash_color: 'palette_clash_color',
+  color_reading_unavailable: 'color_reading_unavailable',
 } as const;
 
 export type VtoTaskStatus = typeof VtoTaskStatus[keyof typeof VtoTaskStatus];

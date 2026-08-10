@@ -54,7 +54,14 @@ export type ReasonCode =
   | "high_shine_texture_caution"
   | "warm_tone_redness_caution"
   | "budget_mismatch"
-  | "style_vibe_mismatch";
+  | "style_vibe_mismatch"
+  // Personal-colour verdicts, derived by comparing the garment's measured
+  // colour to the palette measured from the user's own face.
+  | "palette_hero_color"
+  | "palette_harmonious_color"
+  | "palette_neutral_color"
+  | "palette_clash_color"
+  | "color_reading_unavailable";
 
 export interface UserPreferences {
   occasion: "wedding_guest";
@@ -67,6 +74,14 @@ export interface CatalogItem {
   name: string;
   garmentCategory: GarmentCategory;
   imageUrl: string;
+  /**
+   * The garment's actual colour, sampled from its product photo rather than
+   * typed in by hand. This is what the personal-colour engine scores against:
+   * a measured colour can be compared to a measured complexion, whereas the
+   * older `colorFamily`/`undertone` labels were our own opinion of the
+   * garment and could not be computed for anything outside this catalog.
+   */
+  colorHex: string;
   priceTier: BudgetTier;
   styleVibe: StyleVibeOrEither;
   colorFamily: ColorFamily;
