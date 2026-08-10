@@ -38,3 +38,14 @@ export const DEMO_PREP_TIPS = PREP_TIPS;
 
 export const DEMO_PERSONA_SELFIE_IMAGE_URL = "demo/persona-selfie.jpg";
 export const DEMO_PERSONA_FULL_BODY_IMAGE_URL = "demo/persona-full-body.jpg";
+
+/**
+ * Pre-baked demo video for the bold-emerald-jumpsuit outfit — generated once
+ * offline via the YouCam Image-to-Video API against the canned VTO image.
+ * Served as a static public asset, so Demo Mode always has a video without
+ * any live API cost.
+ */
+export const DEMO_VIDEO_URL = "demo/replay/video-bold-emerald-jumpsuit.mp4";
+
+/** Catalog item whose VTO image was used to generate DEMO_VIDEO_URL. */
+export const DEMO_VIDEO_CATALOG_ITEM_ID = "bold-emerald-jumpsuit";

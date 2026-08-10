@@ -13,7 +13,7 @@ import {
   GetSessionReportResponse,
 } from "@workspace/api-zod";
 import { createSessionPayload, signSessionToken, verifySessionToken, type SessionPayload } from "../../lib/session/sessionToken";
-import { computeEffectiveState } from "../../lib/session/processing";
+import { PROCESSING_STEPS, computeEffectiveState } from "../../lib/session/processing";
 import { advanceLiveSession, startLiveAnalysis } from "../../lib/session/liveProcessing";
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
@@ -24,6 +24,7 @@ import {
   DEMO_RAW_SKIN_SCORES,
   DEMO_REPLAY_CATALOG_ITEM_IDS,
   DEMO_VTO_IMAGE_BY_CATALOG_ID,
+  DEMO_VIDEO_URL,
 } from "../../lib/demo/replay";
 import { PREP_TIPS } from "../../lib/content/prepTips";
 import type { EventReadyReport, VtoResult } from "../../lib/types";
@@ -40,7 +41,7 @@ function buildSessionResponse(payload: SessionPayload, nowMs: number) {
     preferences: payload.preferences,
     status: effective.status,
     currentStep: effective.currentStep,
-    steps: [...effective.steps],
+    steps: [...PROCESSING_STEPS],
     errorMessage: payload.errorMessage,
   };
 }
@@ -229,8 +230,12 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     vtoResults,
     scores,
     prepTips: PREP_TIPS,
-    // Demo Mode never runs live video generation.
-    video: null,
+    // Pre-baked demo video generated once offline via the YouCam
+    // Image-to-Video API for the bold-emerald-jumpsuit VTO image.
+    // Always shown in Demo Mode (it showcases the API feature regardless
+    // of which outfit is ranked #1 by the scoring engine).
+    // Served as a static public asset — zero API cost at runtime.
+    video: { status: "success" as const, videoUrl: DEMO_VIDEO_URL },
   };
 }
 
