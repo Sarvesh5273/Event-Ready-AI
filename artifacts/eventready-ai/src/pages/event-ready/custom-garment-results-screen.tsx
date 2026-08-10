@@ -143,6 +143,21 @@ export function CustomGarmentResultsScreen({ report, onStartOver }: CustomGarmen
                     </div>
                   </motion.div>
                 )}
+
+                {garment.score.userFacingReasons.length === 0 && garment.score.userFacingCautions.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="flex gap-3 py-2"
+                    data-testid="custom-garment-skin-analysis-unavailable"
+                  >
+                    <Info className="w-4 h-4 text-muted-foreground/60 shrink-0 mt-0.5" />
+                    <p className="text-sm text-muted-foreground/70 leading-relaxed italic">
+                      We couldn't read your skin signals from this photo — this score reflects color compatibility only.
+                    </p>
+                  </motion.div>
+                )}
               </div>
             ) : (
               <p className="text-muted-foreground mb-10">
