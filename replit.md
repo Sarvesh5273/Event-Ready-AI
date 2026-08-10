@@ -10,6 +10,7 @@ A Wedding Guest outfit decision assistant: users pick a style vibe and budget, p
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from `lib/api-spec/openapi.yaml`
 - Required env: `SESSION_SECRET` — HMAC key signing the stateless session tokens (no database is used by this app)
+- Optional env for Live Mode: `YOUCAM_API_KEY` (secret) enables real YouCam calls; `ENABLE_DEMO_MODE=true` forces Demo Mode regardless of the key (operator kill-switch, e.g. for guaranteed-deterministic judging demos)
 
 ## Stack
 
@@ -35,7 +36,8 @@ A Wedding Guest outfit decision assistant: users pick a style vibe and budget, p
 
 - **No database.** Sessions are stateless: an HMAC-SHA256-signed token (using `SESSION_SECRET`) carries all session state; `/status` and `/report` derive `status`/`currentStep` purely from elapsed time since analysis started, so there's nothing to persist or clean up.
 - **Demo Mode is a first-class mode, not a mock.** `mode: "demo"` replays a fixed skin-analysis result and 3 pre-baked try-on images for a fixed "Maya" persona, but outfit selection/scoring still runs live against whatever style vibe + budget the user actually picked — only the *inputs* (skin signals, available try-on images) are fixed, not the scoring logic.
-- **Live Mode is an honest stub.** `mode: "live"` immediately returns an `error` status directing the user to Demo Mode — there is no real YouCam API integration yet (planned as a separate follow-on task). It never fakes a successful analysis.
+- **Live Mode calls the real YouCam API.** `mode: "live"` uploads the user's selfie/full-body photo, starts a real Skin Analysis task, then 3 real Apparel VTO tasks against the selected catalog outfits, polling each task at most once per `/status` request (no blocking loops in request handlers). Requires `YOUCAM_API_KEY`; the `ENABLE_DEMO_MODE=true` env var is an operator kill-switch that forces Demo Mode even when a key is configured.
+- **Live uploads are held in an in-memory store, not persisted.** `artifacts/api-server/src/lib/session/liveUploadStore.ts` keeps uploaded photo bytes in a process-local `Map` (15-minute expiry). This only works with a single, non-restarting server instance — a restart or multi-instance deployment loses in-flight uploads and any outstanding VTO tasks will error out.
 - **Confidence score is an explainable v0 heuristic**, not ML: `occasionFit(0-25) + styleVibe(0-20) + budget(0-15) + skinOutfitFit(0-25) + vtoSuccess(0-10) − cautionPenalty(0-20)`, clamped 0-100, with every contributing factor mapped to a fixed, non-medical, user-facing reason string.
 
 ## Product
@@ -52,6 +54,7 @@ _None recorded yet._
 
 - The generated `useGetSessionStatus`/`useGetSessionReport` hooks do not expose the `token` header in their typed function signature (Orval doesn't surface header params on query hooks) — pass it manually via `options.request.headers.token`.
 - Regenerate API hooks after any `lib/api-spec/openapi.yaml` change: `pnpm --filter @workspace/api-spec run codegen`.
+- Live Mode has no HTTP timeout/retry on YouCam calls and no persistence for in-flight uploads across restarts — see Architecture decisions above. Fine for a single-session hackathon demo; not production-hardened.
 
 ## Pointers
 
