@@ -1,0 +1,2026 @@
+# EventReady AI - Final Frozen Build Spec
+
+Last updated: August 10, 2026
+
+Status: **Final direction. No more ideation loops. Build this.**
+
+Project: **EventReady AI**
+
+Hackathon: **YouCam API Skin AI & Apparel VTO Hackathon**
+
+Primary demo scenario: **Wedding Guest**
+
+Core product:
+
+> EventReady AI is an occasion-first wedding guest shopping assistant that uses YouCam Skin Analysis and YouCam Apparel Virtual Try-On to select, simulate, and rank 3 VTO-compatible outfits from a curated catalog.
+
+One-line winning pitch:
+
+> EventReady AI turns virtual try-on from "how does this look?" into "which look should I confidently choose for this event?"
+
+Core thesis:
+
+> People do not shop for skincare or outfits in isolation. They shop for confidence before a moment that matters.
+
+---
+
+## 1. Final Verdict
+
+The idea is good enough to win.
+
+Stop debating the concept. The remaining risk is execution.
+
+The winning version is not:
+
+> A generic virtual try-on app.
+
+The winning version is:
+
+> A wedding guest decision assistant that combines Skin AI, Apparel VTO, and explainable selection logic to help a shopper choose the best outfit for a high-stakes social event.
+
+The primary demo must show:
+
+- A visually compelling occasion.
+- Three visibly different outfit try-ons.
+- A real or replayed YouCam Skin AI result.
+- Real or replayed YouCam Apparel VTO results.
+- A simple but honest rule-based recommendation.
+- No fake claims of trained ML or predictive return modeling.
+
+---
+
+## 2. Frozen Scope
+
+Build only these features:
+
+1. Wedding Guest occasion flow
+2. Two preference inputs:
+   - Style vibe: `Classic` or `Bold`
+   - Budget tier: `Low`, `Mid`, or `High`
+3. Demo persona and demo images
+4. Curated catalog of 9-12 VTO-compatible wedding guest outfits
+5. YouCam Skin Analysis integration
+6. YouCam Apparel VTO integration
+7. Selection of 3 outfits from the catalog
+8. 3 Apparel VTO outputs
+9. Explainable confidence heuristic
+10. Positive, non-medical appearance guidance
+11. Devpost-ready README, screenshots, and demo video
+
+Do not build:
+
+- Retailer dashboard
+- Product scraping
+- Auth/login
+- Checkout
+- Marketplace
+- User closet
+- Social sharing
+- Friend voting
+- Calendar integration
+- Weather integration
+- Native mobile app
+- ML training
+- Complex analytics
+- More than one primary occasion in the demo
+
+Secondary occasions may appear visually in the UI as disabled or "coming next" options, but they should not consume engineering time.
+
+---
+
+## 3. Why Wedding Guest Is Final
+
+Use **Wedding Guest** as the primary scenario.
+
+Reasons:
+
+- It has strong visual variety.
+- It supports different silhouettes:
+  - Floral midi dress
+  - Satin slip dress
+  - Tailored jumpsuit
+  - Structured blazer set
+  - Soft pastel dress
+  - Bold statement dress
+- It lets the demo show obvious differences between VTO outputs.
+- It is familiar enough for judges to understand instantly.
+- It connects naturally to skin, outfit, camera readiness, and confidence.
+
+Do not use Job Interview as the main demo.
+
+Reason:
+
+- Interview outfits are visually conservative.
+- Three dark blazers will look too similar in a 1-3 minute video.
+- The VTO "wow" moment becomes weak.
+
+Do not use Gala as the main demo.
+
+Reason:
+
+- It is visually strong but narrower and less relatable than Wedding Guest.
+
+Do not use First Date as the main demo.
+
+Reason:
+
+- It may be too casual and less clearly tied to apparel retail value.
+
+---
+
+## 4. Hackathon Judging Alignment
+
+### Technological Implementation
+
+Use both required strengths:
+
+- YouCam Skin Analysis
+- YouCam Apparel Virtual Try-On
+
+Make the integration non-trivial:
+
+- Skin analysis affects outfit candidate selection and ranking.
+- VTO creates the visual comparison.
+- A rule engine combines:
+  - occasion rules
+  - skin signals
+  - garment metadata
+  - user preference inputs
+
+Avoid fake sophistication.
+
+Say clearly:
+
+> The prototype uses an explainable v0 confidence heuristic, not a trained prediction model.
+
+### Design
+
+The app must feel like a complete consumer flow:
+
+1. Pick event
+2. Pick vibe and budget
+3. Upload photos or use demo persona
+4. See AI processing
+5. Compare 3 try-ons
+6. Get one recommendation with reasons
+
+No retailer panel in the product UI.
+
+Retail value belongs in:
+
+- Demo video narration
+- Devpost writeup
+- README
+
+### Potential Impact
+
+Real problem:
+
+- Online fashion shoppers are uncertain before buying.
+- Event-based purchases create urgency.
+- Many virtual try-on products show an image but do not help decide.
+
+Impact claim:
+
+> EventReady AI reduces purchase uncertainty before high-stakes social events by helping shoppers choose the best outfit with visual try-on and explainable personalization.
+
+Secondary retail impact:
+
+> The same decision data could help retailers understand hesitation, rejected products, and conversion risk.
+
+Do not claim:
+
+- It predicts actual returns.
+- It clinically evaluates skin.
+- It guarantees fit.
+- It guarantees better purchases.
+
+### Quality of Idea
+
+Non-obvious angle:
+
+- Occasion-first, not garment-first.
+- Skin + outfit integrated in one decision.
+- Explainable recommendation, not just image generation.
+
+Judges should remember:
+
+> This team used YouCam APIs as decision infrastructure, not as a visual gimmick.
+
+---
+
+## 5. Absolute First Tasks
+
+These tasks happen before major app work.
+
+### Task 1: Get API Access
+
+Do immediately:
+
+1. Register on Devpost.
+2. Sign up for YouCam API.
+3. Verify email.
+4. Redeem the hackathon code.
+5. Confirm 1,000 API units appear in account.
+6. Create or copy the API key.
+
+Blocker:
+
+- Without the API key, live integration cannot be tested.
+
+Fallback:
+
+- Build explicit Demo Mode using fixed demo persona and replay data.
+- But the final repository must still contain real API integration code.
+
+### Task 2: Make One Real Skin AI Call
+
+Before writing skin rules:
+
+1. Use one test selfie.
+2. Call YouCam Skin Analysis.
+3. Save the raw response.
+4. Inspect the actual `score_info.json` or equivalent output.
+5. Confirm score names, score ranges, and missing-field behavior.
+
+Do not guess thresholds before this.
+
+The current rule table is provisional until calibrated from real API output.
+
+### Task 3: Make One Real Apparel VTO Call
+
+Before building all 3 outfit flows:
+
+1. Use one full-body demo image.
+2. Use one clean garment image.
+3. Call YouCam Apparel VTO.
+4. Poll until success.
+5. Save the generated result image.
+6. Confirm latency and result format.
+
+### Task 4: Source VTO-Compatible Garment Images
+
+Find or create 9-12 garment images.
+
+Requirements:
+
+- Clean white or neutral background.
+- Single garment or outfit visible.
+- Front-facing.
+- Clear edges.
+- No busy lifestyle photo.
+- No model in complex pose if avoidable.
+- No logos or trademarks.
+- No copyrighted brand imagery unless licensed.
+- Correct garment type for VTO.
+
+Bad garment image examples:
+
+- Influencer photo wearing dress outdoors.
+- Catalog photo with complex background.
+- Cropped garment.
+- Side-angle pose.
+- Multiple items overlapping.
+- Watermarks.
+- Brand logos.
+
+Good garment image examples:
+
+- Dress on white background.
+- Jumpsuit front view on neutral background.
+- Mannequin or flat-lay with clean edges.
+- Full outfit product image with no distractions.
+
+This is a critical curation task.
+
+### Final Asset Sourcing Decision
+
+Use a rights-safe generated asset pipeline unless a fully licensed source is already available.
+
+Required assets:
+
+1. 9-12 garment images
+2. 1 demo persona selfie
+3. 1 demo persona full-body image
+4. 3 replayed VTO output images after live testing
+
+Recommended garment source:
+
+- Generate clean product-style garment images with AI image generation.
+- Prompt for front-facing, full outfit, white/neutral background, no model, no logos, no text, no watermark.
+- Manually reject anything with distorted garment structure, cropped edges, logos, text, or messy backgrounds.
+
+Backup garment source:
+
+- Use only stock/product images with clear commercial rights and no visible trademarks.
+- Prefer flat-lay, mannequin, or product-only shots.
+- Do not use lifestyle photos from real retailers unless the license explicitly allows this use.
+
+Recommended demo persona source:
+
+- First try a generated demo persona because it avoids consent and rights issues.
+- Test the generated selfie with YouCam Skin Analysis on Day 1.
+- Test the generated full-body image with YouCam Apparel VTO on Day 1.
+- If YouCam rejects synthetic-looking images or produces poor results, use a real consenting team member's photos.
+
+Consent rule for real photos:
+
+- If a real person's selfie/full-body image appears in the public demo video, screenshots, repository, or submission, get explicit permission from that person.
+- Do not use a friend's or stranger's photo informally.
+
+Asset naming:
+
+```txt
+public/demo/persona-selfie.jpg
+public/demo/persona-full-body.jpg
+public/demo/outfits/*.png
+public/demo/replay/*.jpg
+public/demo/replay/skin-result-raw.json
+```
+
+---
+
+## 6. Product Flow
+
+Final user flow:
+
+```txt
+Landing / Start
+  -> Wedding Guest setup
+  -> Choose style vibe and budget
+  -> Upload selfie and full-body photo OR use demo persona
+  -> Skin AI processing
+  -> Outfit shortlist selected from curated catalog
+  -> 3 Apparel VTO tasks
+  -> Results and recommendation
+```
+
+### Step 1: Start
+
+First screen should be the product, not a marketing page.
+
+Show:
+
+- "Wedding Guest"
+- "Find the look you will actually feel confident wearing."
+- Start button
+- Demo persona button
+
+Do not spend screen space explaining all features.
+
+### Step 2: Preferences
+
+Only collect two inputs.
+
+Input 1:
+
+```txt
+Style vibe: Classic / Bold
+```
+
+Input 2:
+
+```txt
+Budget: Low / Mid / High
+```
+
+Optional hidden defaults:
+
+```ts
+comfortPriority = "medium";
+occasion = "wedding_guest";
+```
+
+Do not add:
+
+- dress code
+- location
+- weather
+- skin concerns manual input
+- event date
+- body type
+- color preferences
+- complex questionnaire
+
+### Step 3: Upload Photos
+
+Required photos:
+
+1. Selfie for Skin Analysis
+2. Full-body image for Apparel VTO
+
+Provide a "Use demo persona" option.
+
+Photo guidance:
+
+- Good lighting
+- Face visible
+- One person
+- Front-facing selfie
+- Full body visible for try-on
+- Avoid obstructed clothing/body
+
+### Step 4: Skin Analysis
+
+Run Skin AI before selecting the final 3 outfits.
+
+Reason:
+
+- This makes personalization more credible.
+- Skin signals can influence candidate selection, not just final ranking.
+
+The UI should say:
+
+```txt
+Analyzing event readiness
+```
+
+Avoid saying:
+
+```txt
+Diagnosing your skin
+```
+
+### Step 5: Outfit Shortlist
+
+The app selects 3 outfits from the curated catalog using:
+
+- Wedding guest occasion rules
+- Style vibe
+- Budget tier
+- Skin signals
+
+The user does not manually upload garments.
+
+The user does not browse a huge catalog.
+
+The app can show:
+
+```txt
+We selected 3 wedding guest looks for your vibe and skin-readiness profile.
+```
+
+Be honest:
+
+```txt
+Occasion and preference rules create the shortlist. Skin analysis refines color, fabric, and camera-readiness choices.
+```
+
+### Step 6: Apparel VTO
+
+Run exactly 3 VTO calls.
+
+Do not run 5.
+
+Do not generate VTO for all 9-12 catalog items.
+
+Display progress:
+
+- Preparing looks
+- Generating try-ons
+- Comparing results
+
+### Step 7: Results
+
+Show:
+
+1. Recommended look
+2. Three VTO cards
+3. Confidence score
+4. Reasons
+5. Gentle appearance prep
+
+Results hierarchy:
+
+```txt
+Recommended Look
+  - Generated VTO image
+  - Confidence score
+  - 3 reason chips
+  - One caution if needed
+
+Compare Looks
+  - 3 cards
+  - Each card has image, score, and reason
+
+Event Prep
+  - 2-3 generic, non-medical tips
+```
+
+No retail dashboard.
+
+No analytics charts.
+
+No fake aggregate data.
+
+---
+
+## 7. Demo Mode Policy
+
+Demo Mode must be explicit.
+
+Never show cached results from another person's uploaded photo.
+
+### Live Mode
+
+Live Mode behavior:
+
+- User uploads their own selfie and full-body photo.
+- App calls YouCam APIs.
+- Cache results only for the same uploaded image hash and selected garment IDs.
+- If user uploads a different image, do not reuse old VTO images.
+
+### Demo Mode
+
+Demo Mode behavior:
+
+- Fixed demo persona.
+- Fixed demo selfie and full-body image.
+- Fixed catalog.
+- Fixed replayed YouCam outputs.
+- Clear banner:
+
+```txt
+Demo Mode: using saved YouCam API results from a test session.
+```
+
+This is acceptable if transparent.
+
+### Replay Cache
+
+Use replay cache to save API units.
+
+Cache key examples:
+
+```txt
+skin:{hash(selfieImageBytes + requestedActions)}
+vto:{hash(fullBodyImageBytes + garmentImageBytes + garmentCategory)}
+```
+
+Rules:
+
+- Cache successful results.
+- Cache failed results only for a short time.
+- Never use one user's generated body image for another user's upload.
+- Demo persona replay is allowed only in explicit Demo Mode.
+
+---
+
+## 8. Technical Architecture
+
+Recommended stack:
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Server-side API routes
+- No database for the hackathon MVP
+- Local or simple object storage for demo assets
+- Vercel or Render for deployment
+
+Simplest build:
+
+```txt
+Next.js app
+  Frontend pages/components
+  Backend API routes
+  lib/youcam service layer
+  lib/scoring rule engine
+  lib/catalog curated products
+  demo replay JSON and image assets
+```
+
+### Final Persistence Decision
+
+Do **not** use SQLite for the deployed hackathon MVP.
+
+Reason:
+
+- A serverless deployment should not depend on persistent local filesystem writes.
+- The session lifetime is only one demo run.
+- Avoid database setup, migrations, and deployment persistence bugs.
+
+Use stateless session state instead:
+
+- Browser stores the current session state in memory/localStorage.
+- Backend returns a signed session token containing:
+  - session ID
+  - preferences
+  - selected outfit IDs
+  - YouCam task IDs
+  - status summary
+- Each status request sends the signed token back to the server.
+- Server verifies the signature, checks YouCam task status once, returns updated status and a new signed token.
+
+Signing:
+
+- Use `SESSION_SECRET` in environment variables.
+- Sign with HMAC.
+- Do not put the YouCam API key in the token.
+- Do not put private user images directly in the token.
+
+Demo Mode persistence:
+
+- Demo Mode uses static replay files from `public/demo/replay`.
+- No database needed.
+
+Local development:
+
+- If a local replay cache is useful, store it under `.cache/` and keep it out of the deployed architecture.
+- Do not make local cache required for production.
+
+### Final Polling Decision
+
+Do **not** use a blocking polling loop inside `analyze/route.ts`.
+
+Correct route behavior:
+
+```txt
+POST /api/sessions/:sessionId/analyze
+  - Starts Skin Analysis task if not started
+  - Starts VTO tasks when prerequisites are ready
+  - Returns immediately with task IDs/status token
+
+GET /api/sessions/:sessionId/status
+  - Verifies signed session token
+  - Performs one status check per outstanding YouCam task
+  - Updates status
+  - Returns immediately
+```
+
+The browser polls `/status` every few seconds.
+
+Why:
+
+- Avoid serverless function timeout risk.
+- Avoid making users wait on a single long request.
+- Make partial progress visible.
+- Make failed individual VTO tasks recoverable.
+
+Allowed use of a polling helper:
+
+- A blocking `pollUntilComplete` helper is allowed only in local scripts used for Day 1 API experiments.
+- It must not be used in deployed request handlers.
+
+### Architecture Diagram
+
+```mermaid
+flowchart TD
+  U["User"] --> FE["Next.js UI"]
+  FE --> API["Server API Routes"]
+  API --> CAT["Curated Catalog"]
+  API --> YC["YouCam API"]
+  YC --> API
+  FE --> TOKEN["Signed Session Token"]
+  API --> TOKEN
+  API --> CACHE["Static Demo Replay"]
+  API --> RULES["Rule Engine"]
+  RULES --> FE
+  FE --> R["Recommendation Result"]
+```
+
+### Runtime Flow
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant UI
+  participant Server
+  participant YouCam
+  participant Rules
+
+  User->>UI: Choose Classic/Bold and Budget
+  User->>UI: Upload selfie and full-body image
+  UI->>Server: Create session
+  Server->>YouCam: Start Skin Analysis task
+  YouCam-->>Server: Skin task ID
+  Server-->>UI: Signed token with skin task ID
+  UI->>Server: Poll status with token
+  Server->>YouCam: Check Skin task once
+  YouCam-->>Server: Skin result if ready
+  Server->>Rules: Select 3 outfits
+  Server->>YouCam: Start 3 VTO tasks
+  Server-->>UI: Signed token with VTO task IDs
+  UI->>Server: Poll status with token
+  Server->>YouCam: Check VTO tasks once
+  YouCam-->>Server: VTO image URLs if ready
+  Server->>Rules: Rank outfits
+  Rules-->>Server: Recommendation
+  Server-->>UI: Final result and updated token
+  UI-->>User: Show best look and reasons
+```
+
+---
+
+## 9. Repository Structure
+
+Use this structure:
+
+```txt
+eventready-ai/
+  README.md
+  package.json
+  .env.example
+  next.config.ts
+  public/
+    demo/
+      persona-selfie.jpg
+      persona-full-body.jpg
+      outfits/
+        classic-navy-midi.png
+        bold-emerald-jumpsuit.png
+        soft-sage-slip.png
+      replay/
+        skin-result.json
+        vto-classic-navy-midi.jpg
+        vto-bold-emerald-jumpsuit.jpg
+        vto-soft-sage-slip.jpg
+  src/
+    app/
+      page.tsx
+      results/
+        [sessionId]/
+          page.tsx
+      api/
+        sessions/
+          route.ts
+        sessions/
+          [sessionId]/
+            analyze/
+              route.ts
+            status/
+              route.ts
+            report/
+              route.ts
+    components/
+      start-card.tsx
+      preference-step.tsx
+      photo-step.tsx
+      processing-view.tsx
+      recommendation-view.tsx
+      tryon-card.tsx
+      reason-chip.tsx
+      demo-mode-banner.tsx
+    lib/
+      catalog/
+        weddingGuestCatalog.ts
+      scoring/
+        selectOutfits.ts
+        scoreOutfits.ts
+        skinSignals.ts
+        reasonCodes.ts
+      youcam/
+        client.ts
+        skinAnalysis.ts
+        clothesVto.ts
+        types.ts
+      cache/
+        replayCache.ts
+      demo/
+        demoSession.ts
+    types/
+      eventready.ts
+```
+
+---
+
+## 10. Environment Variables
+
+Create `.env.example`:
+
+```env
+YOUCAM_API_KEY=""
+YOUCAM_API_BASE_URL="https://yce-api-01.makeupar.com"
+ENABLE_DEMO_MODE="true"
+ENABLE_REPLAY_CACHE="true"
+SESSION_SECRET=""
+APP_BASE_URL="http://localhost:3000"
+```
+
+Rules:
+
+- Never expose `YOUCAM_API_KEY` in frontend code.
+- All YouCam calls happen on the server.
+- Demo Mode must work without an API key.
+- Live Mode requires `YOUCAM_API_KEY`.
+- `SESSION_SECRET` signs short-lived session state for stateless deployment.
+
+---
+
+## 11. Data Types
+
+### User Preferences
+
+```ts
+export type StyleVibe = "classic" | "bold";
+export type BudgetTier = "low" | "mid" | "high";
+
+export type UserPreferences = {
+  occasion: "wedding_guest";
+  styleVibe: StyleVibe;
+  budgetTier: BudgetTier;
+};
+```
+
+### Catalog Item
+
+```ts
+export type GarmentCategory = "full_body" | "upper_body" | "lower_body";
+
+export type CatalogItem = {
+  id: string;
+  name: string;
+  garmentCategory: GarmentCategory;
+  imageUrl: string;
+  priceTier: "low" | "mid" | "high";
+  styleVibe: "classic" | "bold" | "either";
+  colorFamily:
+    | "navy"
+    | "emerald"
+    | "sage"
+    | "black"
+    | "rose"
+    | "champagne"
+    | "lavender"
+    | "teal"
+    | "burgundy";
+  undertone: "cool" | "warm" | "neutral";
+  fabricFinish: "matte" | "soft_sheen" | "high_shine";
+  silhouette:
+    | "midi_dress"
+    | "slip_dress"
+    | "jumpsuit"
+    | "blazer_set"
+    | "maxi_dress"
+    | "wrap_dress";
+  occasionTags: string[];
+};
+```
+
+### Skin Signals
+
+The exact raw fields must be calibrated after the first real API call.
+
+Internal normalized type:
+
+```ts
+export type SkinSignalLevel = "low" | "medium" | "high" | "unknown";
+
+export type NormalizedSkinSignals = {
+  redness: SkinSignalLevel;
+  oiliness: SkinSignalLevel;
+  darkCircles: SkinSignalLevel;
+  radiance: SkinSignalLevel;
+  moisture: SkinSignalLevel;
+  texture: SkinSignalLevel;
+};
+```
+
+### Outfit Candidate
+
+```ts
+export type OutfitCandidate = {
+  item: CatalogItem;
+  selectionReasons: ReasonCode[];
+};
+```
+
+### VTO Result
+
+```ts
+export type VtoResult = {
+  catalogItemId: string;
+  status: "queued" | "running" | "success" | "error";
+  taskId?: string;
+  resultImageUrl?: string;
+  errorMessage?: string;
+};
+```
+
+### Reason Codes
+
+```ts
+export type ReasonCode =
+  | "wedding_guest_match"
+  | "style_vibe_match"
+  | "budget_match"
+  | "cool_tone_supports_redness"
+  | "matte_finish_supports_oiliness"
+  | "contrast_supports_tired_eye_area"
+  | "soft_color_supports_low_radiance"
+  | "bold_color_matches_vibe"
+  | "classic_silhouette_matches_vibe"
+  | "high_shine_camera_caution"
+  | "warm_tone_redness_caution"
+  | "budget_mismatch"
+  | "style_vibe_mismatch";
+```
+
+### Final Recommendation
+
+```ts
+export type OutfitScore = {
+  catalogItemId: string;
+  confidenceScore: number;
+  reasonCodes: ReasonCode[];
+  cautionCodes: ReasonCode[];
+  userFacingReasons: string[];
+  userFacingCautions: string[];
+};
+
+export type EventReadyReport = {
+  sessionId: string;
+  recommendedCatalogItemId: string;
+  skinSignals: NormalizedSkinSignals;
+  selectedOutfits: OutfitCandidate[];
+  vtoResults: VtoResult[];
+  scores: OutfitScore[];
+  prepTips: string[];
+};
+```
+
+---
+
+## 12. Skin Signal Calibration
+
+This section is intentionally provisional.
+
+Do not finalize thresholds until a real Skin AI response is inspected.
+
+### Expected Process
+
+1. Make a real Skin Analysis API call.
+2. Save the raw result as:
+
+```txt
+public/demo/replay/skin-result-raw.json
+```
+
+3. Inspect:
+
+- field names
+- score ranges
+- whether higher score means more concern or better condition
+- missing fields
+- whether output is JSON directly or ZIP containing JSON
+
+4. Update `normalizeSkinSignals()`.
+
+### Placeholder Threshold Pattern
+
+Only use this after confirming score direction.
+
+```ts
+function toLevel(score: number | undefined): SkinSignalLevel {
+  if (score === undefined) return "unknown";
+  if (score >= 67) return "high";
+  if (score >= 34) return "medium";
+  return "low";
+}
+```
+
+Warning:
+
+- This threshold is arbitrary until calibrated.
+- In code comments and README, call it a v0 heuristic.
+- Do not claim scientific accuracy.
+
+### Required Code Honesty
+
+Add README language:
+
+```txt
+The prototype normalizes Skin Analysis outputs into low/medium/high signals using transparent thresholds. These thresholds are used only for styling and appearance-readiness guidance, not medical diagnosis.
+```
+
+---
+
+## 13. Skin-To-Outfit Rule Logic
+
+This is the heart of the technical differentiation.
+
+### Rule Table
+
+| Skin Signal | Outfit Rule | User-Facing Language |
+|---|---|---|
+| High redness | Prefer cool or neutral tones: navy, sage, teal, emerald. Penalize warm red/orange near face. | "Cooler tones create a calmer face-framing effect for this look." |
+| High oiliness | Prefer matte or soft-sheen fabric. Penalize high-shine satin/sequin looks. | "A lower-shine fabric is more camera-stable for long event lighting." |
+| High dark circles/eye bags | Prefer stronger contrast near face. | "The neckline and color contrast help keep attention on the full look." |
+| Low radiance/moisture | Prefer softer tones and avoid harsh visible cautions. | "A softer palette keeps the look polished without feeling severe." |
+| High texture/acne | Do not show direct acne warnings. Use confidence-positive language only. | "This look keeps the focus on silhouette and overall polish." |
+
+### Important Language Rules
+
+Never say:
+
+- "Your acne is high."
+- "Your skin is bad."
+- "You need treatment."
+- "Use salicylic acid."
+- "Use retinol."
+- "You look tired."
+- "Your skin score is poor."
+
+Allowed:
+
+- "For event lighting, a matte finish may photograph more consistently."
+- "Cooler tones create a calmer face-framing effect."
+- "A gentle hydration-focused prep can help makeup sit more evenly."
+- "This recommendation is cosmetic, not medical."
+
+### Generic Prep Tips
+
+Keep these short and safe:
+
+```txt
+Use a gentle, familiar routine before the event.
+Choose a matte or balanced finish if the venue has bright lighting.
+Do a quick photo check in similar lighting before leaving.
+Avoid trying harsh new products immediately before the event.
+```
+
+No ingredients.
+
+No diagnosis.
+
+No medical claims.
+
+---
+
+## 14. Outfit Selection Algorithm
+
+Goal:
+
+- Select exactly 3 outfits from the catalog.
+
+Inputs:
+
+- User style vibe
+- User budget tier
+- Normalized skin signals
+- Catalog metadata
+
+Selection should be partly personalized before VTO.
+
+### Selection Rules
+
+Start with all catalog items tagged `wedding_guest`.
+
+Add points:
+
+- +3 if `styleVibe` matches user preference or is `either`
+- +2 if `priceTier` matches budget
+- +2 if color/fabric matches skin signal rule
+- +1 if silhouette gives visual diversity
+
+Subtract points:
+
+- -2 for budget mismatch
+- -2 for warm tone when redness is high
+- -2 for high-shine fabric when oiliness is high
+- -1 if too similar to already selected outfit
+
+Final selection:
+
+- Pick top candidate.
+- Pick second candidate with different silhouette.
+- Pick third candidate with different color family and style energy.
+
+Important:
+
+- The 3 outputs must look visually different.
+- Do not pick three similar dresses.
+
+Pseudo-code:
+
+```ts
+export function selectOutfits({
+  catalog,
+  preferences,
+  skinSignals,
+}: {
+  catalog: CatalogItem[];
+  preferences: UserPreferences;
+  skinSignals: NormalizedSkinSignals;
+}): OutfitCandidate[] {
+  const scored = catalog
+    .filter((item) => item.occasionTags.includes("wedding_guest"))
+    .map((item) => scoreCatalogItemForSelection(item, preferences, skinSignals))
+    .sort((a, b) => b.score - a.score);
+
+  return pickDiverseTopThree(scored);
+}
+```
+
+---
+
+## 15. Confidence Heuristic
+
+Do not call this an AI model.
+
+Name:
+
+```txt
+Explainable Confidence Heuristic v0
+```
+
+Purpose:
+
+- Summarize why one look is recommended.
+- Make the recommendation transparent.
+- Give judges code they can inspect.
+
+### Formula
+
+Use only variables the app actually collects or computes:
+
+```ts
+confidenceScore =
+  occasionFitPoints +
+  styleVibePoints +
+  budgetPoints +
+  skinOutfitFitPoints +
+  vtoSuccessPoints -
+  cautionPenalty;
+```
+
+Then clamp to 0-100.
+
+Suggested point ranges:
+
+```txt
+occasionFitPoints: 0-25
+styleVibePoints: 0-20
+budgetPoints: 0-15
+skinOutfitFitPoints: 0-25
+vtoSuccessPoints: 0-10
+cautionPenalty: 0-20
+```
+
+### Why This Is Better Than Weighted Formula
+
+Avoid:
+
+```ts
+0.4 * eventFit + 0.25 * skinOutfitFit
+```
+
+Reason:
+
+- Arbitrary weights look fake if presented as scientific.
+
+Prefer:
+
+```txt
+This prototype assigns transparent points for each visible decision factor.
+```
+
+That is honest and easy for judges to inspect.
+
+### Example Score Output
+
+```json
+{
+  "catalogItemId": "emerald_jumpsuit_mid",
+  "confidenceScore": 87,
+  "reasonCodes": [
+    "wedding_guest_match",
+    "style_vibe_match",
+    "budget_match",
+    "cool_tone_supports_redness"
+  ],
+  "cautionCodes": [],
+  "userFacingReasons": [
+    "Strong match for a wedding guest look.",
+    "The bold silhouette fits your selected vibe.",
+    "The cool emerald tone creates a calm face-framing effect.",
+    "The price tier matches your budget."
+  ]
+}
+```
+
+---
+
+## 16. Curated Catalog Requirements
+
+Catalog size:
+
+- Minimum: 9 outfits
+- Ideal: 12 outfits
+
+All must be wedding-guest appropriate.
+
+### Required Diversity
+
+Include:
+
+- 3 classic looks
+- 3 bold looks
+- 3 soft/romantic looks
+- At least 3 silhouettes
+- At least 5 color families
+- At least 2 matte options
+- At least 2 soft-sheen options
+- At least 1 high-shine option with a caution rule
+
+### Example Catalog
+
+```ts
+export const weddingGuestCatalog: CatalogItem[] = [
+  {
+    id: "classic_navy_midi",
+    name: "Classic Navy Midi Dress",
+    garmentCategory: "full_body",
+    imageUrl: "/demo/outfits/classic-navy-midi.png",
+    priceTier: "mid",
+    styleVibe: "classic",
+    colorFamily: "navy",
+    undertone: "cool",
+    fabricFinish: "matte",
+    silhouette: "midi_dress",
+    occasionTags: ["wedding_guest"]
+  },
+  {
+    id: "bold_emerald_jumpsuit",
+    name: "Emerald Tailored Jumpsuit",
+    garmentCategory: "full_body",
+    imageUrl: "/demo/outfits/bold-emerald-jumpsuit.png",
+    priceTier: "mid",
+    styleVibe: "bold",
+    colorFamily: "emerald",
+    undertone: "cool",
+    fabricFinish: "matte",
+    silhouette: "jumpsuit",
+    occasionTags: ["wedding_guest"]
+  },
+  {
+    id: "soft_sage_slip",
+    name: "Soft Sage Slip Dress",
+    garmentCategory: "full_body",
+    imageUrl: "/demo/outfits/soft-sage-slip.png",
+    priceTier: "mid",
+    styleVibe: "classic",
+    colorFamily: "sage",
+    undertone: "cool",
+    fabricFinish: "soft_sheen",
+    silhouette: "slip_dress",
+    occasionTags: ["wedding_guest"]
+  },
+  {
+    id: "rose_wrap_low",
+    name: "Rose Wrap Dress",
+    garmentCategory: "full_body",
+    imageUrl: "/demo/outfits/rose-wrap-low.png",
+    priceTier: "low",
+    styleVibe: "classic",
+    colorFamily: "rose",
+    undertone: "warm",
+    fabricFinish: "matte",
+    silhouette: "wrap_dress",
+    occasionTags: ["wedding_guest"]
+  },
+  {
+    id: "champagne_satin_gown",
+    name: "Champagne Satin Gown",
+    garmentCategory: "full_body",
+    imageUrl: "/demo/outfits/champagne-satin-gown.png",
+    priceTier: "high",
+    styleVibe: "classic",
+    colorFamily: "champagne",
+    undertone: "warm",
+    fabricFinish: "high_shine",
+    silhouette: "maxi_dress",
+    occasionTags: ["wedding_guest"]
+  },
+  {
+    id: "teal_blazer_set",
+    name: "Teal Blazer Set",
+    garmentCategory: "full_body",
+    imageUrl: "/demo/outfits/teal-blazer-set.png",
+    priceTier: "high",
+    styleVibe: "bold",
+    colorFamily: "teal",
+    undertone: "cool",
+    fabricFinish: "matte",
+    silhouette: "blazer_set",
+    occasionTags: ["wedding_guest"]
+  }
+];
+```
+
+---
+
+## 17. YouCam API Integration Plan
+
+### Official Docs
+
+Use the current YouCam docs while implementing:
+
+- YouCam API documentation: https://docs.perfectcorp.com/develop/introduction
+- Skin Analysis: https://docs.perfectcorp.com/reference/ai_skin_analysis/v2.1
+- AI Clothes Virtual Try-On: https://docs.perfectcorp.com/reference/ai_clothes/section/overview
+
+### Skin Analysis
+
+Expected service file:
+
+```txt
+src/lib/youcam/skinAnalysis.ts
+```
+
+Responsibilities:
+
+- Accept selfie image URL or uploaded file reference.
+- Start Skin Analysis task.
+- Poll task status.
+- Download/parse result if needed.
+- Return normalized raw response to app.
+
+Important:
+
+- The exact response must be inspected from a real API call.
+- Do not finalize thresholds from documentation guesses.
+
+### Apparel VTO
+
+Expected service file:
+
+```txt
+src/lib/youcam/clothesVto.ts
+```
+
+Responsibilities:
+
+- Accept full-body user image.
+- Accept selected garment image.
+- Start Apparel VTO task.
+- Poll task status.
+- Return result image URL.
+
+Known docs mention endpoints in the `cloth-v3` family, including:
+
+```txt
+POST /s2s/v2.0/file/cloth-v3
+POST /s2s/v2.0/task/cloth-v3
+GET /s2s/v2.0/task/cloth-v3/{task_id}
+```
+
+Verify exact base URL, auth, request body, and parameters from the current console/docs before coding final calls.
+
+### Polling
+
+Use browser-driven polling against server routes.
+
+Never poll YouCam directly from the browser.
+
+Do not use this blocking helper inside deployed routes:
+
+```ts
+export async function pollUntilComplete<T>({
+  poll,
+  timeoutMs = 120000,
+  intervalMs = 3000,
+}: {
+  poll: () => Promise<T & { task_status?: string }>;
+  timeoutMs?: number;
+  intervalMs?: number;
+}) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const result = await poll();
+
+    if (result.task_status === "success") return result;
+    if (result.task_status === "error") {
+      throw new Error("YouCam task failed");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+
+  throw new Error("YouCam task timed out");
+}
+```
+
+That helper is only acceptable in local test scripts.
+
+Deployed route pattern:
+
+```ts
+export async function GET(request: Request) {
+  const session = verifySignedSession(request);
+  const updatedSession = await checkEachOutstandingYouCamTaskOnce(session);
+
+  return Response.json({
+    sessionToken: signSession(updatedSession),
+    status: buildPublicStatus(updatedSession),
+  });
+}
+```
+
+The frontend handles repeated polling:
+
+```ts
+setInterval(() => {
+  fetch(`/api/sessions/${sessionId}/status`, {
+    headers: { Authorization: `Bearer ${sessionToken}` },
+  });
+}, 3000);
+```
+
+---
+
+## 18. API Unit and Latency Strategy
+
+You have 1,000 free units after redeeming the hackathon code.
+
+Exact per-call unit costs must be checked in the YouCam account/API console.
+
+Conservative usage:
+
+- 1 Skin Analysis call per live session
+- 3 Apparel VTO calls per live session
+- Cache successful outputs
+- Use Demo Mode while developing UI
+- Do not generate VTO for all catalog items
+
+Development strategy:
+
+1. Build full UI with Demo Mode first.
+2. Make one real Skin Analysis call.
+3. Make one real VTO call.
+4. Cache both.
+5. Expand to 3 VTO calls only after one works.
+6. Record demo with successful cached outputs.
+
+Demo video strategy:
+
+- Do not show 90 seconds of spinner.
+- Show processing briefly.
+- Cut to completed results.
+- Mention that the app polls asynchronous YouCam tasks.
+
+---
+
+## 19. UI Design Requirements
+
+Design tone:
+
+- Elegant
+- Direct
+- Retail-polished
+- Occasion-focused
+- Image-first
+
+Avoid:
+
+- Big marketing landing page
+- Generic AI gradient blobs
+- Over-explaining in the UI
+- Medical skin language
+- Heavy forms
+- Dashboard charts
+
+### Screen 1
+
+Content:
+
+```txt
+Wedding Guest
+Choose the look you will feel confident wearing.
+```
+
+Actions:
+
+- Start
+- Use demo persona
+
+### Screen 2
+
+Inputs:
+
+- Classic / Bold
+- Low / Mid / High
+
+### Screen 3
+
+Uploads:
+
+- Selfie
+- Full-body photo
+
+Show demo option.
+
+### Screen 4
+
+Processing:
+
+```txt
+Reading skin signals
+Selecting event-ready looks
+Generating try-ons
+Ranking the results
+```
+
+### Screen 5
+
+Result:
+
+- Big recommended VTO image
+- Confidence score
+- Reason chips
+- 3 comparison cards
+- Prep tips
+
+Example reason chips:
+
+```txt
+Wedding guest match
+Cool tone
+Bold vibe
+Budget match
+Low-shine fabric
+```
+
+---
+
+## 20. User-Facing Copy
+
+Use positive and practical language.
+
+### Allowed Copy
+
+```txt
+This look is the strongest match for your wedding guest moment.
+```
+
+```txt
+The cool tone creates a calm face-framing effect.
+```
+
+```txt
+A low-shine fabric is more camera-stable for bright venue lighting.
+```
+
+```txt
+Try a familiar hydration-focused routine before the event.
+```
+
+```txt
+Avoid testing harsh new products right before the event.
+```
+
+### Forbidden Copy
+
+```txt
+Your acne score is high.
+```
+
+```txt
+Your skin looks bad.
+```
+
+```txt
+Use salicylic acid tonight.
+```
+
+```txt
+You need treatment.
+```
+
+```txt
+This outfit hides your flaws.
+```
+
+```txt
+You look tired.
+```
+
+---
+
+## 21. Demo Persona
+
+Use a fixed demo persona for Demo Mode.
+
+Example:
+
+```txt
+Name: Maya
+Scenario: Maya is attending an outdoor evening wedding this weekend.
+Preference: Bold
+Budget: Mid
+Need: Choose a camera-friendly outfit and avoid uncertainty before buying.
+```
+
+Demo should show:
+
+- Maya selects Bold and Mid.
+- Maya uses demo photos.
+- Skin AI returns signals.
+- App selects 3 outfits.
+- VTO generates 3 different looks.
+- App recommends one.
+
+Important:
+
+- Use images you have the right to use.
+- Avoid real celebrity or influencer photos.
+- Avoid brand/trademark-heavy assets.
+
+---
+
+## 22. Demo Video Script
+
+Target length: 2 minutes 15 seconds.
+
+### 0:00-0:15 - Problem
+
+Narration:
+
+```txt
+Buying an outfit for a wedding is high-pressure. Shoppers do not just ask "does this fit?" They ask "will this feel right on me, in photos, for this specific event?"
+```
+
+### 0:15-0:30 - Product
+
+Narration:
+
+```txt
+EventReady AI combines YouCam Skin Analysis and YouCam Apparel Virtual Try-On to turn that uncertainty into an explainable outfit recommendation.
+```
+
+### 0:30-0:50 - Setup
+
+Show:
+
+- Wedding Guest
+- Bold
+- Mid budget
+- Use demo persona
+
+Narration:
+
+```txt
+The flow starts with the occasion, then only two preferences: vibe and budget.
+```
+
+### 0:50-1:15 - API Processing
+
+Show:
+
+- Skin analysis processing
+- Outfit selection
+- VTO generating
+
+Narration:
+
+```txt
+The app sends the selfie to YouCam Skin Analysis, normalizes the returned skin signals, then selects three VTO-compatible outfits from a curated wedding guest catalog.
+```
+
+### 1:15-1:45 - VTO Results
+
+Show:
+
+- Three generated try-on images
+- Obvious outfit variety
+
+Narration:
+
+```txt
+Each selected outfit is sent through YouCam Apparel Virtual Try-On, so the user compares actual generated looks instead of guessing from product photos.
+```
+
+### 1:45-2:05 - Recommendation
+
+Show:
+
+- Recommended look
+- Score
+- Reasons
+
+Narration:
+
+```txt
+The recommendation is not a black box. EventReady AI shows the reason codes: wedding guest match, selected vibe, budget tier, color harmony, and camera-friendly fabric.
+```
+
+### 2:05-2:15 - Close
+
+Narration:
+
+```txt
+For retailers, these decision signals can help reduce hesitation before purchase. For shoppers, EventReady AI answers the real question: which look should I choose for this moment?
+```
+
+---
+
+## 23. Devpost Submission Draft
+
+### Inspiration
+
+People rarely shop for outfits in isolation. They shop because a moment is coming: a wedding, gala, interview, date, or celebration. Existing virtual try-on tools show how a garment looks, but they often stop before helping the shopper decide which look is actually right for the occasion.
+
+### What It Does
+
+EventReady AI is an occasion-first wedding guest shopping assistant. A user chooses a simple style vibe and budget, uploads a selfie and full-body photo, and receives three AI-generated outfit try-ons from a curated wedding guest catalog.
+
+The app uses YouCam Skin Analysis to extract appearance-readiness signals and YouCam Apparel Virtual Try-On to generate realistic outfit previews. An explainable confidence heuristic ranks the looks using occasion fit, style preference, budget tier, skin-to-outfit rules, and VTO success.
+
+### How We Built It
+
+We built EventReady AI as a full-stack web application with server-side YouCam API integration. The backend handles API authentication, task creation, polling, replay caching, and response normalization. The frontend provides a focused consumer flow from occasion setup to final recommendation.
+
+The recommendation engine is intentionally transparent. It uses human-readable reason codes rather than pretending to be a trained model.
+
+### YouCam APIs Used
+
+- YouCam AI Skin Analysis
+- YouCam AI Clothes Virtual Try-On
+
+### What Makes It Different
+
+Most virtual try-on projects start with a garment. EventReady AI starts with the occasion. It combines skin signals, event context, and outfit simulation to help users make a confident decision.
+
+### Challenges
+
+The hardest parts were selecting VTO-compatible garment assets, handling asynchronous API polling, and designing skin-informed styling logic without making medical or attractiveness claims.
+
+### Impact
+
+Event-based apparel purchases are high uncertainty. EventReady AI reduces that uncertainty by moving from visual novelty to explainable decision support. The same reason-code data could eventually help retailers understand hesitation, rejected products, and conversion risk before checkout.
+
+### What's Next
+
+Future versions could support more occasions, retailer catalog integrations, trained decision-risk models, AI Look Virtual Try-On, and post-purchase feedback loops.
+
+---
+
+## 24. README Checklist
+
+README must include:
+
+- Project name
+- Hackathon name
+- One-line pitch
+- Problem
+- Demo flow
+- APIs used
+- Architecture
+- Setup
+- Environment variables
+- How to run Demo Mode
+- How to run Live Mode
+- Explanation of replay cache
+- Explanation of confidence heuristic
+- Safety/privacy note
+- Known limitations
+
+Important README honesty:
+
+```txt
+This prototype uses a transparent v0 heuristic for outfit selection and confidence scoring. It is not a trained predictive model and does not provide medical advice.
+```
+
+---
+
+## 25. Privacy and Safety
+
+Required privacy principles:
+
+- API key stays server-side.
+- User photos are not reused across users.
+- Demo Mode is clearly labeled.
+- Do not rate attractiveness.
+- Do not diagnose skin conditions.
+- Do not show raw acne/dark-circle scores in UI.
+- Provide simple deletion or "new session" behavior if feasible.
+
+Recommended disclaimer:
+
+```txt
+EventReady AI uses cosmetic appearance signals to support outfit recommendations. It does not provide medical diagnosis or treatment advice.
+```
+
+---
+
+## 26. Seven-Day Execution Plan
+
+### Day 1
+
+Goal:
+
+- API access and first real calls.
+
+Tasks:
+
+- Register on Devpost.
+- Sign up for YouCam API.
+- Redeem units.
+- Get API key.
+- Make one Skin Analysis call.
+- Make one Apparel VTO call.
+- Save raw outputs.
+- Start collecting garment images.
+
+Exit criteria:
+
+- You have seen real API output.
+
+### Day 2
+
+Goal:
+
+- Build static app flow with Demo Mode.
+
+Tasks:
+
+- Create Next.js project.
+- Build screens.
+- Add demo persona.
+- Add placeholder catalog.
+- Add fake/replayed result flow.
+
+Exit criteria:
+
+- Full user flow works without live API.
+
+### Day 3
+
+Goal:
+
+- Implement rule engine and final catalog.
+
+Tasks:
+
+- Finalize 9-12 VTO-compatible outfit images.
+- Implement `normalizeSkinSignals`.
+- Implement `selectOutfits`.
+- Implement `scoreOutfits`.
+- Add reason codes.
+
+Exit criteria:
+
+- App selects and ranks 3 outfits using demo skin data.
+
+### Day 4
+
+Goal:
+
+- Integrate Skin AI live.
+
+Tasks:
+
+- Implement YouCam client.
+- Implement Skin Analysis service.
+- Add task polling.
+- Add replay cache.
+- Connect Skin API to flow.
+
+Exit criteria:
+
+- Live or cached Skin Analysis powers selection.
+
+### Day 5
+
+Goal:
+
+- Integrate Apparel VTO live.
+
+Tasks:
+
+- Implement Clothes VTO service.
+- Run 3 VTO tasks.
+- Handle one failed outfit gracefully.
+- Save successful outputs.
+
+Exit criteria:
+
+- 3 try-on images render in results.
+
+### Day 6
+
+Goal:
+
+- Polish and stabilize.
+
+Tasks:
+
+- Improve UI.
+- Add mobile responsive styling.
+- Add loading/error states.
+- Add Demo Mode banner.
+- Test clean install.
+- Capture screenshots.
+
+Exit criteria:
+
+- App is judge-ready.
+
+### Day 7
+
+Goal:
+
+- Submission.
+
+Tasks:
+
+- Record 1-3 minute demo video.
+- Write Devpost submission.
+- Final README.
+- Final repository check.
+- Submit before deadline.
+
+Exit criteria:
+
+- Submission complete.
+
+---
+
+## 27. Build Acceptance Criteria
+
+The project is ready when:
+
+- The app opens directly into the Wedding Guest flow.
+- User can choose Classic/Bold and budget tier.
+- User can use Demo Mode.
+- Live mode can call YouCam APIs when key is configured.
+- Skin Analysis response is normalized from actual output format.
+- App selects 3 outfits from curated catalog.
+- 3 VTO results display.
+- One outfit is recommended.
+- Reasons are visible and understandable.
+- No medical claims appear in UI.
+- Demo Mode is clearly labeled.
+- README explains exact setup.
+- Demo video is under 3 minutes.
+
+---
+
+## 28. Final Prompt for Another AI
+
+Use this prompt if continuing in a new chat:
+
+```txt
+We are building EventReady AI for the YouCam API Skin AI & Apparel VTO Hackathon.
+
+The concept is frozen. Do not brainstorm new ideas.
+
+Build a Next.js + TypeScript web app for a Wedding Guest outfit decision flow:
+
+1. User chooses style vibe: Classic or Bold.
+2. User chooses budget tier: Low, Mid, or High.
+3. User uploads selfie and full-body image, or uses explicit Demo Mode.
+4. Backend calls YouCam Skin Analysis.
+5. App normalizes real skin API output into low/medium/high skin signals.
+6. Rule engine selects exactly 3 VTO-compatible outfits from a curated wedding guest catalog.
+7. Backend calls YouCam Apparel Virtual Try-On for those 3 outfits.
+8. App ranks the 3 generated try-on looks using an explainable v0 confidence heuristic.
+9. UI shows one recommended look, all 3 VTO images, reason chips, and safe non-medical prep tips.
+
+Do not build a retailer dashboard, scraping, auth, checkout, marketplace, or extra occasions.
+
+Critical first task: make one real Skin Analysis API call and one real Apparel VTO API call, inspect the actual response shapes, then implement the service layer and normalizers.
+
+Demo Mode must be explicit and must never show another user's cached VTO result for a new uploaded photo.
+```
+
+---
+
+## 29. Sources
+
+Hackathon:
+
+- YouCam API Hackathon rules: https://youcam-api.devpost.com/rules
+- YouCam API platform: https://yce.perfectcorp.com/ai-api
+
+YouCam API docs:
+
+- Introduction: https://docs.perfectcorp.com/develop/introduction
+- Skin Analysis: https://docs.perfectcorp.com/reference/ai_skin_analysis/v2.1
+- AI Clothes Virtual Try-On: https://docs.perfectcorp.com/reference/ai_clothes/section/overview
+- FAQ: https://docs.perfectcorp.com/develop/faq
+
+Market/problem references:
+
+- NRF 2024 returns report: https://nrf.com/media-center/press-releases/nrf-and-happy-returns-report-2024-retail-returns-total-890-billion
+- NRF 2025 returns landscape: https://nrf.com/research/2025-retail-returns-landscape
+- GXO 2024 Global Beauty Report: https://investors.gxo.com/news-releases/news-release-details/gxo-releases-2024-global-beauty-report/
+
+---
+
+## 30. Final Rule
+
+No new features.
+
+No new target user.
+
+No second dashboard.
+
+No fake ML claims.
+
+No medical claims.
+
+No uncached API burn during UI development.
+
+Build the Wedding Guest flow, make it polished, make the API integration real, and record a strong visual demo.
