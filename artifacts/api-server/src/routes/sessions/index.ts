@@ -13,7 +13,7 @@ import {
   GetSessionReportResponse,
 } from "@workspace/api-zod";
 import { createSessionPayload, signSessionToken, verifySessionToken, type SessionPayload } from "../../lib/session/sessionToken";
-import { PROCESSING_STEPS, computeEffectiveState } from "../../lib/session/processing";
+import { computeEffectiveState } from "../../lib/session/processing";
 import { advanceLiveSession, startLiveAnalysis } from "../../lib/session/liveProcessing";
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
@@ -40,7 +40,7 @@ function buildSessionResponse(payload: SessionPayload, nowMs: number) {
     preferences: payload.preferences,
     status: effective.status,
     currentStep: effective.currentStep,
-    steps: [...PROCESSING_STEPS],
+    steps: [...effective.steps],
     errorMessage: payload.errorMessage,
   };
 }
