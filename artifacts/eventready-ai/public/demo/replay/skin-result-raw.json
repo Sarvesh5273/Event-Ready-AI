@@ -1,0 +1,54 @@
+{
+  "_provenance": {
+    "source": "PerfectCorp YouCam AI Skin Analysis (SD tier) public API reference documentation",
+    "url": "https://docs.perfectcorp.com/reference/ai_skin_analysis/v2.1",
+    "note": "No live YOUCAM_API_KEY was available in this build environment, so this file is not a captured response from a real account's API call. It reproduces the field names, envelope shape, and score direction exactly as documented, and is used to calibrate normalizeSkinSignals()/mapSkinAnalysisOutputToRawScores() against the real API contract. Replace this file with an actual captured response (GET /s2s/v2.0/task/skin-analysis/{task_id} with format: \"json\") once a real API key is available, without needing further code changes.",
+    "capturedAt": null
+  },
+  "status": 200,
+  "data": {
+    "task_id": "sample-task-id-0000",
+    "type": "skin-analysis",
+    "task_status": "success",
+    "results": {
+      "output": [
+        {
+          "type": "redness",
+          "ui_score": 3,
+          "raw_score": 32,
+          "mask_urls": []
+        },
+        {
+          "type": "oiliness",
+          "ui_score": 3,
+          "raw_score": 28,
+          "mask_urls": []
+        },
+        {
+          "type": "dark_circle_v2",
+          "ui_score": 6,
+          "raw_score": 61,
+          "mask_urls": []
+        },
+        {
+          "type": "radiance",
+          "ui_score": 7,
+          "raw_score": 68,
+          "mask_urls": []
+        },
+        {
+          "type": "moisture",
+          "ui_score": 5,
+          "raw_score": 47,
+          "mask_urls": []
+        },
+        {
+          "type": "texture",
+          "ui_score": 6,
+          "raw_score": 58,
+          "mask_urls": []
+        }
+      ]
+    }
+  }
+}

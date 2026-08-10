@@ -14,16 +14,19 @@ import {
 } from "@workspace/api-zod";
 import { createSessionPayload, signSessionToken, verifySessionToken, type SessionPayload } from "../../lib/session/sessionToken";
 import { PROCESSING_STEPS, computeEffectiveState } from "../../lib/session/processing";
+import { advanceLiveSession, startLiveAnalysis } from "../../lib/session/liveProcessing";
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
 import { selectOutfits } from "../../lib/scoring/selectOutfits";
 import { scoreOutfits } from "../../lib/scoring/scoreOutfits";
+import { isLiveModeAvailable } from "../../lib/youcam/client";
 import {
   DEMO_RAW_SKIN_SCORES,
   DEMO_REPLAY_CATALOG_ITEM_IDS,
   DEMO_VTO_IMAGE_BY_CATALOG_ID,
-  DEMO_PREP_TIPS,
 } from "../../lib/demo/replay";
+import { PREP_TIPS } from "../../lib/content/prepTips";
+import type { EventReadyReport, VtoResult } from "../../lib/types";
 
 const router: IRouter = Router();
 
@@ -75,18 +78,42 @@ router.post("/sessions/:sessionId/analyze", async (req, res): Promise<void> => {
   }
 
   if (payload.mode === "live") {
-    // Live YouCam calls are Task 2 scope. We stub them here rather than
-    // pretending to succeed: the request fails fast with an honest,
-    // friendly message instead of hanging or returning fake results.
-    const errored: SessionPayload = {
-      ...payload,
-      status: "error",
-      analyzeStartedAt: null,
-      errorMessage:
-        "Live YouCam integration isn't available in this build yet. Switch to Demo Mode to see the full experience.",
-    };
-    req.log.warn({ sessionId: payload.sessionId }, "Live mode analyze requested — returning stub error");
-    res.status(200).json(StartSessionAnalysisResponse.parse(buildSessionResponse(errored, Date.now())));
+    if (!isLiveModeAvailable()) {
+      const errored: SessionPayload = {
+        ...payload,
+        status: "error",
+        analyzeStartedAt: null,
+        errorMessage: "Live Mode isn't available right now. Switch to Demo Mode to see the full experience.",
+      };
+      req.log.warn({ sessionId: payload.sessionId }, "Live mode analyze requested but YouCam is not configured");
+      res.status(200).json(StartSessionAnalysisResponse.parse(buildSessionResponse(errored, Date.now())));
+      return;
+    }
+
+    if (!body.data.selfieImage || !body.data.fullBodyImage) {
+      res.status(400).json({ error: "Live Mode requires both selfieImage and fullBodyImage." });
+      return;
+    }
+
+    try {
+      const started = await startLiveAnalysis(payload, {
+        selfieBytes: Buffer.from(body.data.selfieImage.base64Data, "base64"),
+        selfieContentType: body.data.selfieImage.contentType,
+        fullBodyBytes: Buffer.from(body.data.fullBodyImage.base64Data, "base64"),
+        fullBodyContentType: body.data.fullBodyImage.contentType,
+      });
+      req.log.info({ sessionId: payload.sessionId }, "Started live YouCam analysis pipeline");
+      res.status(200).json(StartSessionAnalysisResponse.parse(buildSessionResponse(started, Date.now())));
+    } catch (err) {
+      req.log.error({ err, sessionId: payload.sessionId }, "Failed to start live analysis");
+      const errored: SessionPayload = {
+        ...payload,
+        status: "error",
+        analyzeStartedAt: null,
+        errorMessage: "Something went wrong starting your analysis. Please try again.",
+      };
+      res.status(200).json(StartSessionAnalysisResponse.parse(buildSessionResponse(errored, Date.now())));
+    }
     return;
   }
 
@@ -114,10 +141,20 @@ router.get("/sessions/:sessionId/status", async (req, res): Promise<void> => {
     return;
   }
 
-  const payload = verifySessionToken(header.data.token);
+  let payload = verifySessionToken(header.data.token);
   if (!payload || payload.sessionId !== params.data.sessionId) {
     res.status(401).json({ error: "Invalid or expired session token." });
     return;
+  }
+
+  // Live Mode has no background job — every poll does exactly one round of
+  // real work (at most one status check per outstanding YouCam task).
+  if (payload.mode === "live" && payload.live && payload.status === "processing") {
+    try {
+      payload = await advanceLiveSession(payload);
+    } catch (err) {
+      req.log.error({ err, sessionId: payload.sessionId }, "Failed to advance live session");
+    }
   }
 
   res.status(200).json(GetSessionStatusResponse.parse(buildSessionResponse(payload, Date.now())));
@@ -148,13 +185,13 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
     return;
   }
 
-  if (payload.mode !== "demo") {
-    // Defensive guard: live mode always errors before reaching "ready" in
-    // this build, so this branch should be unreachable in practice.
-    res.status(409).json({ error: "Live mode reports are not available in this build." });
-    return;
-  }
+  const report: EventReadyReport = payload.mode === "demo" ? buildDemoReport(payload) : buildLiveReport(payload);
 
+  req.log.info({ sessionId: payload.sessionId, mode: payload.mode }, "Built EventReady report");
+  res.status(200).json(GetSessionReportResponse.parse(report));
+});
+
+function buildDemoReport(payload: SessionPayload): EventReadyReport {
   const skinSignals = normalizeSkinSignals(DEMO_RAW_SKIN_SCORES);
   const replayCatalog = weddingGuestCatalog.filter((item) =>
     (DEMO_REPLAY_CATALOG_ITEM_IDS as readonly string[]).includes(item.id),
@@ -167,9 +204,9 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
     count: replayCatalog.length,
   });
 
-  const vtoResults = selectedOutfits.map(({ item }) => ({
+  const vtoResults: VtoResult[] = selectedOutfits.map(({ item }) => ({
     catalogItemId: item.id,
-    status: "success" as const,
+    status: "success",
     resultImageUrl: DEMO_VTO_IMAGE_BY_CATALOG_ID[item.id] ?? null,
     errorMessage: null,
   }));
@@ -183,7 +220,7 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
 
   const recommended = [...scores].sort((a, b) => b.confidenceScore - a.confidenceScore)[0];
 
-  const report = {
+  return {
     sessionId: payload.sessionId,
     mode: payload.mode,
     recommendedCatalogItemId: recommended?.catalogItemId ?? selectedOutfits[0]?.item.id ?? "",
@@ -191,11 +228,50 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
     selectedOutfits,
     vtoResults,
     scores,
-    prepTips: DEMO_PREP_TIPS,
+    prepTips: PREP_TIPS,
   };
+}
 
-  req.log.info({ sessionId: payload.sessionId }, "Built EventReady report");
-  res.status(200).json(GetSessionReportResponse.parse(report));
-});
+function buildLiveReport(payload: SessionPayload): EventReadyReport {
+  const live = payload.live;
+  if (!live || !live.skinSignals || !live.selectedOutfits || !live.vtoTasks) {
+    throw new Error(`Live session ${payload.sessionId} reached "ready" without a complete pipeline state.`);
+  }
+
+  const vtoResults: VtoResult[] = live.vtoTasks.map((task) => ({
+    catalogItemId: task.catalogItemId,
+    status: task.status,
+    resultImageUrl: task.resultImageUrl,
+    errorMessage: task.errorMessage,
+  }));
+
+  const scores = scoreOutfits({
+    items: live.selectedOutfits.map((outfit) => outfit.item),
+    preferences: payload.preferences,
+    skinSignals: live.skinSignals,
+    vtoResults,
+  });
+
+  // Only recommend an outfit whose try-on actually succeeded — never point
+  // the user at a hero image that couldn't be generated.
+  const successfulCatalogItemIds = new Set(
+    vtoResults.filter((v) => v.status === "success").map((v) => v.catalogItemId),
+  );
+  const recommended = [...scores]
+    .filter((s) => successfulCatalogItemIds.has(s.catalogItemId))
+    .sort((a, b) => b.confidenceScore - a.confidenceScore)[0];
+
+  return {
+    sessionId: payload.sessionId,
+    mode: payload.mode,
+    recommendedCatalogItemId:
+      recommended?.catalogItemId ?? live.selectedOutfits[0]?.item.id ?? "",
+    skinSignals: live.skinSignals,
+    selectedOutfits: live.selectedOutfits,
+    vtoResults,
+    scores,
+    prepTips: PREP_TIPS,
+  };
+}
 
 export default router;

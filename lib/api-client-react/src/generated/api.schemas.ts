@@ -171,8 +171,20 @@ export interface SessionInput {
   preferences: UserPreferences;
 }
 
+/**
+ * Raw image bytes for Live Mode uploads, base64-encoded and sent inline in the JSON request body. Required on `startSessionAnalysis` only when the session's mode is "live"; Demo Mode sessions never send these (the demo persona's photos are fixed, pre-captured assets).
+ */
+export interface UploadedImage {
+  /** Raw image bytes, base64-encoded (no data URL prefix). */
+  base64Data: string;
+  /** MIME type of the image, e.g. "image/jpeg". */
+  contentType: string;
+}
+
 export interface AnalyzeInput {
   sessionToken: string;
+  selfieImage?: UploadedImage;
+  fullBodyImage?: UploadedImage;
 }
 
 export interface Session {

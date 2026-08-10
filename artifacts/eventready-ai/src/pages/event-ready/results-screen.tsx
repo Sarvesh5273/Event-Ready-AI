@@ -27,6 +27,7 @@ export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreen
   const heroImageUrl = heroVto?.resultImageUrl
     ? resolveDemoAssetUrl(heroVto.resultImageUrl)
     : resolveDemoAssetUrl(heroOutfit.item.imageUrl);
+  const heroTryOnUnavailable = Boolean(heroVto) && heroVto?.status !== "success";
 
   return (
     <div className="min-h-[100dvh] bg-background pt-16 pb-24 font-sans">
@@ -75,6 +76,17 @@ export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreen
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Match</span>
                 <span className="text-2xl font-serif text-primary leading-none">{heroScore.confidenceScore}%</span>
               </div>
+
+              {heroTryOnUnavailable && (
+                <div
+                  className="absolute bottom-6 left-6 right-6 bg-background/95 backdrop-blur-md px-4 py-2 border border-border shadow-sm text-center"
+                  data-testid="hero-tryon-unavailable"
+                >
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Try-on preview unavailable for this piece — showing the catalog photo instead.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -177,6 +189,7 @@ export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreen
                 const imageUrl = altVto?.resultImageUrl
                   ? resolveDemoAssetUrl(altVto.resultImageUrl)
                   : resolveDemoAssetUrl(alt.item.imageUrl);
+                const altTryOnUnavailable = Boolean(altVto) && altVto?.status !== "success";
 
                 return (
                   <motion.div 
@@ -197,6 +210,14 @@ export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreen
                       {altScore && (
                         <div className="absolute top-3 right-3 bg-background/90 px-2.5 py-1 text-xs font-bold border border-border">
                           {altScore.confidenceScore}%
+                        </div>
+                      )}
+                      {altTryOnUnavailable && (
+                        <div
+                          className="absolute bottom-0 left-0 right-0 bg-background/95 px-3 py-1.5 text-center"
+                          data-testid={`alt-tryon-unavailable-${idx}`}
+                        >
+                          <p className="text-[11px] font-medium text-muted-foreground">Try-on unavailable</p>
                         </div>
                       )}
                     </div>

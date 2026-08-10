@@ -5,7 +5,10 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UploadedImage } from './uploadedImage';
 
 export interface AnalyzeInput {
   sessionToken: string;
+  selfieImage?: UploadedImage;
+  fullBodyImage?: UploadedImage;
 }

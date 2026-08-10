@@ -182,8 +182,9 @@ components:
       type: string
       description: >-
         "demo" replays fixed, previously-captured YouCam API results for the
-        Maya demo persona. "live" is reserved for real YouCam API calls
-        (not yet implemented in this build).
+        Maya demo persona. "live" runs real YouCam Skin Analysis + Apparel
+        VTO API calls against the user's own uploaded photos; it is only
+        offered when YOUCAM_API_KEY is configured.
       enum: [demo, live]
     SessionStatus:
       type: string
@@ -266,8 +267,29 @@ components:
       properties:
         sessionToken:
           type: string
+        selfieImage:
+          $ref: "#/components/schemas/UploadedImage"
+        fullBodyImage:
+          $ref: "#/components/schemas/UploadedImage"
       required:
         - sessionToken
+    UploadedImage:
+      type: object
+      description: >-
+        Raw image bytes for Live Mode uploads, base64-encoded and sent inline
+        in the JSON request body. Required on `startSessionAnalysis` only
+        when the session's mode is "live"; Demo Mode sessions never send
+        these (the demo persona's photos are fixed, pre-captured assets).
+      properties:
+        base64Data:
+          type: string
+          description: Raw image bytes, base64-encoded (no data URL prefix).
+        contentType:
+          type: string
+          description: MIME type of the image, e.g. "image/jpeg".
+      required:
+        - base64Data
+        - contentType
     Session:
       type: object
       properties:

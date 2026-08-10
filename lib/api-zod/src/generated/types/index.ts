@@ -28,6 +28,7 @@ export * from './skinSignalLevel';
 export * from './styleVibe';
 export * from './styleVibeOrEither';
 export * from './undertone';
+export * from './uploadedImage';
 export * from './userPreferences';
 export * from './userPreferencesOccasion';
 export * from './vtoResult';

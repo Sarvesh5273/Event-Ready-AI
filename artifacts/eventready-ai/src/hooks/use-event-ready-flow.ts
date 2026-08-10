@@ -20,6 +20,20 @@ export interface UploadedPhotos {
 
 const POLL_INTERVAL_MS = 3000;
 
+/** Reads a File into a base64 string (no `data:...;base64,` prefix) for the JSON upload body. */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex === -1 ? result : result.slice(commaIndex + 1));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 /** Orders session states so out-of-order poll responses never move state backwards. */
 function progressRank(s: Session): number {
   if (s.status === "ready" || s.status === "error") return 1000;
@@ -159,21 +173,42 @@ export function useEventReadyFlow() {
   const continueFromPhotos = useCallback(() => {
     beginSession("live");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe, budgetTier]);
+  }, [styleVibe, budgetTier, photos]);
 
   function beginSession(mode: "demo" | "live") {
     setFlowError(null);
     createSession.mutate(
       { data: { mode, preferences: { occasion: "wedding_guest", styleVibe, budgetTier } } },
       {
-        onSuccess: (created) => {
+        onSuccess: async (created) => {
           // Don't move to the Processing screen (and don't enable status
           // polling) until analyze has actually started: otherwise a status
           // poll can race the analyze call and briefly return, then get
           // treated as, this same still-"created" state forever.
           sessionTokenRef.current = created.sessionToken;
+
+          let selfieImage: { base64Data: string; contentType: string } | undefined;
+          let fullBodyImage: { base64Data: string; contentType: string } | undefined;
+          if (mode === "live") {
+            if (!photos.selfieFile || !photos.fullBodyFile) {
+              setFlowError("Please upload both a selfie and a full-body photo before continuing.");
+              return;
+            }
+            try {
+              const [selfieBase64, fullBodyBase64] = await Promise.all([
+                fileToBase64(photos.selfieFile),
+                fileToBase64(photos.fullBodyFile),
+              ]);
+              selfieImage = { base64Data: selfieBase64, contentType: photos.selfieFile.type || "image/jpeg" };
+              fullBodyImage = { base64Data: fullBodyBase64, contentType: photos.fullBodyFile.type || "image/jpeg" };
+            } catch {
+              setFlowError("Something went wrong reading your photos. Please try again.");
+              return;
+            }
+          }
+
           startAnalysis.mutate(
-            { sessionId: created.sessionId, data: { sessionToken: created.sessionToken } },
+            { sessionId: created.sessionId, data: { sessionToken: created.sessionToken, selfieImage, fullBodyImage } },
             {
               onSuccess: (started) => {
                 sessionTokenRef.current = started.sessionToken;

@@ -1,4 +1,5 @@
 import type { RawSkinScores } from "../scoring/skinSignals";
+import { PREP_TIPS } from "../content/prepTips";
 
 /**
  * Fixed Demo Mode replay data for the "Maya" persona. Everything here is
@@ -32,11 +33,8 @@ export const DEMO_VTO_IMAGE_BY_CATALOG_ID: Record<string, string> = {
   "champagne-satin-gown": "demo/replay/vto-champagne-satin-gown.jpg",
 };
 
-export const DEMO_PREP_TIPS = [
-  "Do a quick photo check in lighting similar to the venue before you head out.",
-  "If the venue will be bright, a matte or balanced finish tends to photograph more evenly than high-shine fabric.",
-  "Stick with your usual routine the morning of the event — familiar products are the safest choice for a big day.",
-];
+/** @deprecated use `PREP_TIPS` from `../content/prepTips` directly — kept as a re-export for backward compatibility. */
+export const DEMO_PREP_TIPS = PREP_TIPS;
 
 export const DEMO_PERSONA_SELFIE_IMAGE_URL = "demo/persona-selfie.jpg";
 export const DEMO_PERSONA_FULL_BODY_IMAGE_URL = "demo/persona-full-body.jpg";

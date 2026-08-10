@@ -1,2 +1,4 @@
 - [Orval path+query param collision](orval-param-collision.md) — mixing a path param + query param on one operation can break Orval codegen; use a header param instead.
 - [Stateless-token session polling race](stateless-token-session-polling.md) — don't enable status polling until the state-starting mutation resolves; guard poll responses to only move state forward.
+- [YouCam Skin Analysis score direction](youcam-score-direction.md) — YouCam scores are healthy-direction (higher = healthier); invert once at the API boundary if your app's convention is concern-direction.
+- [Cross-artifact static asset reads](monorepo-cross-artifact-asset-read.md) — find monorepo root by walking up to `pnpm-workspace.yaml`, not a hardcoded `../../..` hop count (breaks between bundled and source execution).

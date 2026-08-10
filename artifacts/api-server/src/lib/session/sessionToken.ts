@@ -1,12 +1,38 @@
 import crypto from "node:crypto";
-import type { SessionMode, SessionStatusValue, UserPreferences } from "../types";
+import type { NormalizedSkinSignals, OutfitCandidate, SessionMode, SessionStatusValue, UserPreferences, VtoTaskStatus } from "../types";
+
+/** Per-outfit Apparel VTO task state, tracked independently for each of the 3 selected outfits. */
+export interface LiveVtoTaskState {
+  catalogItemId: string;
+  status: VtoTaskStatus;
+  taskId: string | null;
+  resultImageUrl: string | null;
+  errorMessage: string | null;
+}
+
+/**
+ * Live Mode pipeline state. Only ever populated for `mode: "live"` sessions.
+ * Deliberately holds no raw image bytes and no YouCam API key — just task
+ * ids, statuses, and normalized results, all safe to round-trip through a
+ * signed token the browser can see.
+ */
+export interface LiveSessionState {
+  /** True once Skin Analysis has resolved (success OR graceful fallback) and outfits are selected. */
+  skinResolved: boolean;
+  skinTaskId: string | null;
+  skinSignals: NormalizedSkinSignals | null;
+  selectedOutfits: OutfitCandidate[] | null;
+  vtoTasks: LiveVtoTaskState[] | null;
+}
 
 /**
  * Stateless, HMAC-signed session tokens. There is no database for this
  * product — the entire session lives inside the signed token that the
- * client echoes back on every call. Processing progress is derived from
- * elapsed wall-clock time (see `./processing.ts`), never from server-side
- * mutable state, so any server instance can verify any token.
+ * client echoes back on every call. Demo Mode progress is derived from
+ * elapsed wall-clock time; Live Mode progress is derived from `live` below,
+ * which is advanced by one real YouCam status check per outstanding task,
+ * per poll (see `./liveProcessing.ts`). Either way, no mutable state lives
+ * on the server, so any server instance can verify and advance any token.
  */
 export interface SessionPayload {
   sessionId: string;
@@ -16,6 +42,7 @@ export interface SessionPayload {
   createdAt: string;
   analyzeStartedAt: string | null;
   errorMessage: string | null;
+  live: LiveSessionState | null;
 }
 
 function getSecret(): string {
@@ -77,5 +104,6 @@ export function createSessionPayload(mode: SessionMode, preferences: UserPrefere
     createdAt: new Date().toISOString(),
     analyzeStartedAt: null,
     errorMessage: null,
+    live: null,
   };
 }

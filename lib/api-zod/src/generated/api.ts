@@ -55,7 +55,15 @@ export const StartSessionAnalysisParams = zod.object({
 })
 
 export const StartSessionAnalysisBody = zod.object({
-  "sessionToken": zod.string()
+  "sessionToken": zod.string(),
+  "selfieImage": zod.object({
+  "base64Data": zod.string().describe('Raw image bytes, base64-encoded (no data URL prefix).'),
+  "contentType": zod.string().describe('MIME type of the image, e.g. \"image\/jpeg\".')
+}).optional().describe('Raw image bytes for Live Mode uploads, base64-encoded and sent inline in the JSON request body. Required on `startSessionAnalysis` only when the session\'s mode is \"live\"; Demo Mode sessions never send these (the demo persona\'s photos are fixed, pre-captured assets).'),
+  "fullBodyImage": zod.object({
+  "base64Data": zod.string().describe('Raw image bytes, base64-encoded (no data URL prefix).'),
+  "contentType": zod.string().describe('MIME type of the image, e.g. \"image\/jpeg\".')
+}).optional().describe('Raw image bytes for Live Mode uploads, base64-encoded and sent inline in the JSON request body. Required on `startSessionAnalysis` only when the session\'s mode is \"live\"; Demo Mode sessions never send these (the demo persona\'s photos are fixed, pre-captured assets).')
 })
 
 export const StartSessionAnalysisResponse = zod.object({
