@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ColorReport } from './colorReport';
 import type { CustomGarmentResult } from './customGarmentResult';
 import type { EventReadyVideo } from './eventReadyVideo';
 import type { GarmentSource } from './garmentSource';
@@ -28,4 +29,6 @@ export interface EventReadyReport {
   video: EventReadyVideo | null;
   /** Non-null only when `flow` is "custom". */
   customGarment: CustomGarmentResult | null;
+  /** The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default. */
+  colorAnalysis: ColorReport | null;
 }

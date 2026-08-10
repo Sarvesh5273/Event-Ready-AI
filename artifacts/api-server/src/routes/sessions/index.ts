@@ -1,4 +1,5 @@
 import { analyzeColorSeason } from "../../lib/color/season";
+import { toColorReport } from "../../lib/color/report";
 import { Router, type IRouter } from "express";
 import {
   CreateSessionBody,
@@ -290,6 +291,7 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     // Served as a static public asset — zero API cost at runtime.
     video: { status: "success" as const, videoUrl: DEMO_VIDEO_URL },
     customGarment: null,
+    colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
   };
 }
 
@@ -312,13 +314,9 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     }
 
     const vtoTerminal = live.custom.vto.status === "success" || live.custom.vto.status === "error";
+    const colorAnalysis = live.tones ? analyzeColorSeason(live.tones) : null;
     const score = vtoTerminal
-      ? scoreCustomGarment(
-          live.custom.colorHex,
-          live.tones ? analyzeColorSeason(live.tones) : null,
-          live.skinSignals,
-          live.custom.vto.status,
-        )
+      ? scoreCustomGarment(live.custom.colorHex, colorAnalysis, live.skinSignals, live.custom.vto.status)
       : null;
 
     // Re-signing here is deterministic (same payload -> same HMAC) and
@@ -349,6 +347,7 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
       prepTips: PREP_TIPS,
       video,
       customGarment,
+      colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
     };
   }
 
@@ -363,11 +362,13 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     errorMessage: task.errorMessage,
   }));
 
+  const colorAnalysis = live.tones ? analyzeColorSeason(live.tones) : null;
+
   const scores = scoreOutfits({
     items: live.selectedOutfits.map((outfit) => outfit.item),
     preferences: payload.preferences,
     skinSignals: live.skinSignals,
-    colorAnalysis: live.tones ? analyzeColorSeason(live.tones) : null,
+    colorAnalysis,
     vtoResults,
   });
 
@@ -394,6 +395,7 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     // never "queued"/"running".
     video,
     customGarment: null,
+    colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
   };
 }
 

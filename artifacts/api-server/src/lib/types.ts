@@ -3,6 +3,10 @@
 // validated against the generated Zod schemas at the route boundary — these
 // types exist so the rule-engine/library code isn't written against `any`.
 
+import type { ColorReport } from "./color/report";
+
+export type { ColorReport };
+
 export type StyleVibe = "classic" | "bold";
 export type StyleVibeOrEither = "classic" | "bold" | "either";
 export type BudgetTier = "low" | "mid" | "high";
@@ -179,4 +183,10 @@ export interface EventReadyReport {
   video: EventReadyVideo | null;
   /** Non-null only when `flow` is "custom". */
   customGarment: CustomGarmentResult | null;
+  /**
+   * The personal colour reading, or null when the colour-tones task returned
+   * nothing usable. Null means no palette was measured — the UI must say so
+   * rather than falling back to a default palette.
+   */
+  colorAnalysis: ColorReport | null;
 }

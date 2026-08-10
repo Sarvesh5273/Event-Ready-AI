@@ -194,7 +194,52 @@ export const GetSessionReportResponse = zod.object({
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
 }).describe('Skin\/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there\'s no occasion\/style\/budget preference to check a self-picked garment against and fabric finish can\'t be reliably read from a photo.'),zod.null()])
-}).describe('Present on the report only when `flow` is \"custom\".'),zod.null()]).describe('Non-null only when `flow` is \"custom\".')
+}).describe('Present on the report only when `flow` is \"custom\".'),zod.null()]).describe('Non-null only when `flow` is \"custom\".'),
+  "colorAnalysis": zod.union([zod.object({
+  "season": zod.enum(['light_spring', 'true_spring', 'bright_spring', 'light_summer', 'true_summer', 'soft_summer', 'soft_autumn', 'true_autumn', 'deep_autumn', 'deep_winter', 'true_winter', 'bright_winter']),
+  "seasonLabel": zod.string(),
+  "tagline": zod.string(),
+  "rationale": zod.string(),
+  "dominantTrait": zod.enum(['warm', 'cool', 'light', 'deep', 'bright', 'soft']),
+  "axes": zod.object({
+  "temperature": zod.number(),
+  "value": zod.number(),
+  "chroma": zod.number()
+}).describe('Where the wearer sits on each axis, each running -1..+1.'),
+  "axesSummary": zod.string(),
+  "confidence": zod.number().describe('0..1 — how clearly the dominant trait beat the runner-up.'),
+  "measured": zod.object({
+  "skinColor": zod.union([zod.string(),zod.null()]),
+  "hairColor": zod.union([zod.string(),zod.null()]),
+  "hairColorName": zod.union([zod.string(),zod.null()]),
+  "eyeColor": zod.union([zod.string(),zod.null()]),
+  "eyeColorName": zod.union([zod.string(),zod.null()]),
+  "lipColor": zod.union([zod.string(),zod.null()]),
+  "eyebrowColor": zod.union([zod.string(),zod.null()])
+}).describe('Colours measured directly from the user\'s selfie by the YouCam Facial Colour Tones task. A null field means that feature was not returned for this face — it is not a default.'),
+  "heroColors": zod.array(zod.object({
+  "hex": zod.string(),
+  "name": zod.string()
+})),
+  "avoidColors": zod.array(zod.object({
+  "hex": zod.string(),
+  "name": zod.string()
+})),
+  "bestNeutral": zod.object({
+  "hex": zod.string(),
+  "name": zod.string()
+}),
+  "proofPair": zod.union([zod.object({
+  "best": zod.object({
+  "hex": zod.string(),
+  "name": zod.string()
+}),
+  "worst": zod.object({
+  "hex": zod.string(),
+  "name": zod.string()
+})
+}).describe('The two colours used for the side-by-side try-on proof.'),zod.null()])
+}),zod.null()]).describe('The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default.')
 })
 
 

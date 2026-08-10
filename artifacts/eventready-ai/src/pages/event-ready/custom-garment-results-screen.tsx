@@ -3,6 +3,7 @@ import type { EventReadyReport } from '@workspace/api-client-react';
 import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Shirt, Play } from 'lucide-react';
+import { PaletteReveal } from './palette-reveal';
 
 interface CustomGarmentResultsScreenProps {
   report: EventReadyReport;
@@ -47,9 +48,16 @@ export function CustomGarmentResultsScreen({ report, onStartOver }: CustomGarmen
           </div>
           <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">Is it right for you?</h1>
           <p className="text-lg text-muted-foreground">
-            A read on how this piece works with your complexion and coloring.
+            {report.colorAnalysis
+              ? 'A read on how this piece works with the colouring measured from your photo.'
+              : "A read on this piece — we couldn't read your colouring, so this covers fit, style and fabric only."}
           </p>
         </motion.div>
+
+        {/* The same colour reading the catalog flow shows. The compatibility
+            verdict below is judged against this palette, so it has to be
+            visible here too rather than asserted without evidence. */}
+        <PaletteReveal analysis={report.colorAnalysis} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 mb-24">
           <motion.div

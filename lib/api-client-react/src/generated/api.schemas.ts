@@ -315,6 +315,88 @@ export interface CustomGarmentResult {
   score: CustomGarmentScore | null;
 }
 
+export type ColorSeason = typeof ColorSeason[keyof typeof ColorSeason];
+
+
+export const ColorSeason = {
+  light_spring: 'light_spring',
+  true_spring: 'true_spring',
+  bright_spring: 'bright_spring',
+  light_summer: 'light_summer',
+  true_summer: 'true_summer',
+  soft_summer: 'soft_summer',
+  soft_autumn: 'soft_autumn',
+  true_autumn: 'true_autumn',
+  deep_autumn: 'deep_autumn',
+  deep_winter: 'deep_winter',
+  true_winter: 'true_winter',
+  bright_winter: 'bright_winter',
+} as const;
+
+export type DominantTrait = typeof DominantTrait[keyof typeof DominantTrait];
+
+
+export const DominantTrait = {
+  warm: 'warm',
+  cool: 'cool',
+  light: 'light',
+  deep: 'deep',
+  bright: 'bright',
+  soft: 'soft',
+} as const;
+
+export interface PaletteColor {
+  hex: string;
+  name: string;
+}
+
+/**
+ * Colours measured directly from the user's selfie by the YouCam Facial Colour Tones task. A null field means that feature was not returned for this face — it is not a default.
+ */
+export interface FacialColorTones {
+  skinColor: string | null;
+  hairColor: string | null;
+  hairColorName: string | null;
+  eyeColor: string | null;
+  eyeColorName: string | null;
+  lipColor: string | null;
+  eyebrowColor: string | null;
+}
+
+/**
+ * Where the wearer sits on each axis, each running -1..+1.
+ */
+export interface PaletteAxes {
+  temperature: number;
+  value: number;
+  chroma: number;
+}
+
+/**
+ * The two colours used for the side-by-side try-on proof.
+ */
+export interface ColorProofPair {
+  best: PaletteColor;
+  worst: PaletteColor;
+}
+
+export interface ColorReport {
+  season: ColorSeason;
+  seasonLabel: string;
+  tagline: string;
+  rationale: string;
+  dominantTrait: DominantTrait;
+  axes: PaletteAxes;
+  axesSummary: string;
+  /** 0..1 — how clearly the dominant trait beat the runner-up. */
+  confidence: number;
+  measured: FacialColorTones;
+  heroColors: PaletteColor[];
+  avoidColors: PaletteColor[];
+  bestNeutral: PaletteColor;
+  proofPair: ColorProofPair | null;
+}
+
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
@@ -329,5 +411,7 @@ export interface EventReadyReport {
   video: EventReadyVideo | null;
   /** Non-null only when `flow` is "custom". */
   customGarment: CustomGarmentResult | null;
+  /** The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default. */
+  colorAnalysis: ColorReport | null;
 }
 

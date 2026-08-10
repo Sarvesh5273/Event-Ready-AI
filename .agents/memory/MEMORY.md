@@ -6,3 +6,4 @@
 - [Stateless-token payload size](stateless-token-payload-size.md) — never embed raw/base64 images in a signed session token echoed back as an HTTP header; it silently trips HTTP 431.
 - [Colour season calibration](color-season-calibration.md) — LAB warm/cool classifiers read falsely warm; validate on a spread of archetypes, not single cases.
 - [YouCam API discovery](youcam-api-discovery.md) — fetch docs as `.md`; the feature-cost endpoint is not a capability inventory.
+- [Measurement vs interpretation in UI](measurement-vs-interpretation-ui.md) — never render a generated axis summary beside curated category copy; show axis meters instead.

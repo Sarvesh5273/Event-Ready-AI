@@ -40,3 +40,18 @@ charged anyway. Polling itself is free.
 Beware that anyone testing a live deployment — including hackathon judges —
 spends the balance on your key, so budget headroom for that separately from
 development.
+
+## Facial Colour Tones rejects imperfect face framing
+
+The tone endpoint fails the whole task on head pose, returning reasons like
+`error_face_angle_left_tilt` rather than degrading to a lower-confidence read.
+
+**Why it matters:** a tilted or angled selfie produces no colour measurement at
+all, so any feature built on it disappears for that user. When a UI that
+depends on tones appears "missing" during testing, check the provider error in
+the server log before assuming the wiring is broken — honest degradation and a
+genuine bug look identical from the browser.
+
+**How to apply:** test selfies must be straight-on and evenly lit. Treat a
+tone failure as an expected branch worth exercising deliberately, not an edge
+case.

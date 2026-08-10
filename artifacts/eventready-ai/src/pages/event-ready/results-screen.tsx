@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Star, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
+import { PaletteReveal } from './palette-reveal';
 
 export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreenProps) {
 
@@ -52,9 +53,15 @@ export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreen
           </div>
           <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">The Perfect Match</h1>
           <p className="text-lg text-muted-foreground">
-            Based on your complexion, style vibe, and the occasion.
+            {report.colorAnalysis
+              ? 'Based on the colouring measured from your photo, your style, and the occasion.'
+              : "Based on your style and the occasion — we couldn't read your colouring from this photo."}
           </p>
         </motion.div>
+
+        {/* The colour reading comes before the outfit because it is the
+            evidence the recommendation rests on. */}
+        <PaletteReveal analysis={report.colorAnalysis} />
 
         {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 mb-24">
