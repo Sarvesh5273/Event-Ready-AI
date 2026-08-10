@@ -65,6 +65,12 @@ export function CustomGarmentResultsScreen({ report, onStartOver }: CustomGarmen
                   src={heroImageUrl}
                   alt="Your garment"
                   className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                  onLoad={() => {
+                    console.log('[CustomGarmentResults] hero image loaded OK:', heroImageUrl?.slice(0, 120));
+                  }}
+                  onError={() => {
+                    console.error('[CustomGarmentResults] hero image FAILED to load:', heroImageUrl?.slice(0, 120));
+                  }}
                 />
               </div>
 

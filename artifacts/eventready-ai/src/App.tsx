@@ -10,6 +10,14 @@ import {
   useLocation,
   Router as WouterRouter,
 } from 'wouter';
+// Dev-only preview page — loaded only when import.meta.env.DEV is true so it
+// is never bundled into a production build. Using React.lazy + Suspense means
+// the module is dynamically imported, which Vite's tree-shaking can eliminate
+// entirely when NODE_ENV=production (the conditional is statically analysable).
+import { lazy, Suspense } from 'react';
+const DevResultsPreview = import.meta.env.DEV
+  ? lazy(() => import('@/pages/dev/dev-results-preview').then(m => ({ default: m.DevResultsPreview })))
+  : null;
 import { useEventReadyFlow } from '@/hooks/use-event-ready-flow';
 import { DemoModeBanner } from '@/components/demo-mode-banner';
 import { StartScreen } from '@/pages/event-ready/start-screen';
@@ -100,6 +108,13 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={WeddingGuestFlow} />
+        {import.meta.env.DEV && DevResultsPreview && (
+          <Route path="/dev/results">
+            <Suspense fallback={null}>
+              <DevResultsPreview />
+            </Suspense>
+          </Route>
+        )}
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
