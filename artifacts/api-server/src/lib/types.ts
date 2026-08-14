@@ -3,6 +3,7 @@
 // validated against the generated Zod schemas at the route boundary — these
 // types exist so the rule-engine/library code isn't written against `any`.
 
+import type { PaletteColor } from "./color/palettes";
 import type { ColorReport } from "./color/report";
 
 export type { ColorReport };
@@ -221,6 +222,48 @@ export interface CustomGarmentResult {
   score: CustomGarmentScore | null;
 }
 
+/** One real, buyable garment listing from a retailer's own product page. */
+export interface ShopListing {
+  id: string;
+  /** The retailer's own product title, unedited — it is their claim, not ours. */
+  title: string;
+  /** Retailer domain, shown as-is. Guessing a brand's display name invents facts. */
+  retailer: string;
+  url: string;
+  /** Locally cached copy of the retailer's photo, so a hotlink block can't blank the card. */
+  imageUrl: string;
+}
+
+/** A retailer search this palette colour can be browsed with, beyond the fixed listings. */
+export interface ShopSearchLink {
+  retailer: string;
+  url: string;
+}
+
+export interface ShopColorGroup {
+  paletteColor: PaletteColor;
+  /** The catalog colour family this palette colour snapped to when matching listings. */
+  colorFamily: ColorFamily;
+  listings: ShopListing[];
+  searchLinks: ShopSearchLink[];
+}
+
+/**
+ * Where to actually buy the colours we measured.
+ *
+ * The colours are measured; the garments are not. Listings are filed under
+ * the colour word their own retailer used, because retailer product
+ * photography cannot be colour-measured reliably. Clients must present this
+ * as "places to look", never as a scored verdict.
+ */
+export interface ShopYourPalette {
+  /** Date the listing index was gathered, shown to the user so they can judge staleness. */
+  capturedAt: string;
+  /** What this tradition's garment is called, e.g. "saree" — used in the UI copy. */
+  garmentWord: string;
+  groups: ShopColorGroup[];
+}
+
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
@@ -253,6 +296,12 @@ export interface EventReadyReport {
    * assembled. See `ProofShot`.
    */
   proofShot: ProofShot | null;
+  /**
+   * Where to buy real garments in the measured palette colours, or null when
+   * no palette was measured — with nothing measured there is nothing honest
+   * to shop from.
+   */
+  shopping: ShopYourPalette | null;
 }
 
 /** One half of the side-by-side proof: a real garment, tried on for real. */

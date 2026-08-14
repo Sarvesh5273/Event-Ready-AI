@@ -17,3 +17,5 @@
 - [Hair measurement cross-check](hair-measurement-cross-check.md) — a returned hair swatch may be skin/background; reject it when it reads much lighter than the brows.
 - [Value-contrast scoring](value-contrast-scoring.md) — contrast needs its own additive points on a floor curve; failure verdicts must cap their score; never default an unmeasured value.
 - [Demo fixtures couple to scoring](demo-fixture-engine-coupling.md) — a scoring change can silently blank a conditional demo section that depends on baked renders.
+- [Colour-family bucket labelling](color-family-bucket-labelling.md) — RGB family matching is hue-blind when dark; never head a third-party bucket with your own measured colour name.
+- [Baked listing index](baked-listing-index.md) — generating a committed real-listings index with agent-side search: the filters and image gotchas that decide quality.

@@ -14,6 +14,7 @@ import type { OutfitCandidate } from './outfitCandidate';
 import type { OutfitScore } from './outfitScore';
 import type { ProofShot } from './proofShot';
 import type { SessionMode } from './sessionMode';
+import type { ShopYourPalette } from './shopYourPalette';
 import type { SkinOverlaySet } from './skinOverlaySet';
 import type { VtoResult } from './vtoResult';
 
@@ -37,4 +38,6 @@ export interface EventReadyReport {
   colorAnalysis: ColorReport | null;
   /** Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot. */
   proofShot: ProofShot | null;
+  /** Real listings in the measured palette colours. Null when no palette was measured — with no measurement there is nothing honest to shop from. */
+  shopping: ShopYourPalette | null;
 }

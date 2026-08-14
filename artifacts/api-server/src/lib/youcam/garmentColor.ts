@@ -26,7 +26,7 @@ const COLOR_FAMILY_REFERENCE: Record<ColorFamily, { rgb: [number, number, number
   terracotta: { rgb: [190, 110, 80], undertone: "warm" },
 };
 
-function nearestColorFamily(rgb: Rgb): { colorFamily: ColorFamily; undertone: Undertone } {
+export function nearestColorFamily(rgb: Rgb): { colorFamily: ColorFamily; undertone: Undertone } {
   let best: ColorFamily = "navy";
   let bestDistance = Infinity;
   for (const [family, ref] of Object.entries(COLOR_FAMILY_REFERENCE) as [ColorFamily, { rgb: [number, number, number]; undertone: Undertone }][]) {

@@ -539,6 +539,46 @@ export interface ColorReport {
   proofPair: ColorProofPair | null;
 }
 
+/**
+ * A real, buyable garment on a retailer's own product page.
+ */
+export interface ShopListing {
+  id: string;
+  /** The retailer's own product title, unedited — their claim, not ours. */
+  title: string;
+  /** Retailer domain, shown as-is. Rendering a prettified brand name would mean inventing one for small boutiques. */
+  retailer: string;
+  url: string;
+  /** Locally cached copy of the retailer's photo, relative to the frontend's public dir. Cached rather than hot-linked so a retailer blocking cross-origin requests cannot blank the section. */
+  imageUrl: string;
+}
+
+/**
+ * A retailer search for this colour, for browsing past the fixed listings.
+ */
+export interface ShopSearchLink {
+  retailer: string;
+  url: string;
+}
+
+export interface ShopColorGroup {
+  paletteColor: PaletteColor;
+  colorFamily: ColorFamily;
+  listings: ShopListing[];
+  searchLinks: ShopSearchLink[];
+}
+
+/**
+ * Where to buy the colours we measured. Note the asymmetry: the colours come from the user's face and are measured; the garments are filed under the colour word their own retailer used, because retailer product photography cannot be colour-measured reliably. Clients must present these as places to look, never as scored verdicts.
+ */
+export interface ShopYourPalette {
+  /** Date the listing index was gathered, so the user can judge staleness. */
+  capturedAt: string;
+  /** What this tradition's garment is called, e.g. "saree". */
+  garmentWord: string;
+  groups: ShopColorGroup[];
+}
+
 export interface EventReadyReport {
   sessionId: string;
   mode: SessionMode;
@@ -559,5 +599,7 @@ export interface EventReadyReport {
   colorAnalysis: ColorReport | null;
   /** Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot. */
   proofShot: ProofShot | null;
+  /** Real listings in the measured palette colours. Null when no palette was measured — with no measurement there is nothing honest to shop from. */
+  shopping: ShopYourPalette | null;
 }
 

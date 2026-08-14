@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Shirt } from 'lucide-react';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
+import { ShopYourPaletteSection } from './shop-your-palette-section';
 import { SkinReadSection } from './skin-read-section';
 
 interface CustomGarmentResultsScreenProps extends OutfitVideoProps {
@@ -208,6 +209,10 @@ export function CustomGarmentResultsScreen({
           isGeneratingVideo={isGeneratingVideo}
           videoError={videoError}
         />
+
+        {/* The palette was measured from her face, not from the garment she
+            uploaded, so it is just as shoppable here as in the catalog flow. */}
+        <ShopYourPaletteSection shopping={report.shopping} />
 
         {report.prepTips.length > 0 && (
           <motion.div

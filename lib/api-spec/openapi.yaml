@@ -923,6 +923,74 @@ components:
         - avoidColors
         - bestNeutral
         - proofPair
+    ShopListing:
+      type: object
+      description: A real, buyable garment on a retailer's own product page.
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          description: The retailer's own product title, unedited — their claim, not ours.
+        retailer:
+          type: string
+          description: >-
+            Retailer domain, shown as-is. Rendering a prettified brand name
+            would mean inventing one for small boutiques.
+        url:
+          type: string
+        imageUrl:
+          type: string
+          description: >-
+            Locally cached copy of the retailer's photo, relative to the
+            frontend's public dir. Cached rather than hot-linked so a retailer
+            blocking cross-origin requests cannot blank the section.
+      required: [id, title, retailer, url, imageUrl]
+    ShopSearchLink:
+      type: object
+      description: A retailer search for this colour, for browsing past the fixed listings.
+      properties:
+        retailer:
+          type: string
+        url:
+          type: string
+      required: [retailer, url]
+    ShopColorGroup:
+      type: object
+      properties:
+        paletteColor:
+          $ref: "#/components/schemas/PaletteColor"
+        colorFamily:
+          $ref: "#/components/schemas/ColorFamily"
+        listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShopListing"
+        searchLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShopSearchLink"
+      required: [paletteColor, colorFamily, listings, searchLinks]
+    ShopYourPalette:
+      type: object
+      description: >-
+        Where to buy the colours we measured. Note the asymmetry: the colours
+        come from the user's face and are measured; the garments are filed
+        under the colour word their own retailer used, because retailer
+        product photography cannot be colour-measured reliably. Clients must
+        present these as places to look, never as scored verdicts.
+      properties:
+        capturedAt:
+          type: string
+          description: Date the listing index was gathered, so the user can judge staleness.
+        garmentWord:
+          type: string
+          description: What this tradition's garment is called, e.g. "saree".
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShopColorGroup"
+      required: [capturedAt, garmentWord, groups]
     EventReadyReport:
       type: object
       properties:
@@ -987,10 +1055,19 @@ components:
           oneOf:
             - $ref: "#/components/schemas/ProofShot"
             - type: "null"
+        shopping:
+          description: >-
+            Real listings in the measured palette colours. Null when no palette
+            was measured — with no measurement there is nothing honest to shop
+            from.
+          oneOf:
+            - $ref: "#/components/schemas/ShopYourPalette"
+            - type: "null"
       required:
         - sessionId
         - colorAnalysis
         - proofShot
+        - shopping
         - mode
         - flow
         - recommendedCatalogItemId

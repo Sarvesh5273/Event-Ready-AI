@@ -43,3 +43,17 @@ strong colours while failing completely on pale ones. Treat measured colour
 values as generated output: record in the data file that they are
 machine-measured and must not be hand-edited, or someone will "fix" one by eye
 and reintroduce inconsistency.
+
+## Retailer photography is not measurable at all
+
+The border-flood-fill extractor works on flat studio catalog shots but fails
+outright on real retailer product photos: four dresses a retailer described as
+emerald extracted as navy, teal, navy and black, with the garment occupying
+only ~26–32% of the frame. Retailer photography uses moody lighting, styled
+backdrops and models at varying scale.
+
+**Why it matters:** the temptation is to score third-party listings the same
+way you score your own catalog. Don't. Scoring an emerald gown as "black —
+clashes" discredits the colour engine's real results elsewhere in the product.
+Fall back to the retailer's own colour word and say plainly that the garment
+was not measured.

@@ -24,6 +24,7 @@ import { createSessionPayload, signSessionToken, verifySessionToken, type Sessio
 import { PROCESSING_STEPS, computeEffectiveState } from "../../lib/session/processing";
 import { advanceLiveSession, advanceVideoGeneration, startLiveAnalysis } from "../../lib/session/liveProcessing";
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
+import { buildShopYourPalette } from "../../lib/shopping/shopYourPalette";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
 import { selectOutfits } from "../../lib/scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../../lib/scoring/scoreOutfits";
@@ -440,6 +441,7 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
   });
 
   const recommendedCatalogItemId = pickRecommendedCatalogItemId(scores, vtoResults) ?? selectedOutfits[0]?.item.id ?? "";
+  const colorReport = colorAnalysis ? toColorReport(colorAnalysis) : null;
 
   return {
     sessionId: payload.sessionId,
@@ -466,8 +468,12 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     // the pre-baked demo clip instantly — see the video endpoints above.
     video: null,
     customGarment: null,
-    colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
+    colorAnalysis: colorReport,
     proofShot: toProofShot(proofPair, vtoResults),
+    // Shopping hangs off the measured palette rather than the shortlist: it
+    // answers "where do I get this colour", which outlives the three outfits
+    // we happened to render.
+    shopping: colorReport ? buildShopYourPalette(colorReport.heroColors, payload.preferences.tradition) : null,
   };
 }
 
@@ -528,6 +534,7 @@ async function buildLiveReport(payload: SessionPayload): Promise<EventReadyRepor
 
     const vtoTerminal = live.custom.vto.status === "success" || live.custom.vto.status === "error";
     const colorAnalysis = live.tones ? analyzeColorSeason(live.tones) : null;
+    const colorReport = colorAnalysis ? toColorReport(colorAnalysis) : null;
     const score = vtoTerminal
       ? scoreCustomGarment(live.custom.colorHex, colorAnalysis, live.skinSignals, live.custom.vto.status)
       : null;
@@ -561,11 +568,14 @@ async function buildLiveReport(payload: SessionPayload): Promise<EventReadyRepor
       prepTips: PREP_TIPS,
       video,
       customGarment,
-      colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
+      colorAnalysis: colorReport,
       // The proof compares two catalog garments of one silhouette. A custom
       // upload is a single garment with no same-cut sibling to compare it
       // against, so there is nothing honest to show here.
       proofShot: null,
+      // Still worth shopping: the palette was measured from their face, not
+      // taken from the garment they uploaded.
+      shopping: colorReport ? buildShopYourPalette(colorReport.heroColors, payload.preferences.tradition) : null,
     };
   }
 
@@ -596,6 +606,7 @@ async function buildLiveReport(payload: SessionPayload): Promise<EventReadyRepor
   // generate, so the two are always in agreement.
   const recommendedCatalogItemId =
     pickRecommendedCatalogItemId(scores, vtoResults) ?? live.selectedOutfits[0]?.item.id ?? "";
+  const colorReport = colorAnalysis ? toColorReport(colorAnalysis) : null;
 
   return {
     sessionId: payload.sessionId,
@@ -614,7 +625,8 @@ async function buildLiveReport(payload: SessionPayload): Promise<EventReadyRepor
     // drives off the video endpoints, not this field.
     video,
     customGarment: null,
-    colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
+    colorAnalysis: colorReport,
+    shopping: colorReport ? buildShopYourPalette(colorReport.heroColors, payload.preferences.tradition) : null,
     // Recomputed rather than carried on the session — see `selectLiveOutfits`
     // for why this is deterministic and why the token stays small.
     proofShot: toProofShot(

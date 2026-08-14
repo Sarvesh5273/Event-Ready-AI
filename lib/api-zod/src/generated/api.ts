@@ -274,7 +274,29 @@ export const GetSessionReportResponse = zod.object({
   "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash', 'washed_out']),
   "headline": zod.string()
 }).describe('One half of the side-by-side proof — a real catalog garment tried on the user.')
-}).describe('Two garments of the same silhouette — the best and the worst colour match for this person — rendered on their own body. Holding the silhouette constant is the whole point: if cut and drape also changed, any visible difference could not be attributed to colour.'),zod.null()]).describe('Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot.')
+}).describe('Two garments of the same silhouette — the best and the worst colour match for this person — rendered on their own body. Holding the silhouette constant is the whole point: if cut and drape also changed, any visible difference could not be attributed to colour.'),zod.null()]).describe('Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot.'),
+  "shopping": zod.union([zod.object({
+  "capturedAt": zod.string().describe('Date the listing index was gathered, so the user can judge staleness.'),
+  "garmentWord": zod.string().describe('What this tradition\'s garment is called, e.g. \"saree\".'),
+  "groups": zod.array(zod.object({
+  "paletteColor": zod.object({
+  "hex": zod.string(),
+  "name": zod.string()
+}),
+  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
+  "listings": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string().describe('The retailer\'s own product title, unedited — their claim, not ours.'),
+  "retailer": zod.string().describe('Retailer domain, shown as-is. Rendering a prettified brand name would mean inventing one for small boutiques.'),
+  "url": zod.string(),
+  "imageUrl": zod.string().describe('Locally cached copy of the retailer\'s photo, relative to the frontend\'s public dir. Cached rather than hot-linked so a retailer blocking cross-origin requests cannot blank the section.')
+}).describe('A real, buyable garment on a retailer\'s own product page.')),
+  "searchLinks": zod.array(zod.object({
+  "retailer": zod.string(),
+  "url": zod.string()
+}).describe('A retailer search for this colour, for browsing past the fixed listings.'))
+}))
+}).describe('Where to buy the colours we measured. Note the asymmetry: the colours come from the user\'s face and are measured; the garments are filed under the colour word their own retailer used, because retailer product photography cannot be colour-measured reliably. Clients must present these as places to look, never as scored verdicts.'),zod.null()]).describe('Real listings in the measured palette colours. Null when no palette was measured — with no measurement there is nothing honest to shop from.')
 })
 
 

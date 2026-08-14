@@ -8,6 +8,7 @@ import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
 import { ProofShotSection } from './proof-shot-section';
+import { ShopYourPaletteSection } from './shop-your-palette-section';
 import { SkinReadSection } from './skin-read-section';
 
 export function ResultsScreen({
@@ -207,6 +208,11 @@ export function ResultsScreen({
           isGeneratingVideo={isGeneratingVideo}
           videoError={videoError}
         />
+
+        {/* The verdict is only useful if she can act on it, so the buying
+            step sits directly after the recommendation rather than at the
+            very bottom under the prep notes. */}
+        <ShopYourPaletteSection shopping={report.shopping} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8">
           
