@@ -42,3 +42,11 @@ uploaded content.
    that itself gets echoed into a future token. If the consumer is a plain
    `<img src>` (which can't attach custom headers), pass the auth/session
    token as a query parameter on that one read-only endpoint instead.
+4. It is not only binary data. A handful of *URLs* will do it too: presigned
+   links run ~400 characters each, so under ten of them add several KB and
+   land in the same 431. When the token already holds a provider task/job id,
+   re-read the URLs from the provider when the response is actually built
+   instead of carrying them. Status re-reads are typically free and
+   un-billed, so this trades nothing for an unbounded field removed. Check
+   first whether the re-read can resurrect data a fallback already declared
+   unusable — see `unmeasured-fallback-must-clear-handles.md`.

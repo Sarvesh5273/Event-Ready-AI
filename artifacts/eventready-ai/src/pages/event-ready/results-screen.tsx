@@ -8,6 +8,7 @@ import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
 import { ProofShotSection } from './proof-shot-section';
+import { SkinReadSection } from './skin-read-section';
 
 export function ResultsScreen({
   report,
@@ -86,6 +87,11 @@ export function ResultsScreen({
             it is the one part of the result the user can verify themselves,
             so it has to land before we ask them to trust a score. */}
         <ProofShotSection proofShot={report.proofShot} />
+
+        {/* The skin read closes the evidence run because it is what turns a
+            colour verdict into a garment verdict — fabric finish and the prep
+            notes below both come from here. */}
+        <SkinReadSection skinOverlay={report.skinOverlay} skinSignals={report.skinSignals} />
 
         {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 mb-24">

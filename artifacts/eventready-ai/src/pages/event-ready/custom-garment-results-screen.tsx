@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Shirt } from 'lucide-react';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
+import { SkinReadSection } from './skin-read-section';
 
 interface CustomGarmentResultsScreenProps extends OutfitVideoProps {
   report: EventReadyReport;
@@ -67,6 +68,11 @@ export function CustomGarmentResultsScreen({
             verdict below is judged against this palette, so it has to be
             visible here too rather than asserted without evidence. */}
         <PaletteReveal analysis={report.colorAnalysis} />
+
+        {/* Same reasoning as the palette above: the fabric-finish and prep
+            parts of the verdict come from the skin read, so the evidence for
+            it belongs on this screen too. */}
+        <SkinReadSection skinOverlay={report.skinOverlay} skinSignals={report.skinSignals} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 mb-24">
           <motion.div

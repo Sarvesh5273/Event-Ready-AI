@@ -29,17 +29,26 @@ import { selectOutfits } from "../../lib/scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../../lib/scoring/scoreOutfits";
 import { pickGarmentProofPair, toProofShot } from "../../lib/scoring/proofPair";
 import { isLiveModeAvailable } from "../../lib/youcam/client";
+import { checkYouCamSkinAnalysisStatus } from "../../lib/youcam/skinAnalysis";
 import {
   DEMO_FACIAL_TONES,
   DEMO_RAW_SKIN_SCORES,
   DEMO_REPLAY_CATALOG_ITEM_IDS,
   DEMO_VTO_IMAGE_BY_CATALOG_ID,
   DEMO_VIDEO_URL,
+  DEMO_SKIN_OVERLAY_BASE_IMAGE_URL,
+  DEMO_SKIN_OVERLAY_MASK_URL_BY_CONCERN,
 } from "../../lib/demo/replay";
 import { PREP_TIPS } from "../../lib/content/prepTips";
 import { scoreCustomGarment } from "../../lib/scoring/customGarmentScore";
 import { getGarmentImage } from "../../lib/session/garmentImageStore";
-import type { CustomGarmentResult, EventReadyReport, VtoResult } from "../../lib/types";
+import type {
+  CustomGarmentResult,
+  EventReadyReport,
+  NormalizedSkinSignals,
+  SkinOverlaySet,
+  VtoResult,
+} from "../../lib/types";
 
 const router: IRouter = Router();
 
@@ -212,7 +221,7 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
     return;
   }
 
-  const report: EventReadyReport = payload.mode === "demo" ? buildDemoReport(payload) : buildLiveReport(payload);
+  const report: EventReadyReport = payload.mode === "demo" ? buildDemoReport(payload) : await buildLiveReport(payload);
 
   req.log.info({ sessionId: payload.sessionId, mode: payload.mode }, "Built EventReady report");
   res.status(200).json(GetSessionReportResponse.parse(report));
@@ -438,6 +447,16 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     flow: "catalog",
     recommendedCatalogItemId,
     skinSignals,
+    skinOverlay: {
+      baseImageUrl: DEMO_SKIN_OVERLAY_BASE_IMAGE_URL,
+      overlays: (Object.keys(DEMO_SKIN_OVERLAY_MASK_URL_BY_CONCERN) as (keyof typeof skinSignals)[]).map(
+        (concern) => ({
+          concern,
+          level: skinSignals[concern],
+          maskUrl: DEMO_SKIN_OVERLAY_MASK_URL_BY_CONCERN[concern],
+        }),
+      ),
+    },
     selectedOutfits,
     vtoResults,
     scores,
@@ -452,11 +471,48 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
   };
 }
 
-function buildLiveReport(payload: SessionPayload): EventReadyReport {
+/**
+ * Re-reads the skin masks from YouCam instead of carrying them on the session.
+ *
+ * Each mask URL runs ~430 characters, so the seven of them would add roughly
+ * 4KB to a session token that travels as a request header on every poll —
+ * a direct route to HTTP 431. The task id is already on the session and a
+ * status re-read consumes no units, so we fetch them once, here, at the point
+ * the report is actually built.
+ *
+ * Any failure yields null. An unmeasured face gets no overlay rather than a
+ * decorative one, which also means a session whose skin analysis errored and
+ * fell back to neutral signals correctly shows nothing.
+ */
+async function fetchLiveSkinOverlay(
+  skinTaskId: string | null,
+  skinSignals: NormalizedSkinSignals,
+): Promise<SkinOverlaySet | null> {
+  if (!skinTaskId) return null;
+  try {
+    const result = await checkYouCamSkinAnalysisStatus(skinTaskId);
+    if (result.status !== "success" || !result.overlays) return null;
+
+    return {
+      baseImageUrl: result.overlays.baseImageUrl,
+      overlays: result.overlays.overlays.map(({ concern, maskUrl }) => ({
+        concern,
+        level: skinSignals[concern],
+        maskUrl,
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function buildLiveReport(payload: SessionPayload): Promise<EventReadyReport> {
   const live = payload.live;
   if (!live || !live.skinSignals) {
     throw new Error(`Live session ${payload.sessionId} reached "ready" without a complete pipeline state.`);
   }
+
+  const skinOverlay = await fetchLiveSkinOverlay(live.skinTaskId, live.skinSignals);
 
   const videoStatus: "success" | "error" | "skipped" | null = live.video
     ? live.video.status === "success" || live.video.status === "error"
@@ -498,6 +554,7 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
       flow: "custom",
       recommendedCatalogItemId: "",
       skinSignals: live.skinSignals,
+      skinOverlay,
       selectedOutfits: [],
       vtoResults: [],
       scores: [],
@@ -546,6 +603,7 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     flow: "catalog",
     recommendedCatalogItemId,
     skinSignals: live.skinSignals,
+    skinOverlay,
     selectedOutfits: live.selectedOutfits,
     vtoResults,
     scores,

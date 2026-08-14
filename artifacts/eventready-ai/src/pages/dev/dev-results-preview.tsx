@@ -20,6 +20,7 @@
 import { useEffect, useState } from 'react';
 import type { EventReadyReport } from '@workspace/api-client-react';
 import { CustomGarmentResultsScreen } from '@/pages/event-ready/custom-garment-results-screen';
+import { ResultsScreen } from '@/pages/event-ready/results-screen';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -147,6 +148,47 @@ export function DevResultsPreview() {
           return;
         }
 
+        // Demo fast path: ?demo=1 runs the catalog flow in Demo Mode, which
+        // makes no YouCam calls at all. Free to reload, so this is the route
+        // to use for visual checks and screenshots of the catalog results
+        // screen — the live paths below cost real units every run.
+        if (params.get('demo')) {
+          setPhase({ kind: 'running', message: 'Creating demo session…' });
+
+          const createRes = await fetch(`${API}/api/sessions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mode: 'demo',
+              preferences: { occasion: 'wedding_guest', styleVibe: 'classic', tradition: 'any' },
+              garmentSource: 'catalog',
+            }),
+          });
+          const created = await createRes.json();
+          if (!created.sessionId) throw new Error(created.error ?? 'Failed to create demo session');
+          if (cancelled) return;
+
+          const analyzeRes = await fetch(`${API}/api/sessions/${created.sessionId}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionToken: created.sessionToken }),
+          });
+          const analyzed = await analyzeRes.json();
+          if (cancelled) return;
+
+          const { report } = await pollUntilReady(
+            created.sessionId,
+            analyzed.sessionToken ?? created.sessionToken,
+            msg => { if (!cancelled) setPhase({ kind: 'running', message: msg }); },
+            20,
+            1500,
+          );
+          if (cancelled) return;
+
+          setPhase({ kind: 'ready', report, garmentImageUrl: '' });
+          return;
+        }
+
         // Slow path: create a new live session from scratch.
         setPhase({ kind: 'running', message: 'Fetching demo persona images…' });
 
@@ -221,6 +263,23 @@ export function DevResultsPreview() {
 
     // phase.kind === 'ready'
     const { report, garmentImageUrl } = phase;
+
+    if (report.flow === 'catalog') {
+      return (
+        <div className="pt-10 pb-20">
+          <ResultsScreen
+            report={report}
+            isDemoMode={report.mode === 'demo'}
+            onStartOver={() => { window.location.href = '/'; }}
+            video={null}
+            onGenerateVideo={() => setDevVideoError('Video generation is not wired up in this dev preview — use the main flow to test it.')}
+            isGeneratingVideo={false}
+            videoError={devVideoError}
+          />
+        </div>
+      );
+    }
+
     const vtoStatus = report.customGarment?.vtoStatus;
 
     // Build the report variant for the selected case
@@ -268,7 +327,10 @@ export function DevResultsPreview() {
       {/* Dev toolbar */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-black/90 text-white text-xs px-4 py-2 flex flex-wrap items-center gap-4 font-mono">
         <span className="font-semibold text-yellow-400">[DEV PREVIEW]</span>
-        {phase.kind === 'ready' && (
+        {phase.kind === 'ready' && phase.report.flow === 'catalog' && (
+          <span className="opacity-70">Demo Mode — catalog results screen (no YouCam calls)</span>
+        )}
+        {phase.kind === 'ready' && phase.report.flow === 'custom' && (
           <>
             <span className="opacity-70">
               {activeCase === 'success'

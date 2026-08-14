@@ -320,6 +320,35 @@ export interface NormalizedSkinSignals {
   texture: SkinSignalLevel;
 }
 
+export type SkinConcern = typeof SkinConcern[keyof typeof SkinConcern];
+
+
+export const SkinConcern = {
+  redness: 'redness',
+  oiliness: 'oiliness',
+  darkCircles: 'darkCircles',
+  radiance: 'radiance',
+  moisture: 'moisture',
+  texture: 'texture',
+} as const;
+
+/**
+ * One measured concern and the segmentation mask showing where on the face it was detected. The mask is a binary image (coloured region on a black field) that clients composite over `baseImageUrl`.
+ */
+export interface SkinConcernOverlay {
+  concern: SkinConcern;
+  level: SkinSignalLevel;
+  maskUrl: string;
+}
+
+/**
+ * The visual evidence behind the skin reading. `baseImageUrl` is YouCam's own normalised copy of the selfie — the masks are aligned to that image and to nothing else, so clients must never composite them over the original upload.
+ */
+export interface SkinOverlaySet {
+  baseImageUrl: string;
+  overlays: SkinConcernOverlay[];
+}
+
 export interface OutfitCandidate {
   item: CatalogItem;
   selectionReasons: ReasonCode[];
@@ -500,6 +529,8 @@ export interface EventReadyReport {
   /** Empty string when `flow` is "custom" — nothing catalog-based to recommend. */
   recommendedCatalogItemId: string;
   skinSignals: NormalizedSkinSignals;
+  /** Where on the face each concern was measured. Null when YouCam returned no usable masks, and always null for a session whose skin analysis failed and fell back to neutral defaults — an unmeasured face never gets an illustrative overlay. */
+  skinOverlay: SkinOverlaySet | null;
   selectedOutfits: OutfitCandidate[];
   vtoResults: VtoResult[];
   scores: OutfitScore[];

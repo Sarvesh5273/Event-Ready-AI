@@ -87,6 +87,44 @@ export async function startYouCamSkinAnalysis(
   return startYouCamSkinAnalysisWithFileId(fileId);
 }
 
+/** One measured concern plus the mask showing where on the face it was found. */
+export interface SkinConcernOverlay {
+  concern: keyof RawSkinScores;
+  maskUrl: string;
+}
+
+/** A face image and the concern masks that are aligned to it. */
+export interface SkinOverlaySet {
+  baseImageUrl: string;
+  overlays: SkinConcernOverlay[];
+}
+
+/**
+ * Pulls the segmentation masks out of a Skin Analysis response.
+ *
+ * Alongside the six scored concerns, YouCam returns a `resize_image` entry
+ * whose mask URL is its own normalised copy of the selfie. The concern masks
+ * are aligned to THAT image, not to the bytes we uploaded, so we return the
+ * pair together and never let a caller composite a mask over the original
+ * upload.
+ *
+ * Returns null when the response carries no usable masks — a missing overlay
+ * is a missing overlay, and the UI says so rather than drawing an empty face.
+ */
+export function mapSkinAnalysisOutputToOverlays(output: YouCamSkinOutputItem[]): SkinOverlaySet | null {
+  const baseImageUrl = output.find((item) => item.type === "resize_image")?.mask_urls?.[0];
+  if (!baseImageUrl) return null;
+
+  const overlays: SkinConcernOverlay[] = [];
+  for (const item of output) {
+    const concern = TYPE_TO_FIELD[item.type];
+    const maskUrl = item.mask_urls?.[0];
+    if (concern && maskUrl) overlays.push({ concern, maskUrl });
+  }
+
+  return overlays.length > 0 ? { baseImageUrl, overlays } : null;
+}
+
 interface SkinTaskStatusResponse {
   results?: { output: YouCamSkinOutputItem[] };
   task_status: "running" | "success" | "error";
@@ -96,6 +134,7 @@ export interface SkinAnalysisStatusResult {
   status: "running" | "success" | "error";
   rawScores?: RawSkinScores;
   rawOutput?: YouCamSkinOutputItem[];
+  overlays?: SkinOverlaySet | null;
   errorMessage?: string;
 }
 
@@ -110,7 +149,12 @@ export async function checkYouCamSkinAnalysisStatus(taskId: string): Promise<Ski
 
   if (result.task_status === "success") {
     const output = result.results?.output ?? [];
-    return { status: "success", rawScores: mapSkinAnalysisOutputToRawScores(output), rawOutput: output };
+    return {
+      status: "success",
+      rawScores: mapSkinAnalysisOutputToRawScores(output),
+      rawOutput: output,
+      overlays: mapSkinAnalysisOutputToOverlays(output),
+    };
   }
 
   if (result.task_status === "error") {

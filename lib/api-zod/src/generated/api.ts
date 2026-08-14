@@ -144,6 +144,14 @@ export const GetSessionReportResponse = zod.object({
   "moisture": zod.enum(['low', 'medium', 'high', 'unknown']),
   "texture": zod.enum(['low', 'medium', 'high', 'unknown'])
 }),
+  "skinOverlay": zod.union([zod.object({
+  "baseImageUrl": zod.string(),
+  "overlays": zod.array(zod.object({
+  "concern": zod.enum(['redness', 'oiliness', 'darkCircles', 'radiance', 'moisture', 'texture']),
+  "level": zod.enum(['low', 'medium', 'high', 'unknown']),
+  "maskUrl": zod.string()
+}).describe('One measured concern and the segmentation mask showing where on the face it was detected. The mask is a binary image (coloured region on a black field) that clients composite over `baseImageUrl`.'))
+}).describe('The visual evidence behind the skin reading. `baseImageUrl` is YouCam\'s own normalised copy of the selfie — the masks are aligned to that image and to nothing else, so clients must never composite them over the original upload.'),zod.null()]).describe('Where on the face each concern was measured. Null when YouCam returned no usable masks, and always null for a session whose skin analysis failed and fell back to neutral defaults — an unmeasured face never gets an illustrative overlay.'),
   "selectedOutfits": zod.array(zod.object({
   "item": zod.object({
   "id": zod.string(),

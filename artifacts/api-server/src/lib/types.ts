@@ -133,6 +133,28 @@ export interface NormalizedSkinSignals {
   texture: SkinSignalLevel;
 }
 
+/** The six concerns YouCam AI Skin Analysis measures for us. */
+export type SkinConcern = keyof NormalizedSkinSignals;
+
+/** One measured concern and the mask showing where on the face it was found. */
+export interface SkinConcernOverlay {
+  concern: SkinConcern;
+  level: SkinSignalLevel;
+  maskUrl: string;
+}
+
+/**
+ * The visual evidence behind the skin reading.
+ *
+ * `baseImageUrl` is YouCam's own normalised copy of the selfie. The masks are
+ * aligned to that frame and to nothing else, so a client must never composite
+ * them over the original upload.
+ */
+export interface SkinOverlaySet {
+  baseImageUrl: string;
+  overlays: SkinConcernOverlay[];
+}
+
 export interface OutfitCandidate {
   item: CatalogItem;
   selectionReasons: ReasonCode[];
@@ -205,6 +227,13 @@ export interface EventReadyReport {
   /** Empty string when `flow` is "custom" — nothing catalog-based to recommend. */
   recommendedCatalogItemId: string;
   skinSignals: NormalizedSkinSignals;
+  /**
+   * Where each concern was measured on the face, or null when no usable masks
+   * came back. Also null for a session whose skin analysis failed and fell
+   * back to neutral defaults — an unmeasured face never gets an illustrative
+   * overlay.
+   */
+  skinOverlay: SkinOverlaySet | null;
   selectedOutfits: OutfitCandidate[];
   vtoResults: VtoResult[];
   scores: OutfitScore[];

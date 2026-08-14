@@ -19,13 +19,25 @@ export const DEMO_REPLAY_CATALOG_ITEM_IDS = [
   "champagne-satin-gown",
 ] as const;
 
+/**
+ * Concern-direction skin scores for the demo persona, derived from a REAL
+ * captured YouCam Skin Analysis response — see
+ * `public/demo/replay/skin-result-raw.json`, recorded by
+ * `scripts/capture-demo-skin-analysis.ts`.
+ *
+ * These were previously hand-written from the API reference because no key
+ * was available when Demo Mode was built, which made the numbers plausible
+ * but fictional. They are now the genuine measurement, which is why they
+ * read much healthier than the placeholders did (real redness 15, not 74).
+ * Do not hand-tune them: re-run the capture script instead.
+ */
 export const DEMO_RAW_SKIN_SCORES: RawSkinScores = {
-  redness: 74,
-  oiliness: 70,
-  darkCircles: 40,
-  radiance: 30,
-  moisture: 55,
-  texture: 45,
+  redness: 15,
+  oiliness: 45,
+  darkCircles: 33,
+  radiance: 6,
+  moisture: 36,
+  texture: 4,
 };
 
 /**
@@ -71,6 +83,29 @@ export const DEMO_PREP_TIPS = PREP_TIPS;
 
 export const DEMO_PERSONA_SELFIE_IMAGE_URL = "demo/persona-selfie.jpg";
 export const DEMO_PERSONA_FULL_BODY_IMAGE_URL = "demo/persona-full-body.jpg";
+
+/**
+ * The demo persona's skin overlay assets, captured in the same run as
+ * `DEMO_RAW_SKIN_SCORES` by `scripts/capture-demo-skin-analysis.ts`.
+ *
+ * YouCam serves masks as short-lived S3 links, so the images are committed
+ * here rather than referenced remotely — a demo that depends on an expiring
+ * URL is a demo that breaks the week after it is recorded.
+ *
+ * The base image is YouCam's own normalised copy of the selfie. The masks are
+ * aligned to that frame and to nothing else, which is why Demo Mode shows it
+ * rather than `DEMO_PERSONA_SELFIE_IMAGE_URL`.
+ */
+export const DEMO_SKIN_OVERLAY_BASE_IMAGE_URL = "demo/replay/skin-masks/resize_image.jpg";
+
+export const DEMO_SKIN_OVERLAY_MASK_URL_BY_CONCERN: Record<keyof RawSkinScores, string> = {
+  redness: "demo/replay/skin-masks/redness.jpg",
+  oiliness: "demo/replay/skin-masks/oiliness.jpg",
+  darkCircles: "demo/replay/skin-masks/dark_circle_v2.jpg",
+  radiance: "demo/replay/skin-masks/radiance.jpg",
+  moisture: "demo/replay/skin-masks/moisture.jpg",
+  texture: "demo/replay/skin-masks/texture.jpg",
+};
 
 /**
  * Pre-baked demo video for the bold-emerald-jumpsuit outfit — generated once

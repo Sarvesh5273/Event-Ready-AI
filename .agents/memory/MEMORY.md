@@ -12,3 +12,5 @@
 - [OpenAPI enum drift](openapi-enum-drift.md) — extending a TS union but not the spec enum passes typecheck, then 500s the *whole* response for any row using the new value.
 - [OpenAPI `integer` breaks zod codegen](openapi-zod-integer-codegen.md) — Orval emits v4-only `zod.int()`; use `type: number` and say "whole number" in the description.
 - [Negative controls must be excluded](negative-control-exclusion.md) — a deliberately-bad comparison item can win the blended ranking; exclude it from the shortlist, don't assume ordering separates them.
+- [Unmeasured fallbacks must clear handles](unmeasured-fallback-must-clear-handles.md) — when substituting neutral defaults, drop the task id too, or a later re-read pairs real evidence with the "unmeasured" verdict.
+- [Presigned URLs in public fixtures](public-fixture-presigned-urls.md) — captured API responses in `public/` leak AWS signatures and expire; rewrite URLs to baked local copies at capture time.

@@ -1,54 +1,97 @@
 {
   "_provenance": {
-    "source": "PerfectCorp YouCam AI Skin Analysis (SD tier) public API reference documentation",
+    "source": "PerfectCorp YouCam AI Skin Analysis (SD tier)",
     "url": "https://docs.perfectcorp.com/reference/ai_skin_analysis/v2.1",
-    "note": "No live YOUCAM_API_KEY was available in this build environment, so this file is not a captured response from a real account's API call. It reproduces the field names, envelope shape, and score direction exactly as documented, and is used to calibrate normalizeSkinSignals()/mapSkinAnalysisOutputToRawScores() against the real API contract. Replace this file with an actual captured response (GET /s2s/v2.0/task/skin-analysis/{task_id} with format: \"json\") once a real API key is available, without needing further code changes.",
-    "capturedAt": null
+    "note": "Real captured response for public/demo/persona-selfie.jpg, recorded by scripts/capture-demo-skin-analysis.ts.",
+    "capturedAt": "2026-08-14T13:52:25.180Z",
+    "dstActions": [
+      "redness",
+      "oiliness",
+      "dark_circle_v2",
+      "radiance",
+      "moisture",
+      "texture"
+    ]
   },
   "status": 200,
   "data": {
-    "task_id": "sample-task-id-0000",
-    "type": "skin-analysis",
-    "task_status": "success",
+    "error": null,
     "results": {
       "output": [
         {
-          "type": "redness",
-          "ui_score": 3,
-          "raw_score": 32,
-          "mask_urls": []
-        },
-        {
-          "type": "oiliness",
-          "ui_score": 3,
-          "raw_score": 28,
-          "mask_urls": []
-        },
-        {
-          "type": "dark_circle_v2",
-          "ui_score": 6,
-          "raw_score": 61,
-          "mask_urls": []
-        },
-        {
+          "ui_score": 90,
+          "mask_urls": [
+            "demo/replay/skin-masks/radiance.jpg"
+          ],
+          "raw_score": 93.68231892585754,
           "type": "radiance",
-          "ui_score": 7,
-          "raw_score": 68,
-          "mask_urls": []
+          "url": null
         },
         {
-          "type": "moisture",
-          "ui_score": 5,
-          "raw_score": 47,
-          "mask_urls": []
+          "ui_score": 72,
+          "mask_urls": [
+            "demo/replay/skin-masks/dark_circle_v2.jpg"
+          ],
+          "raw_score": 67.45606064796448,
+          "type": "dark_circle_v2",
+          "url": null
         },
         {
+          "ui_score": 83,
+          "mask_urls": [
+            "demo/replay/skin-masks/redness.jpg"
+          ],
+          "raw_score": 84.99141693115234,
+          "type": "redness",
+          "url": null
+        },
+        {
+          "ui_score": 70,
+          "mask_urls": [
+            "demo/replay/skin-masks/oiliness.jpg"
+          ],
+          "raw_score": 54.89923095703125,
+          "type": "oiliness",
+          "url": null
+        },
+        {
+          "ui_score": 94,
+          "mask_urls": [
+            "demo/replay/skin-masks/texture.jpg"
+          ],
+          "raw_score": 96.15228176116943,
           "type": "texture",
-          "ui_score": 6,
-          "raw_score": 58,
-          "mask_urls": []
+          "url": null
+        },
+        {
+          "ui_score": 75,
+          "mask_urls": [
+            "demo/replay/skin-masks/moisture.jpg"
+          ],
+          "raw_score": 64.00394439697266,
+          "type": "moisture",
+          "url": null
+        },
+        {
+          "score": 80.66666666666667,
+          "type": "all",
+          "url": null
+        },
+        {
+          "score": 31,
+          "type": "skin_age",
+          "url": null
+        },
+        {
+          "mask_urls": [
+            "demo/replay/skin-masks/resize_image.jpg"
+          ],
+          "type": "resize_image",
+          "url": null
         }
       ]
-    }
-  }
+    },
+    "task_status": "success"
+  },
+  "_sanitized": "YouCam returns masks as presigned S3 URLs that carry AWS credential identifiers and request signatures, and they expire. This file is served publicly, so those URLs have been replaced with the paths of the mask images baked into demo/replay/skin-masks/. Scores and provenance are untouched and are exactly what the API returned."
 }

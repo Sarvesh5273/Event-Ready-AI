@@ -14,6 +14,7 @@ import type { OutfitCandidate } from './outfitCandidate';
 import type { OutfitScore } from './outfitScore';
 import type { ProofShot } from './proofShot';
 import type { SessionMode } from './sessionMode';
+import type { SkinOverlaySet } from './skinOverlaySet';
 import type { VtoResult } from './vtoResult';
 
 export interface EventReadyReport {
@@ -23,6 +24,8 @@ export interface EventReadyReport {
   /** Empty string when `flow` is "custom" — nothing catalog-based to recommend. */
   recommendedCatalogItemId: string;
   skinSignals: NormalizedSkinSignals;
+  /** Where on the face each concern was measured. Null when YouCam returned no usable masks, and always null for a session whose skin analysis failed and fell back to neutral defaults — an unmeasured face never gets an illustrative overlay. */
+  skinOverlay: SkinOverlaySet | null;
   selectedOutfits: OutfitCandidate[];
   vtoResults: VtoResult[];
   scores: OutfitScore[];

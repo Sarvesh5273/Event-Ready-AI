@@ -461,6 +461,16 @@ async function checkVideoTask(sessionId: string, live: LiveSessionState): Promis
   }
 }
 
+/**
+ * Note the `skinTaskId: null` on every fallback path below.
+ *
+ * The task id is what `buildLiveReport` later re-reads to fetch the mask
+ * overlays. Once we have decided this session is unmeasured and substituted
+ * neutral signals, that id must not survive: a task that fails our status
+ * check here can still succeed on a later re-read, which would put real masks
+ * on screen next to signals we never actually measured. Dropping the id is
+ * what keeps "we could not read this face" true for the whole report.
+ */
 async function checkSkinTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
   try {
     const result = await checkYouCamSkinAnalysisStatus(live.skinTaskId!);
@@ -475,13 +485,13 @@ async function checkSkinTask(sessionId: string, live: LiveSessionState): Promise
 
     if (result.status === "error") {
       logger.warn({ sessionId }, "YouCam Skin Analysis task failed — falling back to neutral signals");
-      return { ...live, skinResolved: true, skinSignals: NEUTRAL_SKIN_SIGNALS };
+      return { ...live, skinResolved: true, skinTaskId: null, skinSignals: NEUTRAL_SKIN_SIGNALS };
     }
 
     return live; // still running — check again next poll
   } catch (err) {
     logger.warn({ err, sessionId }, "Skin Analysis status check errored — falling back to neutral signals");
-    return { ...live, skinResolved: true, skinSignals: NEUTRAL_SKIN_SIGNALS };
+    return { ...live, skinResolved: true, skinTaskId: null, skinSignals: NEUTRAL_SKIN_SIGNALS };
   }
 }
 
@@ -554,7 +564,7 @@ function resolveStalledSelfieTasks(payload: SessionPayload, live: LiveSessionSta
 
   if (!next.skinResolved) {
     logger.warn({ sessionId: payload.sessionId }, "Skin Analysis timed out — falling back to neutral signals");
-    next = { ...next, skinResolved: true, skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS };
+    next = { ...next, skinResolved: true, skinTaskId: null, skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS };
   }
   if (!next.toneResolved) {
     logger.warn({ sessionId: payload.sessionId }, "Facial Colour Tones timed out — continuing without a palette");
