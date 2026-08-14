@@ -163,6 +163,7 @@ export const ReasonCode = {
   palette_harmonious_color: 'palette_harmonious_color',
   palette_neutral_color: 'palette_neutral_color',
   palette_clash_color: 'palette_clash_color',
+  palette_washed_out_color: 'palette_washed_out_color',
   color_reading_unavailable: 'color_reading_unavailable',
 } as const;
 
@@ -473,6 +474,7 @@ export const ColorVerdict = {
   harmonious: 'harmonious',
   neutral: 'neutral',
   clash: 'clash',
+  washed_out: 'washed_out',
 } as const;
 
 /**
@@ -505,6 +507,17 @@ export interface ProofShot {
   worst: ProofShotSide;
 }
 
+/**
+ * Which measured feature anchored the depth and contrast reading. Hair is preferred; "eyebrow" means the hair swatch was missing or failed the plausibility cross-check.
+ */
+export type DepthSource = typeof DepthSource[keyof typeof DepthSource];
+
+
+export const DepthSource = {
+  hair: 'hair',
+  eyebrow: 'eyebrow',
+} as const;
+
 export interface ColorReport {
   season: ColorSeason;
   seasonLabel: string;
@@ -516,6 +529,10 @@ export interface ColorReport {
   /** 0..1 — how clearly the dominant trait beat the runner-up. */
   confidence: number;
   measured: FacialColorTones;
+  /** Null when neither hair nor brows could be read. */
+  depthSource: DepthSource | null;
+  /** True when a hair colour was returned but measured far lighter than the eyebrows, and was therefore excluded from the reading. This is a plausibility rule, not a diagnosis: the usual cause is the hair swatch catching skin or background, but bleached or greying hair reads the same way. Either way the depth is taken from the brows. */
+  hairReadingRejected: boolean;
   heroColors: PaletteColor[];
   avoidColors: PaletteColor[];
   bestNeutral: PaletteColor;

@@ -31,6 +31,9 @@ export interface FacialColorTones {
 
 export type DominantTrait = "warm" | "cool" | "light" | "deep" | "bright" | "soft";
 
+/** Which measured feature anchored the depth and contrast reading. */
+export type DepthSource = "hair" | "eyebrow";
+
 /**
  * Where the wearer sits on each axis. All three run -1..+1 and are reported
  * to the UI, because showing the axes is what makes the verdict feel
@@ -55,6 +58,23 @@ export interface ColorAnalysis {
   /** 0..1 — how clearly the dominant trait beat the runner-up. */
   confidence: number;
   measured: FacialColorTones;
+  /** Skin L* — the reference every garment's value contrast is measured against. */
+  skinLightness: number;
+  /**
+   * 0..1 — how much contrast the wearer carries between their skin and their
+   * hair/brows. Drives how much separation a garment needs to look right on
+   * them, which is a separate question from whether its hue suits them.
+   *
+   * Null when neither hair nor brows could be read. Contrast is a measurement,
+   * so there is no honest default for it: a substituted "medium" would silently
+   * decide how much separation every garment needs for a wearer nothing was
+   * measured on. Consumers must drop the contrast term rather than fill it in.
+   */
+  contrastLevel: number | null;
+  /** Which feature the depth reading came from, or null if neither was measurable. */
+  depthSource: DepthSource | null;
+  /** True when the hair swatch was measured but rejected as implausible. */
+  hairReadingRejected: boolean;
   heroColors: PaletteColor[];
   avoidColors: PaletteColor[];
   bestNeutral: PaletteColor;
@@ -121,6 +141,54 @@ function eyeTemperature(eye: Lab): { value: number; weight: number } {
   };
 }
 
+/**
+ * Hair segmentation is the least reliable measurement of the set. It traces a
+ * soft, translucent edge against whatever is behind it, so the swatch that
+ * comes back can be backdrop, a rim-lit highlight, or forehead skin rather
+ * than hair — and when that happens the value is not noisy, it is simply
+ * somebody else's colour.
+ *
+ * Eyebrows are the cross-check. They are small, opaque, always inside the
+ * face crop, and share their pigment with the hair, so brow lightness tracks
+ * natural hair depth closely. Hair that measures far *lighter* than the brows
+ * is therefore the signature of a failed hair segmentation: the swatch has
+ * drifted towards skin or background, both of which are lighter than hair.
+ *
+ * The asymmetry is deliberate — only "much lighter" is rejected. Hair darker
+ * than the brows is ordinary, and genuinely bleached or greying hair is also
+ * much lighter than the brows, so this rule reads dye as "use the brows".
+ * That is the same call a human analyst makes: colour is read from natural
+ * depth, not from the box dye.
+ */
+const HAIR_LIGHTER_THAN_BROW_LIMIT = 18;
+
+interface DepthReading {
+  lab: Lab;
+  source: DepthSource;
+  /** Hair only votes on temperature when it survived the cross-check. */
+  hairUsable: boolean;
+  rejected: boolean;
+}
+
+function resolveDepth(hair: Lab | null, brow: Lab | null): DepthReading | null {
+  if (hair && brow && hair.l - brow.l > HAIR_LIGHTER_THAN_BROW_LIMIT) {
+    return { lab: brow, source: "eyebrow", hairUsable: false, rejected: true };
+  }
+  if (hair) return { lab: hair, source: "hair", hairUsable: true, rejected: false };
+  if (brow) return { lab: brow, source: "eyebrow", hairUsable: false, rejected: false };
+  return null;
+}
+
+/**
+ * Contrast is the lightness gap between the face and the hair framing it.
+ * It is reported separately from the axes because it answers a different
+ * question: not "which colours suit this person" but "how much separation
+ * does a garment need before it reads as deliberate on them".
+ */
+function computeContrast(skin: Lab, depth: Lab | null): number | null {
+  return depth ? ramp(Math.abs(skin.l - depth.l), 12, 55) : null;
+}
+
 function computeTemperature(skin: Lab, hair: Lab | null, eye: Lab | null): number {
   let weighted = skinTemperature(skin) * 0.5;
   let totalWeight = 0.5;
@@ -145,12 +213,12 @@ function computeTemperature(skin: Lab, hair: Lab | null, eye: Lab | null): numbe
  * fair skin and near-black hair is not "light" — the hair pulls them deep,
  * which is why hair carries nearly as much weight as skin here.
  */
-function computeValue(skin: Lab, hair: Lab | null): number {
+function computeValue(skin: Lab, depth: Lab | null): number {
   const skinValue = bipolar(skin.l, 40, 75);
-  if (!hair) return clamp(skinValue, -1, 1);
+  if (!depth) return clamp(skinValue, -1, 1);
 
-  const hairValue = bipolar(hair.l, 18, 65);
-  return clamp(skinValue * 0.55 + hairValue * 0.45, -1, 1);
+  const depthValue = bipolar(depth.l, 18, 65);
+  return clamp(skinValue * 0.55 + depthValue * 0.45, -1, 1);
 }
 
 /**
@@ -159,14 +227,17 @@ function computeValue(skin: Lab, hair: Lab | null): number {
  * the features themselves (a saturated blue or green eye). Low contrast plus
  * muted features is what "soft" means.
  */
-function computeChroma(skin: Lab, hair: Lab | null, eye: Lab | null, lip: Lab | null): number {
-  const contrast = hair ? ramp(Math.abs(skin.l - hair.l), 12, 55) : 0.4;
-
+function computeChroma(contrast: number | null, eye: Lab | null, lip: Lab | null): number {
   const vividness = ramp(
     Math.max(eye ? labChroma(eye) : 0, lip ? labChroma(lip) * 0.75 : 0),
     8,
     30,
   );
+
+  // With no depth reading, vividness carries the full weight rather than
+  // being averaged against a stand-in contrast value. Re-weighting what was
+  // actually measured is honest; inventing the missing half is not.
+  if (contrast === null) return clamp(vividness * 2 - 1, -1, 1);
 
   return clamp((contrast * 0.6 + vividness * 0.4) * 2 - 1, -1, 1);
 }
@@ -228,11 +299,15 @@ export function analyzeColorSeason(tones: FacialColorTones): ColorAnalysis | nul
   const hair = hexToLab(tones.hairColor);
   const eye = hexToLab(tones.eyeColor);
   const lip = hexToLab(tones.lipColor);
+  const brow = hexToLab(tones.eyebrowColor);
+
+  const depth = resolveDepth(hair, brow);
+  const contrastLevel = computeContrast(skin, depth?.lab ?? null);
 
   const axes: PaletteAxes = {
-    temperature: computeTemperature(skin, hair, eye),
-    value: computeValue(skin, hair),
-    chroma: computeChroma(skin, hair, eye, lip),
+    temperature: computeTemperature(skin, depth?.hairUsable ? hair : null, eye),
+    value: computeValue(skin, depth?.lab ?? null),
+    chroma: computeChroma(contrastLevel, eye, lip),
   };
 
   const ranked = rankTraits(axes);
@@ -246,7 +321,7 @@ export function analyzeColorSeason(tones: FacialColorTones): ColorAnalysis | nul
   // face we actually got to measure. A reading taken from skin alone is
   // materially less certain than one backed by hair and eye colour too.
   const separation = ramp(dominant.strength - runnerUp.strength, 0, 0.35);
-  const coverage = (hair ? 0.3 : 0) + (eye ? 0.2 : 0) + 0.5;
+  const coverage = (depth ? 0.3 : 0) + (eye ? 0.2 : 0) + 0.5;
   const confidence = clamp(0.45 + separation * 0.4 + (coverage - 0.5) * 0.3, 0.35, 0.96);
 
   return {
@@ -258,6 +333,10 @@ export function analyzeColorSeason(tones: FacialColorTones): ColorAnalysis | nul
     axes,
     confidence: Math.round(confidence * 100) / 100,
     measured: tones,
+    skinLightness: Math.round(skin.l * 10) / 10,
+    contrastLevel: contrastLevel === null ? null : Math.round(contrastLevel * 100) / 100,
+    depthSource: depth?.source ?? null,
+    hairReadingRejected: depth?.rejected ?? false,
     heroColors: palette.heroColors,
     avoidColors: palette.avoidColors,
     bestNeutral: palette.bestNeutral,

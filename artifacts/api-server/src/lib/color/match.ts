@@ -12,10 +12,60 @@ import { clamp, deltaE2000, hexToLab, ramp } from "./lab";
 import type { PaletteColor } from "./palettes";
 import type { ColorAnalysis } from "./season";
 
-export type ColorVerdict = "hero" | "harmonious" | "neutral" | "clash";
+export type ColorVerdict = "hero" | "harmonious" | "neutral" | "clash" | "washed_out";
 
 /** Maximum points colour fit can contribute to an outfit score. */
 export const MAX_COLOR_POINTS = 30;
+
+/**
+ * Hue harmony answers "is this one of your colours". Value contrast answers a
+ * different question — "will this read as a garment, or will it merge into
+ * you" — and the two disagree often enough that scoring only the first gets
+ * visibly wrong answers.
+ *
+ * A garment sitting at the wearer's own lightness has nothing to separate it
+ * from their skin, so the eye stops finding an edge at the neckline and the
+ * face flattens, however well-chosen the hue. Conversely a colour outside the
+ * palette can still look deliberate and sharp when it carries the depth the
+ * wearer's own colouring leads you to expect. Contrast therefore contributes
+ * its own points rather than merely scaling the hue score, because otherwise
+ * a well-matched hue can never lose to a better-contrasted one.
+ */
+const HUE_WEIGHT = 0.6;
+const CONTRAST_WEIGHT = 0.4;
+
+/**
+ * How much lighter or darker than the wearer's skin a garment needs to sit
+ * before it reads as a garment rather than an extension of the wearer.
+ *
+ * The curve rises to a floor and then *stays* satisfied, rather than aiming
+ * at a target. Too little separation is a real and very visible failure — the
+ * neckline stops registering as an edge and the face flattens. Too much
+ * mostly is not: deep skin against ivory and fair skin against black are two
+ * of the most reliably flattering combinations there are, and an earlier
+ * symmetric version of this function scored both at zero, which is how the
+ * error was caught.
+ *
+ * The one case where excess does cost something is a genuinely low-contrast
+ * person, whose features can be overpowered by a hard dark/light break. That
+ * is a soft, partial penalty applied only in proportion to how little
+ * contrast they carry — never the cliff that the target-band version imposed
+ * on everyone.
+ */
+const WASHOUT_FLOOR = 7;
+const SEPARATION_NEEDED_MIN = 14;
+const SEPARATION_NEEDED_MAX = 34;
+const OVERSHOOT_MAX_PENALTY = 0.3;
+
+/**
+ * A garment that washes the wearer out cannot be allowed to score like a
+ * mid-table option just because its hue is right. Without this cap a textbook
+ * palette colour sitting at the wearer's own lightness keeps the full hue
+ * score and loses only the contrast term — landing mid-table while the copy
+ * tells the user it flattens their face. The cap keeps the number and the
+ * verdict saying the same thing, and keeps a washout from being shortlisted.
+ */
+const WASHOUT_MAX_POINTS = 10;
 
 export interface GarmentColorMatch {
   verdict: ColorVerdict;
@@ -27,6 +77,14 @@ export interface GarmentColorMatch {
   deltaToClash: number | null;
   /** 0..MAX_COLOR_POINTS contribution to the outfit score. */
   points: number;
+  /** L* gap between the garment and the wearer's skin. */
+  separation: number;
+  /**
+   * 0..1 — how well that gap matches the contrast the wearer naturally
+   * carries, or null when their contrast could not be measured and the
+   * garment was judged on hue alone.
+   */
+  contrastFit: number | null;
   /** One-line explanation written for the wearer. */
   headline: string;
 }
@@ -55,16 +113,41 @@ function nearest(
  * work — being in the neighbourhood is enough, which is why the score decays
  * smoothly rather than snapping between buckets.
  */
+function contrastFitFor(
+  garmentL: number,
+  analysis: ColorAnalysis,
+): { separation: number; fit: number | null } {
+  const separation = Math.abs(garmentL - analysis.skinLightness);
+
+  // Contrast was never measured, so how much separation this wearer needs is
+  // genuinely unknown. Returning null makes the caller drop the term; a
+  // stand-in value would score every garment against a wearer we never read.
+  if (analysis.contrastLevel === null) {
+    return { separation: Math.round(separation * 10) / 10, fit: null };
+  }
+
+  const needed =
+    SEPARATION_NEEDED_MIN + (SEPARATION_NEEDED_MAX - SEPARATION_NEEDED_MIN) * analysis.contrastLevel;
+
+  const reached = ramp(separation, WASHOUT_FLOOR, needed);
+  const overshoot =
+    ramp(separation - needed, 25, 60) * (1 - analysis.contrastLevel) * OVERSHOOT_MAX_PENALTY;
+
+  return { separation: Math.round(separation * 10) / 10, fit: clamp(reached - overshoot, 0, 1) };
+}
+
 export function judgeGarmentColor(
   garmentHex: string,
   analysis: ColorAnalysis,
 ): GarmentColorMatch | null {
+  const garmentLab = hexToLab(garmentHex);
   const hero = nearest(garmentHex, analysis.heroColors);
-  if (!hero) return null;
+  if (!hero || !garmentLab) return null;
 
   const clash = nearest(garmentHex, analysis.avoidColors);
 
   const heroScore = MAX_COLOR_POINTS * (1 - ramp(hero.delta, 8, 45));
+  const { separation, fit } = contrastFitFor(garmentLab.l, analysis);
 
   // Only penalise when the garment is genuinely closer to a problem colour
   // than to a palette colour — otherwise a deep burgundy that happens to sit
@@ -72,12 +155,41 @@ export function judgeGarmentColor(
   const isClashDominant = clash !== null && clash.delta < hero.delta;
   const clashPenalty = isClashDominant ? 12 * (1 - ramp(clash.delta, 6, 30)) : 0;
 
-  const points = Math.round(clamp(heroScore - clashPenalty, 0, MAX_COLOR_POINTS));
+  // With no contrast measurement, hue carries the whole score rather than
+  // being scaled down to 60% of a scale whose other 40% cannot be filled.
+  const blended =
+    fit === null
+      ? heroScore - clashPenalty
+      : heroScore * HUE_WEIGHT + MAX_COLOR_POINTS * fit * CONTRAST_WEIGHT - clashPenalty;
+
+  // Washing out is its own failure and gets its own verdict. A garment can be
+  // a textbook palette hue and still be the wrong thing to wear because it
+  // disappears into the wearer, and saying "harmonious" about it would be
+  // technically true and useless.
+  //
+  // The test is the raw L* gap, not the fitted score, so it still holds when
+  // contrast could not be measured: skin lightness alone is enough to know a
+  // garment is sitting on top of it.
+  const washedOut = separation < WASHOUT_FLOOR;
+
+  const points = Math.round(
+    clamp(washedOut ? Math.min(blended, WASHOUT_MAX_POINTS) : blended, 0, MAX_COLOR_POINTS),
+  );
+
+  // "Clash" has to mean the garment actively works against the wearer, not
+  // merely that its nearest neighbour happens to sit on the avoid list. A
+  // colour that lands mid-table on the blended score is not fighting anyone —
+  // it is unremarkable, and "neutral" says so honestly. Reserving the harsh
+  // label for genuinely low scores keeps it meaningful when it does appear.
+  const CLASH_MAX_POINTS = 13;
 
   let verdict: ColorVerdict;
-  if (hero.delta <= 12) verdict = "hero";
+  if (washedOut) verdict = "washed_out";
+  else if (hero.delta <= 12 && (fit === null || fit >= 0.45)) verdict = "hero";
+  else if (isClashDominant && clash !== null && clash.delta <= 20 && points < CLASH_MAX_POINTS) {
+    verdict = "clash";
+  } else if (points >= 17) verdict = "harmonious";
   else if (hero.delta <= 26) verdict = "harmonious";
-  else if (isClashDominant && clash !== null && clash.delta <= 20) verdict = "clash";
   else verdict = "neutral";
 
   const headline = buildHeadline(verdict, hero.color, clash?.color ?? null, analysis);
@@ -89,6 +201,8 @@ export function judgeGarmentColor(
     nearestClash: clash?.color ?? null,
     deltaToClash: clash ? Math.round(clash.delta * 10) / 10 : null,
     points,
+    separation,
+    contrastFit: fit === null ? null : Math.round(fit * 100) / 100,
     headline,
   };
 }
@@ -110,6 +224,8 @@ function buildHeadline(
         : `This one pulls against your palette.`;
     case "neutral":
       return `Neither a palette colour nor a problem one — it will read as safe rather than striking.`;
+    case "washed_out":
+      return `Sits at almost exactly your own colouring, so it flattens your face rather than lifting it.`;
   }
 }
 

@@ -76,6 +76,16 @@ export const DEMO_VTO_IMAGE_BY_CATALOG_ID: Record<string, string> = {
   "champagne-satin-gown": "demo/replay/vto-champagne-satin-gown.jpg",
   "rose-wrap-low": "demo/replay/vto-rose-wrap-low.jpg",
   "navy-wrap-dress": "demo/replay/vto-navy-wrap-dress.jpg",
+  // The demo persona reads True Autumn, and the widest same-silhouette colour
+  // gap available to her is emerald against lilac — a 28-point spread where
+  // the lilac washes out against her skin rather than merely mismatching it.
+  // Without these two the proof section has no pair to draw and disappears.
+  "bold-emerald-kaftan": "demo/replay/vto-bold-emerald-kaftan.jpg",
+  "classic-lilac-kaftan": "demo/replay/vto-classic-lilac-kaftan.jpg",
+  // Proof pairs are filtered by tradition, so the kaftans above cover "any"
+  // and non-western traditions but leave a western visitor with no pair at
+  // all. This is the western half: burgundy against the rose wrap dress.
+  "burgundy-wrap-midi": "demo/replay/vto-burgundy-wrap-midi.jpg",
 };
 
 /** @deprecated use `PREP_TIPS` from `../content/prepTips` directly — kept as a re-export for backward compatibility. */

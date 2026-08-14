@@ -14,4 +14,5 @@ export const ColorVerdict = {
   harmonious: 'harmonious',
   neutral: 'neutral',
   clash: 'clash',
+  washed_out: 'washed_out',
 } as const;

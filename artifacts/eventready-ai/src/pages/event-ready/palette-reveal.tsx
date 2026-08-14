@@ -96,11 +96,31 @@ export function PaletteReveal({ analysis }: PaletteRevealProps) {
   // flatMap rather than filter so `hex` narrows to a plain string — the
   // measured fields are nullable and a null hex must drop the swatch
   // entirely rather than render an empty box.
+  const hairRejected = analysis.hairReadingRejected;
+
   const measured = [
-    { label: 'Skin', hex: analysis.measured.skinColor, detail: null as string | null },
-    { label: 'Hair', hex: analysis.measured.hairColor, detail: analysis.measured.hairColorName },
-    { label: 'Eyes', hex: analysis.measured.eyeColor, detail: analysis.measured.eyeColorName },
-  ].flatMap((m) => (m.hex ? [{ label: m.label, hex: m.hex, detail: m.detail }] : []));
+    { label: 'Skin', hex: analysis.measured.skinColor, detail: null as string | null, rejected: false },
+    {
+      label: 'Hair',
+      hex: analysis.measured.hairColor,
+      detail: analysis.measured.hairColorName,
+      rejected: hairRejected,
+    },
+    // The brows only appear when they are actually carrying the depth
+    // reading. Showing them on every result would add a swatch that changed
+    // nothing; showing them here explains what replaced the discarded hair.
+    ...(hairRejected && analysis.measured.eyebrowColor
+      ? [
+          {
+            label: 'Brows',
+            hex: analysis.measured.eyebrowColor,
+            detail: 'Used for depth instead',
+            rejected: false,
+          },
+        ]
+      : []),
+    { label: 'Eyes', hex: analysis.measured.eyeColor, detail: analysis.measured.eyeColorName, rejected: false },
+  ].flatMap((m) => (m.hex ? [{ label: m.label, hex: m.hex, detail: m.detail, rejected: m.rejected }] : []));
 
   const confidencePct = Math.round(analysis.confidence * 100);
 
@@ -131,20 +151,45 @@ export function PaletteReveal({ analysis }: PaletteRevealProps) {
                   data-testid={`measured-${m.label.toLowerCase()}`}
                 >
                   <div
-                    className="w-14 h-14 border border-border/60 shrink-0"
+                    className={`w-14 h-14 border border-border/60 shrink-0 ${m.rejected ? 'opacity-40' : ''}`}
                     style={{ backgroundColor: m.hex }}
                     aria-hidden="true"
                   />
                   <div className="leading-tight">
-                    <div className="text-sm font-medium text-foreground">{m.label}</div>
-                    <div className="text-xs text-muted-foreground font-mono uppercase">{m.hex}</div>
+                    <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                      {m.label}
+                      {m.rejected && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border border-border px-1.5 py-0.5">
+                          Not used
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={`text-xs text-muted-foreground font-mono uppercase ${m.rejected ? 'line-through opacity-70' : ''}`}
+                    >
+                      {m.hex}
+                    </div>
                     {m.detail && (
-                      <div className="text-xs text-muted-foreground mt-0.5">{m.detail}</div>
+                      <div
+                        className={`text-xs text-muted-foreground mt-0.5 ${m.rejected ? 'line-through opacity-70' : ''}`}
+                      >
+                        {m.detail}
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
             </div>
+            {hairRejected && (
+              <p
+                className="text-xs text-muted-foreground/90 mt-6 max-w-2xl leading-relaxed border-l-2 border-border pl-3"
+                data-testid="hair-reading-rejected"
+              >
+                The hair swatch came back lighter than the brows. That usually means the
+                segmentation caught skin or background rather than hair, so we left it out of the
+                reading and took your depth from the brows instead.
+              </p>
+            )}
           </div>
         )}
 

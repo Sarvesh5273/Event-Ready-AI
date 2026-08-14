@@ -7,6 +7,7 @@
  */
 import type { ColorProofPair } from './colorProofPair';
 import type { ColorSeason } from './colorSeason';
+import type { DepthSource } from './depthSource';
 import type { DominantTrait } from './dominantTrait';
 import type { FacialColorTones } from './facialColorTones';
 import type { PaletteAxes } from './paletteAxes';
@@ -23,6 +24,10 @@ export interface ColorReport {
   /** 0..1 — how clearly the dominant trait beat the runner-up. */
   confidence: number;
   measured: FacialColorTones;
+  /** Null when neither hair nor brows could be read. */
+  depthSource: DepthSource | null;
+  /** True when a hair colour was returned but measured far lighter than the eyebrows, and was therefore excluded from the reading. This is a plausibility rule, not a diagnosis: the usual cause is the hair swatch catching skin or background, but bleached or greying hair reads the same way. Either way the depth is taken from the brows. */
+  hairReadingRejected: boolean;
   heroColors: PaletteColor[];
   avoidColors: PaletteColor[];
   bestNeutral: PaletteColor;

@@ -1,7 +1,7 @@
 import { pickProofPair } from "./match";
 import type { ColorSeason, PaletteColor } from "./palettes";
 import { describeAxes } from "./season";
-import type { ColorAnalysis, DominantTrait, FacialColorTones, PaletteAxes } from "./season";
+import type { ColorAnalysis, DepthSource, DominantTrait, FacialColorTones, PaletteAxes } from "./season";
 
 /**
  * The colour reading as the client sees it.
@@ -26,6 +26,18 @@ export interface ColorReport {
   confidence: number;
   /** Raw colours measured from the selfie. Nulls mean that feature was not returned. */
   measured: FacialColorTones;
+  /**
+   * Which feature anchored the depth reading, and whether a hair colour was
+   * measured but thrown out.
+   *
+   * The client needs both because it displays the raw swatches. Showing a
+   * hair swatch the engine refused to use, with no indication that it was
+   * refused, would be the one kind of dishonesty this panel exists to
+   * prevent — the user would see a measurement contradicted by their own
+   * reflection and have no way to tell we had already caught it.
+   */
+  depthSource: DepthSource | null;
+  hairReadingRejected: boolean;
   heroColors: PaletteColor[];
   avoidColors: PaletteColor[];
   bestNeutral: PaletteColor;
@@ -44,6 +56,8 @@ export function toColorReport(analysis: ColorAnalysis): ColorReport {
     axesSummary: describeAxes(analysis.axes),
     confidence: analysis.confidence,
     measured: analysis.measured,
+    depthSource: analysis.depthSource,
+    hairReadingRejected: analysis.hairReadingRejected,
     heroColors: analysis.heroColors,
     avoidColors: analysis.avoidColors,
     bestNeutral: analysis.bestNeutral,

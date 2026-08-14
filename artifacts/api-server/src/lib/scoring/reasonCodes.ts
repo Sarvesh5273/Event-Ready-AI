@@ -23,6 +23,8 @@ export const REASON_COPY: Record<ReasonCode, string> = {
   palette_harmonious_color: "This color sits comfortably inside your palette.",
   palette_neutral_color: "This color is neither a standout nor a problem for your palette.",
   palette_clash_color: "This color pulls against your natural coloring.",
+  palette_washed_out_color:
+    "This color sits at almost exactly your own lightness, so it flattens your face rather than lifting it.",
   color_reading_unavailable: "We couldn't read your coloring from your photo, so this score reflects fit and style only.",
 };
 
@@ -36,4 +38,5 @@ export const COLOR_VERDICT_REASON = {
   harmonious: "palette_harmonious_color",
   neutral: "palette_neutral_color",
   clash: "palette_clash_color",
+  washed_out: "palette_washed_out_color",
 } as const satisfies Record<string, ReasonCode>;

@@ -16,6 +16,7 @@ export * from './colorSeason';
 export * from './colorVerdict';
 export * from './customGarmentResult';
 export * from './customGarmentScore';
+export * from './depthSource';
 export * from './dominantTrait';
 export * from './eventReadyReport';
 export * from './eventReadyVideo';

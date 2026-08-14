@@ -340,6 +340,7 @@ components:
         - palette_harmonious_color
         - palette_neutral_color
         - palette_clash_color
+        - palette_washed_out_color
         - color_reading_unavailable
     VtoTaskStatus:
       type: string
@@ -787,7 +788,7 @@ components:
       required: [best, worst]
     ColorVerdict:
       type: string
-      enum: [hero, harmonious, neutral, clash]
+      enum: [hero, harmonious, neutral, clash, washed_out]
     ProofShotSide:
       type: object
       description: One half of the side-by-side proof — a real catalog garment tried on the user.
@@ -850,6 +851,13 @@ components:
         worst:
           $ref: "#/components/schemas/ProofShotSide"
       required: [silhouette, gap, maxPoints, best, worst]
+    DepthSource:
+      type: string
+      description: >-
+        Which measured feature anchored the depth and contrast reading. Hair
+        is preferred; "eyebrow" means the hair swatch was missing or failed
+        the plausibility cross-check.
+      enum: [hair, eyebrow]
     ColorReport:
       type: object
       properties:
@@ -872,6 +880,19 @@ components:
           description: 0..1 — how clearly the dominant trait beat the runner-up.
         measured:
           $ref: "#/components/schemas/FacialColorTones"
+        depthSource:
+          oneOf:
+            - $ref: "#/components/schemas/DepthSource"
+            - type: "null"
+          description: Null when neither hair nor brows could be read.
+        hairReadingRejected:
+          type: boolean
+          description: >-
+            True when a hair colour was returned but measured far lighter than
+            the eyebrows, and was therefore excluded from the reading. This is
+            a plausibility rule, not a diagnosis: the usual cause is the hair
+            swatch catching skin or background, but bleached or greying hair
+            reads the same way. Either way the depth is taken from the brows.
         heroColors:
           type: array
           items:
@@ -896,6 +917,8 @@ components:
         - axesSummary
         - confidence
         - measured
+        - depthSource
+        - hairReadingRejected
         - heroColors
         - avoidColors
         - bestNeutral

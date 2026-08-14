@@ -79,8 +79,9 @@ export function scoreOutfits({ items, preferences, skinSignals, colorAnalysis, v
       points += colorMatch.points;
       maxPoints += MAX_COLOR_POINTS;
       const code = COLOR_VERDICT_REASON[colorMatch.verdict];
-      if (colorMatch.verdict === "clash") cautionCodes.push(code);
-      else reasonCodes.push(code);
+      if (colorMatch.verdict === "clash" || colorMatch.verdict === "washed_out") {
+        cautionCodes.push(code);
+      } else reasonCodes.push(code);
     } else {
       reasonCodes.push("color_reading_unavailable");
     }

@@ -31,7 +31,21 @@ function findRepoRoot(from: string): string {
 }
 
 const publicDir = path.join(findRepoRoot(process.cwd()), "artifacts/eventready-ai/public");
-const CATALOG_IDS = ["rose-wrap-low", "navy-wrap-dress"];
+
+/**
+ * Every garment Demo Mode needs a real render for.
+ *
+ * Demo Mode draws its proof pair only from items that appear here, so this
+ * list is what decides whether the side-by-side can be shown at all. When the
+ * colour engine changes its verdicts the widest-gap pair can move to a
+ * silhouette that was never rendered, and the proof section then silently
+ * disappears rather than failing loudly — which is exactly how the kaftan pair
+ * came to be added. Anything listed here that is already on disk is skipped,
+ * so extending the list only ever costs credits for the new items.
+ */
+const CATALOG_IDS = process.argv.slice(2).length
+  ? process.argv.slice(2)
+  : ["rose-wrap-low", "navy-wrap-dress", "bold-emerald-kaftan", "classic-lilac-kaftan"];
 
 const person = await readFile(path.join(publicDir, "demo/persona-full-body.jpg"));
 console.log(`persona full-body photo: ${person.length} bytes`);

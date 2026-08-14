@@ -88,6 +88,7 @@ export type ReasonCode =
   | "palette_harmonious_color"
   | "palette_neutral_color"
   | "palette_clash_color"
+  | "palette_washed_out_color"
   | "color_reading_unavailable";
 
 export interface UserPreferences {

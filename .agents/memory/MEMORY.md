@@ -14,3 +14,6 @@
 - [Negative controls must be excluded](negative-control-exclusion.md) — a deliberately-bad comparison item can win the blended ranking; exclude it from the shortlist, don't assume ordering separates them.
 - [Unmeasured fallbacks must clear handles](unmeasured-fallback-must-clear-handles.md) — when substituting neutral defaults, drop the task id too, or a later re-read pairs real evidence with the "unmeasured" verdict.
 - [Presigned URLs in public fixtures](public-fixture-presigned-urls.md) — captured API responses in `public/` leak AWS signatures and expire; rewrite URLs to baked local copies at capture time.
+- [Hair measurement cross-check](hair-measurement-cross-check.md) — a returned hair swatch may be skin/background; reject it when it reads much lighter than the brows.
+- [Value-contrast scoring](value-contrast-scoring.md) — contrast needs its own additive points on a floor curve; failure verdicts must cap their score; never default an unmeasured value.
+- [Demo fixtures couple to scoring](demo-fixture-engine-coupling.md) — a scoring change can silently blank a conditional demo section that depends on baked renders.

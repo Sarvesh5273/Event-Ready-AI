@@ -166,7 +166,7 @@ export const GetSessionReportResponse = zod.object({
   "silhouette": zod.enum(['midi_dress', 'slip_dress', 'jumpsuit', 'blazer_set', 'maxi_dress', 'wrap_dress', 'saree', 'lehenga', 'anarkali', 'sharara', 'qipao', 'hanbok', 'ao_dai', 'abaya', 'kaftan']).describe('Garment shapes across all supported traditions. Must stay in sync with the catalog — the report response is validated against this enum, so a silhouette missing here fails the whole report rather than one item.'),
   "occasionTags": zod.array(zod.string())
 }),
-  "selectionReasons": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable']))
+  "selectionReasons": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'palette_washed_out_color', 'color_reading_unavailable']))
 })),
   "vtoResults": zod.array(zod.object({
   "catalogItemId": zod.string(),
@@ -177,8 +177,8 @@ export const GetSessionReportResponse = zod.object({
   "scores": zod.array(zod.object({
   "catalogItemId": zod.string(),
   "confidenceScore": zod.number(),
-  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
-  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
+  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'palette_washed_out_color', 'color_reading_unavailable'])),
+  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'palette_washed_out_color', 'color_reading_unavailable'])),
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
 })),
@@ -197,8 +197,8 @@ export const GetSessionReportResponse = zod.object({
   "vtoErrorMessage": zod.string().nullable(),
   "score": zod.union([zod.object({
   "confidenceScore": zod.number(),
-  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
-  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
+  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'palette_washed_out_color', 'color_reading_unavailable'])),
+  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'palette_washed_out_color', 'color_reading_unavailable'])),
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
 }).describe('Skin\/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there\'s no occasion or style preference to check a self-picked garment against and fabric finish can\'t be reliably read from a photo.'),zod.null()])
@@ -225,6 +225,8 @@ export const GetSessionReportResponse = zod.object({
   "lipColor": zod.union([zod.string(),zod.null()]),
   "eyebrowColor": zod.union([zod.string(),zod.null()])
 }).describe('Colours measured directly from the user\'s selfie by the YouCam Facial Colour Tones task. A null field means that feature was not returned for this face — it is not a default.'),
+  "depthSource": zod.union([zod.enum(['hair', 'eyebrow']).describe('Which measured feature anchored the depth and contrast reading. Hair is preferred; \"eyebrow\" means the hair swatch was missing or failed the plausibility cross-check.'),zod.null()]).describe('Null when neither hair nor brows could be read.'),
+  "hairReadingRejected": zod.boolean().describe('True when a hair colour was returned but measured far lighter than the eyebrows, and was therefore excluded from the reading. This is a plausibility rule, not a diagnosis: the usual cause is the hair swatch catching skin or background, but bleached or greying hair reads the same way. Either way the depth is taken from the brows.'),
   "heroColors": zod.array(zod.object({
   "hex": zod.string(),
   "name": zod.string()
@@ -259,7 +261,7 @@ export const GetSessionReportResponse = zod.object({
   "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
   "tryOnImageUrl": zod.string().describe('The try-on render on the user\'s own body. Never null: if either half fails to render, the entire `proofShot` is null instead, because a one-sided comparison is not evidence.'),
   "colorPoints": zod.number().describe('Whole number, 0..maxPoints — how well this garment\'s colour suits the measured palette. Typed as `number` rather than `integer` because the zod codegen emits a v4-only `int()` helper for `integer` that the pinned zod 3 does not have.'),
-  "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash']),
+  "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash', 'washed_out']),
   "headline": zod.string()
 }).describe('One half of the side-by-side proof — a real catalog garment tried on the user.'),
   "worst": zod.object({
@@ -269,7 +271,7 @@ export const GetSessionReportResponse = zod.object({
   "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
   "tryOnImageUrl": zod.string().describe('The try-on render on the user\'s own body. Never null: if either half fails to render, the entire `proofShot` is null instead, because a one-sided comparison is not evidence.'),
   "colorPoints": zod.number().describe('Whole number, 0..maxPoints — how well this garment\'s colour suits the measured palette. Typed as `number` rather than `integer` because the zod codegen emits a v4-only `int()` helper for `integer` that the pinned zod 3 does not have.'),
-  "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash']),
+  "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash', 'washed_out']),
   "headline": zod.string()
 }).describe('One half of the side-by-side proof — a real catalog garment tried on the user.')
 }).describe('Two garments of the same silhouette — the best and the worst colour match for this person — rendered on their own body. Holding the silhouette constant is the whole point: if cut and drape also changed, any visible difference could not be attributed to colour.'),zod.null()]).describe('Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot.')
