@@ -748,6 +748,71 @@ components:
         worst:
           $ref: "#/components/schemas/PaletteColor"
       required: [best, worst]
+    ColorVerdict:
+      type: string
+      enum: [hero, harmonious, neutral, clash]
+    ProofShotSide:
+      type: object
+      description: One half of the side-by-side proof — a real catalog garment tried on the user.
+      properties:
+        catalogItemId:
+          type: string
+        name:
+          type: string
+        colorHex:
+          type: string
+          description: The garment's colour, sampled from its product photo rather than hand-labelled.
+        colorFamily:
+          $ref: "#/components/schemas/ColorFamily"
+        tryOnImageUrl:
+          type: string
+          description: >-
+            The try-on render on the user's own body. Never null: if either
+            half fails to render, the entire `proofShot` is null instead,
+            because a one-sided comparison is not evidence.
+        colorPoints:
+          type: number
+          description: >-
+            Whole number, 0..maxPoints — how well this garment's colour suits
+            the measured palette. Typed as `number` rather than `integer`
+            because the zod codegen emits a v4-only `int()` helper for
+            `integer` that the pinned zod 3 does not have.
+        verdict:
+          $ref: "#/components/schemas/ColorVerdict"
+        headline:
+          type: string
+      required:
+        - catalogItemId
+        - name
+        - colorHex
+        - colorFamily
+        - tryOnImageUrl
+        - colorPoints
+        - verdict
+        - headline
+    ProofShot:
+      type: object
+      description: >-
+        Two garments of the same silhouette — the best and the worst colour
+        match for this person — rendered on their own body. Holding the
+        silhouette constant is the whole point: if cut and drape also changed,
+        any visible difference could not be attributed to colour.
+      properties:
+        silhouette:
+          $ref: "#/components/schemas/Silhouette"
+        gap:
+          type: number
+          description: Whole number — colour-points difference between the two halves.
+        maxPoints:
+          type: number
+          description: >-
+            Whole number — top of the colour-points scale, so clients can
+            render `gap` proportionally.
+        best:
+          $ref: "#/components/schemas/ProofShotSide"
+        worst:
+          $ref: "#/components/schemas/ProofShotSide"
+      required: [silhouette, gap, maxPoints, best, worst]
     ColorReport:
       type: object
       properties:
@@ -845,9 +910,18 @@ components:
           oneOf:
             - $ref: "#/components/schemas/ColorReport"
             - type: "null"
+        proofShot:
+          description: >-
+            Null when no colour was measured, when no two garments of a single
+            silhouette sit far enough apart to make a legible comparison, or
+            for custom-garment sessions. Never fabricated to fill the slot.
+          oneOf:
+            - $ref: "#/components/schemas/ProofShot"
+            - type: "null"
       required:
         - sessionId
         - colorAnalysis
+        - proofShot
         - mode
         - flow
         - recommendedCatalogItemId

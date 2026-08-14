@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
+import { ProofShotSection } from './proof-shot-section';
 
 export function ResultsScreen({
   report,
@@ -80,6 +81,11 @@ export function ResultsScreen({
         {/* The colour reading comes before the outfit because it is the
             evidence the recommendation rests on. */}
         <PaletteReveal analysis={report.colorAnalysis} />
+
+        {/* And the proof comes before the recommendation for the same reason:
+            it is the one part of the result the user can verify themselves,
+            so it has to land before we ask them to trust a score. */}
+        <ProofShotSection proofShot={report.proofShot} />
 
         {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 mb-24">

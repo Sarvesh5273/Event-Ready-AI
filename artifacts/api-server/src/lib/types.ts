@@ -11,6 +11,8 @@ export type StyleVibe = "classic" | "bold";
 export type StyleVibeOrEither = "classic" | "bold" | "either";
 export type SessionMode = "demo" | "live";
 export type SessionStatusValue = "created" | "processing" | "ready" | "error";
+import type { ColorVerdict } from "./color/match";
+
 export type GarmentCategory = "full_body" | "upper_body" | "lower_body";
 export type ColorFamily =
   | "navy"
@@ -216,4 +218,41 @@ export interface EventReadyReport {
    * rather than falling back to a default palette.
    */
   colorAnalysis: ColorReport | null;
+  /**
+   * The side-by-side colour proof, or null when one cannot be honestly
+   * assembled. See `ProofShot`.
+   */
+  proofShot: ProofShot | null;
+}
+
+/** One half of the side-by-side proof: a real garment, tried on for real. */
+export interface ProofShotSide {
+  catalogItemId: string;
+  name: string;
+  /** Sampled from the product photo, not hand-labelled. */
+  colorHex: string;
+  colorFamily: ColorFamily;
+  /** The try-on render on the user's own body. */
+  tryOnImageUrl: string;
+  colorPoints: number;
+  verdict: ColorVerdict;
+  headline: string;
+}
+
+/**
+ * Two garments of the *same silhouette* — the best and worst colour match for
+ * this person — rendered on their own body.
+ *
+ * This is what makes the recommendation checkable instead of merely asserted:
+ * one variable changes, so whatever the viewer sees is attributable to colour
+ * and nothing else. Null whenever that claim cannot be made honestly.
+ */
+export interface ProofShot {
+  silhouette: Silhouette;
+  /** Colour-points difference between the two halves. */
+  gap: number;
+  /** Top of the colour-points scale, so clients can render `gap` proportionally. */
+  maxPoints: number;
+  best: ProofShotSide;
+  worst: ProofShotSide;
 }

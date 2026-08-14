@@ -12,6 +12,7 @@ import type { GarmentSource } from './garmentSource';
 import type { NormalizedSkinSignals } from './normalizedSkinSignals';
 import type { OutfitCandidate } from './outfitCandidate';
 import type { OutfitScore } from './outfitScore';
+import type { ProofShot } from './proofShot';
 import type { SessionMode } from './sessionMode';
 import type { VtoResult } from './vtoResult';
 
@@ -31,4 +32,6 @@ export interface EventReadyReport {
   customGarment: CustomGarmentResult | null;
   /** The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default. */
   colorAnalysis: ColorReport | null;
+  /** Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot. */
+  proofShot: ProofShot | null;
 }

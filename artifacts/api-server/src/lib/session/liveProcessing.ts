@@ -3,6 +3,7 @@ import { weddingGuestCatalog } from "../catalog/weddingGuestCatalog";
 import { NEUTRAL_SKIN_SIGNALS, normalizeSkinSignals, type RawSkinScores } from "../scoring/skinSignals";
 import { selectOutfits } from "../scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../scoring/scoreOutfits";
+import { pickGarmentProofPair } from "../scoring/proofPair";
 import { readGarmentImage } from "../youcam/garmentAssets";
 import { extractGarmentColor } from "../youcam/garmentColor";
 import { storeGarmentImage } from "./garmentImageStore";
@@ -563,17 +564,60 @@ function resolveStalledSelfieTasks(payload: SessionPayload, live: LiveSessionSta
   return next;
 }
 
+/**
+ * Resolves the catalog item behind a VTO task.
+ *
+ * Not every try-on belongs to a shortlisted outfit. The unflattering half of
+ * the proof pair is rendered deliberately and is kept out of
+ * `selectedOutfits` precisely so it can never be scored or recommended, so
+ * the lookup has to fall through to the full catalog or those tasks would
+ * fail as "not found".
+ */
+function findCatalogItemForTask(live: LiveSessionState, catalogItemId: string) {
+  return (
+    (live.selectedOutfits ?? []).find((o) => o.item.id === catalogItemId)?.item ??
+    weddingGuestCatalog.find((item) => item.id === catalogItemId)
+  );
+}
+
 function selectLiveOutfits(payload: SessionPayload, live: LiveSessionState): LiveSessionState {
+  const colorAnalysis = live.tones ? analyzeColorSeason(live.tones) : null;
+
+  // The pair is chosen before the shortlist, because the shortlist depends on
+  // it: the unflattering half has to be kept out of the recommendations.
+  //
+  // It is intentionally not persisted on the session. It is a pure function of
+  // the catalog, the preferences and the measured tones — all of which the
+  // report can already see — and live state is serialised into the session
+  // token on every response, where payload size has bitten us before.
+  // Recomputing is free; carrying it is not.
+  const proofPair = pickGarmentProofPair({
+    catalog: weddingGuestCatalog,
+    preferences: payload.preferences,
+    colorAnalysis,
+  });
+
   const selectedOutfits = selectOutfits({
     catalog: weddingGuestCatalog,
     preferences: payload.preferences,
     skinSignals: live.skinSignals ?? NEUTRAL_SKIN_SIGNALS,
-    colorAnalysis: live.tones ? analyzeColorSeason(live.tones) : null,
+    colorAnalysis,
     count: OUTFIT_COUNT,
+    // Otherwise the app could recommend the exact garment the proof shot is
+    // about to label "not your colour".
+    excludeIds: proofPair ? [proofPair.worst.id] : undefined,
   });
 
-  const vtoTasks: LiveVtoTaskState[] = selectedOutfits.map(({ item }) => ({
-    catalogItemId: item.id,
+  // Try on the unflattering half of the pair as well. It is never shortlisted
+  // and never recommended; it exists so the colour verdict can be checked
+  // against the user's own body on a garment of identical cut.
+  const vtoItemIds = selectedOutfits.map(({ item }) => item.id);
+  for (const id of [proofPair?.best.id, proofPair?.worst.id]) {
+    if (id && !vtoItemIds.includes(id)) vtoItemIds.push(id);
+  }
+
+  const vtoTasks: LiveVtoTaskState[] = vtoItemIds.map((catalogItemId) => ({
+    catalogItemId,
     status: "queued",
     taskId: null,
     resultImageUrl: null,
@@ -585,7 +629,6 @@ function selectLiveOutfits(payload: SessionPayload, live: LiveSessionState): Liv
 
 async function startQueuedVtoTasks(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
   const pending = peekPendingLiveUpload(sessionId);
-  const items = live.selectedOutfits ?? [];
 
   if (!pending) {
     logger.warn({ sessionId }, "No pending photo upload found — cannot start VTO tasks");
@@ -601,7 +644,7 @@ async function startQueuedVtoTasks(sessionId: string, live: LiveSessionState): P
     (live.vtoTasks ?? []).map(async (task): Promise<LiveVtoTaskState> => {
       if (task.status !== "queued") return task;
 
-      const item = items.find((o) => o.item.id === task.catalogItemId)?.item;
+      const item = findCatalogItemForTask(live, task.catalogItemId);
       if (!item) {
         return { ...task, status: "error", errorMessage: "Outfit could not be found in the catalog." };
       }
@@ -634,7 +677,6 @@ async function startQueuedVtoTasks(sessionId: string, live: LiveSessionState): P
 
 async function checkRunningVtoTasks(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {
   const pending = peekPendingLiveUpload(sessionId);
-  const items = live.selectedOutfits ?? [];
 
   const vtoTasks = await Promise.all(
     (live.vtoTasks ?? []).map(async (task): Promise<LiveVtoTaskState> => {
@@ -644,7 +686,7 @@ async function checkRunningVtoTasks(sessionId: string, live: LiveSessionState): 
         const result = await checkYouCamClothesVtoStatus(task.taskId);
 
         if (result.status === "success" && result.resultImageUrl) {
-          await cacheVtoSuccessBestEffort(pending, items, task.catalogItemId, result.resultImageUrl);
+          await cacheVtoSuccessBestEffort(pending, live, task.catalogItemId, result.resultImageUrl);
           return { ...task, status: "success", resultImageUrl: result.resultImageUrl };
         }
 
@@ -665,12 +707,12 @@ async function checkRunningVtoTasks(sessionId: string, live: LiveSessionState): 
 
 async function cacheVtoSuccessBestEffort(
   pending: ReturnType<typeof peekPendingLiveUpload>,
-  items: NonNullable<LiveSessionState["selectedOutfits"]>,
+  live: LiveSessionState,
   catalogItemId: string,
   resultImageUrl: string,
 ): Promise<void> {
   if (!pending) return;
-  const item = items.find((o) => o.item.id === catalogItemId)?.item;
+  const item = findCatalogItemForTask(live, catalogItemId);
   if (!item) return;
   try {
     const garment = await readGarmentImage(item.imageUrl);

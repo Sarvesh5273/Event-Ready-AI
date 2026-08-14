@@ -239,7 +239,32 @@ export const GetSessionReportResponse = zod.object({
   "name": zod.string()
 })
 }).describe('The two colours used for the side-by-side try-on proof.'),zod.null()])
-}),zod.null()]).describe('The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default.')
+}),zod.null()]).describe('The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default.'),
+  "proofShot": zod.union([zod.object({
+  "silhouette": zod.enum(['midi_dress', 'slip_dress', 'jumpsuit', 'blazer_set', 'maxi_dress', 'wrap_dress', 'saree', 'lehenga', 'anarkali', 'sharara', 'qipao', 'hanbok', 'ao_dai', 'abaya', 'kaftan']).describe('Garment shapes across all supported traditions. Must stay in sync with the catalog — the report response is validated against this enum, so a silhouette missing here fails the whole report rather than one item.'),
+  "gap": zod.number().describe('Whole number — colour-points difference between the two halves.'),
+  "maxPoints": zod.number().describe('Whole number — top of the colour-points scale, so clients can render `gap` proportionally.'),
+  "best": zod.object({
+  "catalogItemId": zod.string(),
+  "name": zod.string(),
+  "colorHex": zod.string().describe('The garment\'s colour, sampled from its product photo rather than hand-labelled.'),
+  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
+  "tryOnImageUrl": zod.string().describe('The try-on render on the user\'s own body. Never null: if either half fails to render, the entire `proofShot` is null instead, because a one-sided comparison is not evidence.'),
+  "colorPoints": zod.number().describe('Whole number, 0..maxPoints — how well this garment\'s colour suits the measured palette. Typed as `number` rather than `integer` because the zod codegen emits a v4-only `int()` helper for `integer` that the pinned zod 3 does not have.'),
+  "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash']),
+  "headline": zod.string()
+}).describe('One half of the side-by-side proof — a real catalog garment tried on the user.'),
+  "worst": zod.object({
+  "catalogItemId": zod.string(),
+  "name": zod.string(),
+  "colorHex": zod.string().describe('The garment\'s colour, sampled from its product photo rather than hand-labelled.'),
+  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
+  "tryOnImageUrl": zod.string().describe('The try-on render on the user\'s own body. Never null: if either half fails to render, the entire `proofShot` is null instead, because a one-sided comparison is not evidence.'),
+  "colorPoints": zod.number().describe('Whole number, 0..maxPoints — how well this garment\'s colour suits the measured palette. Typed as `number` rather than `integer` because the zod codegen emits a v4-only `int()` helper for `integer` that the pinned zod 3 does not have.'),
+  "verdict": zod.enum(['hero', 'harmonious', 'neutral', 'clash']),
+  "headline": zod.string()
+}).describe('One half of the side-by-side proof — a real catalog garment tried on the user.')
+}).describe('Two garments of the same silhouette — the best and the worst colour match for this person — rendered on their own body. Holding the silhouette constant is the whole point: if cut and drape also changed, any visible difference could not be attributed to colour.'),zod.null()]).describe('Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot.')
 })
 
 

@@ -27,6 +27,7 @@ import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
 import { selectOutfits } from "../../lib/scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../../lib/scoring/scoreOutfits";
+import { pickGarmentProofPair, toProofShot } from "../../lib/scoring/proofPair";
 import { isLiveModeAvailable } from "../../lib/youcam/client";
 import {
   DEMO_FACIAL_TONES,
@@ -390,18 +391,34 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
   // so it exercises exactly the same shortlist-and-score path as Live Mode.
   const colorAnalysis = analyzeColorSeason(DEMO_FACIAL_TONES);
 
+  // Demo Mode can only prove what it has real renders for, so the pair is
+  // drawn from the pre-rendered set rather than the whole catalog. Chosen
+  // before the shortlist for the same reason as Live Mode — see
+  // `selectLiveOutfits`.
+  const proofPair = pickGarmentProofPair({
+    catalog: weddingGuestCatalog.filter((item) => item.id in DEMO_VTO_IMAGE_BY_CATALOG_ID),
+    preferences: payload.preferences,
+    colorAnalysis,
+  });
+
   const selectedOutfits = selectOutfits({
     catalog: replayCatalog,
     preferences: payload.preferences,
     skinSignals,
     colorAnalysis,
     count: replayCatalog.length,
+    excludeIds: proofPair ? [proofPair.worst.id] : undefined,
   });
 
-  const vtoResults: VtoResult[] = selectedOutfits.map(({ item }) => ({
-    catalogItemId: item.id,
+  const vtoItemIds = selectedOutfits.map(({ item }) => item.id);
+  for (const id of [proofPair?.best.id, proofPair?.worst.id]) {
+    if (id && !vtoItemIds.includes(id)) vtoItemIds.push(id);
+  }
+
+  const vtoResults: VtoResult[] = vtoItemIds.map((catalogItemId) => ({
+    catalogItemId,
     status: "success",
-    resultImageUrl: DEMO_VTO_IMAGE_BY_CATALOG_ID[item.id] ?? null,
+    resultImageUrl: DEMO_VTO_IMAGE_BY_CATALOG_ID[catalogItemId] ?? null,
     errorMessage: null,
   }));
 
@@ -431,6 +448,7 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     video: null,
     customGarment: null,
     colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
+    proofShot: toProofShot(proofPair, vtoResults),
   };
 }
 
@@ -487,6 +505,10 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
       video,
       customGarment,
       colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
+      // The proof compares two catalog garments of one silhouette. A custom
+      // upload is a single garment with no same-cut sibling to compare it
+      // against, so there is nothing honest to show here.
+      proofShot: null,
     };
   }
 
@@ -535,6 +557,16 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     video,
     customGarment: null,
     colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
+    // Recomputed rather than carried on the session — see `selectLiveOutfits`
+    // for why this is deterministic and why the token stays small.
+    proofShot: toProofShot(
+      pickGarmentProofPair({
+        catalog: weddingGuestCatalog,
+        preferences: payload.preferences,
+        colorAnalysis,
+      }),
+      vtoResults,
+    ),
   };
 }
 

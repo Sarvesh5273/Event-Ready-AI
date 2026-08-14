@@ -46,10 +46,24 @@ export const DEMO_FACIAL_TONES: FacialColorTones = {
   eyebrowColor: "#3e3834",
 };
 
+/**
+ * Every try-on render that exists for the demo persona.
+ *
+ * The first three back the shortlist. The last two are the proof pair — the
+ * same wrap-dress cut in the colour her measured palette likes most and the
+ * one it likes least — and exist so Demo Mode can show the side-by-side
+ * without a live call. All five were produced by the same YouCam Cloth VTO
+ * endpoint Live Mode uses, so nothing here is an illustration.
+ *
+ * Demo Mode derives its proof pair from exactly this set: it can only prove
+ * what it has real renders for.
+ */
 export const DEMO_VTO_IMAGE_BY_CATALOG_ID: Record<string, string> = {
   "bold-emerald-jumpsuit": "demo/replay/vto-bold-emerald-jumpsuit.jpg",
   "soft-sage-slip": "demo/replay/vto-soft-sage-slip.jpg",
   "champagne-satin-gown": "demo/replay/vto-champagne-satin-gown.jpg",
+  "rose-wrap-low": "demo/replay/vto-rose-wrap-low.jpg",
+  "navy-wrap-dress": "demo/replay/vto-navy-wrap-dress.jpg",
 };
 
 /** @deprecated use `PREP_TIPS` from `../content/prepTips` directly — kept as a re-export for backward compatibility. */

@@ -436,6 +436,46 @@ export interface ColorProofPair {
   worst: PaletteColor;
 }
 
+export type ColorVerdict = typeof ColorVerdict[keyof typeof ColorVerdict];
+
+
+export const ColorVerdict = {
+  hero: 'hero',
+  harmonious: 'harmonious',
+  neutral: 'neutral',
+  clash: 'clash',
+} as const;
+
+/**
+ * One half of the side-by-side proof — a real catalog garment tried on the user.
+ */
+export interface ProofShotSide {
+  catalogItemId: string;
+  name: string;
+  /** The garment's colour, sampled from its product photo rather than hand-labelled. */
+  colorHex: string;
+  colorFamily: ColorFamily;
+  /** The try-on render on the user's own body. Never null: if either half fails to render, the entire `proofShot` is null instead, because a one-sided comparison is not evidence. */
+  tryOnImageUrl: string;
+  /** Whole number, 0..maxPoints — how well this garment's colour suits the measured palette. Typed as `number` rather than `integer` because the zod codegen emits a v4-only `int()` helper for `integer` that the pinned zod 3 does not have. */
+  colorPoints: number;
+  verdict: ColorVerdict;
+  headline: string;
+}
+
+/**
+ * Two garments of the same silhouette — the best and the worst colour match for this person — rendered on their own body. Holding the silhouette constant is the whole point: if cut and drape also changed, any visible difference could not be attributed to colour.
+ */
+export interface ProofShot {
+  silhouette: Silhouette;
+  /** Whole number — colour-points difference between the two halves. */
+  gap: number;
+  /** Whole number — top of the colour-points scale, so clients can render `gap` proportionally. */
+  maxPoints: number;
+  best: ProofShotSide;
+  worst: ProofShotSide;
+}
+
 export interface ColorReport {
   season: ColorSeason;
   seasonLabel: string;
@@ -469,5 +509,7 @@ export interface EventReadyReport {
   customGarment: CustomGarmentResult | null;
   /** The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default. */
   colorAnalysis: ColorReport | null;
+  /** Null when no colour was measured, when no two garments of a single silhouette sit far enough apart to make a legible comparison, or for custom-garment sessions. Never fabricated to fill the slot. */
+  proofShot: ProofShot | null;
 }
 

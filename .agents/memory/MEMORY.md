@@ -10,3 +10,5 @@
 - [YouCam billing & VTO coverage](youcam-billing-and-vto-coverage.md) — failed tasks are refunded; Cloth VTO handles saree/qipao/abaya fine despite its Western-only category enum.
 - [Product-photo colour extraction](product-photo-color-extraction.md) — centre-crop averaging silently blends the backdrop in; use border flood fill w/ adaptive tolerance + largest cluster.
 - [OpenAPI enum drift](openapi-enum-drift.md) — extending a TS union but not the spec enum passes typecheck, then 500s the *whole* response for any row using the new value.
+- [OpenAPI `integer` breaks zod codegen](openapi-zod-integer-codegen.md) — Orval emits v4-only `zod.int()`; use `type: number` and say "whole number" in the description.
+- [Negative controls must be excluded](negative-control-exclusion.md) — a deliberately-bad comparison item can win the blended ranking; exclude it from the shortlist, don't assume ordering separates them.
