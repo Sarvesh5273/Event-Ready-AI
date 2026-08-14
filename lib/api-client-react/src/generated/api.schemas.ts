@@ -30,15 +30,6 @@ export const StyleVibeOrEither = {
   either: 'either',
 } as const;
 
-export type BudgetTier = typeof BudgetTier[keyof typeof BudgetTier];
-
-
-export const BudgetTier = {
-  low: 'low',
-  mid: 'mid',
-  high: 'high',
-} as const;
-
 /**
  * "demo" replays fixed, previously-captured YouCam API results for the Maya demo persona. "live" runs real YouCam Skin Analysis + Apparel VTO API calls against the user's own uploaded photos; it is only offered when YOUCAM_API_KEY is configured.
  */
@@ -93,6 +84,10 @@ export const ColorFamily = {
   lavender: 'lavender',
   teal: 'teal',
   burgundy: 'burgundy',
+  coral: 'coral',
+  mustard: 'mustard',
+  ivory: 'ivory',
+  terracotta: 'terracotta',
 } as const;
 
 export type Undertone = typeof Undertone[keyof typeof Undertone];
@@ -113,6 +108,9 @@ export const FabricFinish = {
   high_shine: 'high_shine',
 } as const;
 
+/**
+ * Garment shapes across all supported traditions. Must stay in sync with the catalog — the report response is validated against this enum, so a silhouette missing here fails the whole report rather than one item.
+ */
 export type Silhouette = typeof Silhouette[keyof typeof Silhouette];
 
 
@@ -123,6 +121,15 @@ export const Silhouette = {
   blazer_set: 'blazer_set',
   maxi_dress: 'maxi_dress',
   wrap_dress: 'wrap_dress',
+  saree: 'saree',
+  lehenga: 'lehenga',
+  anarkali: 'anarkali',
+  sharara: 'sharara',
+  qipao: 'qipao',
+  hanbok: 'hanbok',
+  ao_dai: 'ao_dai',
+  abaya: 'abaya',
+  kaftan: 'kaftan',
 } as const;
 
 export type SkinSignalLevel = typeof SkinSignalLevel[keyof typeof SkinSignalLevel];
@@ -141,7 +148,6 @@ export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];
 export const ReasonCode = {
   wedding_guest_match: 'wedding_guest_match',
   style_vibe_match: 'style_vibe_match',
-  budget_match: 'budget_match',
   cool_tone_supports_redness: 'cool_tone_supports_redness',
   matte_finish_supports_oiliness: 'matte_finish_supports_oiliness',
   contrast_supports_tired_eye_area: 'contrast_supports_tired_eye_area',
@@ -152,7 +158,6 @@ export const ReasonCode = {
   matte_finish_supports_texture: 'matte_finish_supports_texture',
   high_shine_texture_caution: 'high_shine_texture_caution',
   warm_tone_redness_caution: 'warm_tone_redness_caution',
-  budget_mismatch: 'budget_mismatch',
   style_vibe_mismatch: 'style_vibe_mismatch',
   palette_hero_color: 'palette_hero_color',
   palette_harmonious_color: 'palette_harmonious_color',
@@ -189,6 +194,57 @@ export interface EventReadyVideo {
   videoUrl: string | null;
 }
 
+export type SessionVideoStatus = typeof SessionVideoStatus[keyof typeof SessionVideoStatus];
+
+
+export const SessionVideoStatus = {
+  idle: 'idle',
+  queued: 'queued',
+  running: 'running',
+  success: 'success',
+  error: 'error',
+  skipped: 'skipped',
+} as const;
+
+/**
+ * State of the on-demand bonus outfit video, plus the updated signed session token that carries that state. "idle" means the user has not asked for a video yet; "skipped" means there was no successful try-on image to animate.
+ */
+export interface SessionVideo {
+  sessionToken: string;
+  status: SessionVideoStatus;
+  /** @nullable */
+  videoUrl: string | null;
+  /** @nullable */
+  errorMessage: string | null;
+}
+
+/**
+ * The dressing tradition a catalog garment belongs to.
+ */
+export type GarmentTradition = typeof GarmentTradition[keyof typeof GarmentTradition];
+
+
+export const GarmentTradition = {
+  western: 'western',
+  indian: 'indian',
+  east_asian: 'east_asian',
+  middle_eastern: 'middle_eastern',
+} as const;
+
+/**
+ * Which dressing tradition to shortlist from. "any" spans the whole catalog; any other value is a hard filter on the catalog rather than a scoring preference.
+ */
+export type TraditionPreference = typeof TraditionPreference[keyof typeof TraditionPreference];
+
+
+export const TraditionPreference = {
+  any: 'any',
+  western: 'western',
+  indian: 'indian',
+  east_asian: 'east_asian',
+  middle_eastern: 'middle_eastern',
+} as const;
+
 export type UserPreferencesOccasion = typeof UserPreferencesOccasion[keyof typeof UserPreferencesOccasion];
 
 
@@ -199,7 +255,7 @@ export const UserPreferencesOccasion = {
 export interface UserPreferences {
   occasion: UserPreferencesOccasion;
   styleVibe: StyleVibe;
-  budgetTier: BudgetTier;
+  tradition: TraditionPreference;
 }
 
 export interface SessionInput {
@@ -245,8 +301,8 @@ export interface CatalogItem {
   id: string;
   name: string;
   garmentCategory: GarmentCategory;
+  tradition: GarmentTradition;
   imageUrl: string;
-  priceTier: BudgetTier;
   styleVibe: StyleVibeOrEither;
   colorFamily: ColorFamily;
   undertone: Undertone;
@@ -288,7 +344,7 @@ export interface OutfitScore {
 }
 
 /**
- * Skin/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there's no occasion/style/budget preference to check a self-picked garment against and fabric finish can't be reliably read from a photo.
+ * Skin/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there's no occasion or style preference to check a self-picked garment against and fabric finish can't be reliably read from a photo.
  */
 export interface CustomGarmentScore {
   confidenceScore: number;

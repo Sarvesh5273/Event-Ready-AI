@@ -19,4 +19,8 @@ export const ColorFamily = {
   lavender: 'lavender',
   teal: 'teal',
   burgundy: 'burgundy',
+  coral: 'coral',
+  mustard: 'mustard',
+  ivory: 'ivory',
+  terracotta: 'terracotta',
 } as const;

@@ -25,7 +25,8 @@ import type {
   EventReadyReport,
   HealthStatus,
   Session,
-  SessionInput
+  SessionInput,
+  SessionVideo
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -422,6 +423,156 @@ export function useGetSessionReport<TData = Awaited<ReturnType<typeof getSession
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetSessionReportQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartSessionVideoUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/sessions/${sessionId}/video`
+}
+
+/**
+ * Starts a YouCam Image-to-Video task for the try-on image of the outfit this session recommends. Deliberately user-triggered rather than automatic — it is the most expensive call in the product, so it only ever runs when the user asks for it. Returns immediately with an updated signed token; the client polls getSessionVideo for progress.
+ * @summary Start generating the bonus outfit video
+ */
+export const startSessionVideo = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<SessionVideo> => {
+
+  return customFetch<SessionVideo>(getStartSessionVideoUrl(sessionId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStartSessionVideoMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startSessionVideo>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startSessionVideo>>, TError,{sessionId: string}, TContext> => {
+
+const mutationKey = ['startSessionVideo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startSessionVideo>>, {sessionId: string}> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  startSessionVideo(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartSessionVideoMutationResult = NonNullable<Awaited<ReturnType<typeof startSessionVideo>>>
+
+    export type StartSessionVideoMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Start generating the bonus outfit video
+ */
+export const useStartSessionVideo = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startSessionVideo>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startSessionVideo>>,
+        TError,
+        {sessionId: string},
+        TContext
+      > => {
+      return useMutation(getStartSessionVideoMutationOptions(options));
+    }
+
+export const getGetSessionVideoUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/sessions/${sessionId}/video`
+}
+
+/**
+ * Advances an already-started Image-to-Video task by exactly one status check and returns its state plus an updated signed token. Never starts a task itself, so polling can never incur cost — in Live Mode status is "idle" until startSessionVideo has been called. Demo Mode replays a clip generated offline, so it reports "success" immediately; there is no paid task to protect.
+ * @summary Poll the bonus outfit video task
+ */
+export const getSessionVideo = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<SessionVideo> => {
+
+  return customFetch<SessionVideo>(getGetSessionVideoUrl(sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSessionVideoQueryKey = (sessionId: string,) => {
+    return [
+    `/api/sessions/${sessionId}/video`
+    ] as const;
+    }
+
+
+export const getGetSessionVideoQueryOptions = <TData = Awaited<ReturnType<typeof getSessionVideo>>, TError = ErrorType<ApiError>>(sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSessionVideo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSessionVideoQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionVideo>>> = ({ signal }) => getSessionVideo(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSessionVideo>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSessionVideoQueryResult = NonNullable<Awaited<ReturnType<typeof getSessionVideo>>>
+export type GetSessionVideoQueryError = ErrorType<ApiError>
+
+
+/**
+ * @summary Poll the bonus outfit video task
+ */
+
+export function useGetSessionVideo<TData = Awaited<ReturnType<typeof getSessionVideo>>, TError = ErrorType<ApiError>>(
+ sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSessionVideo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSessionVideoQueryOptions(sessionId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

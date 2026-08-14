@@ -8,7 +8,7 @@
 import type { ReasonCode } from './reasonCode';
 
 /**
- * Skin/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there's no occasion/style/budget preference to check a self-picked garment against and fabric finish can't be reliably read from a photo.
+ * Skin/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there's no occasion or style preference to check a self-picked garment against and fabric finish can't be reliably read from a photo.
  */
 export interface CustomGarmentScore {
   confidenceScore: number;

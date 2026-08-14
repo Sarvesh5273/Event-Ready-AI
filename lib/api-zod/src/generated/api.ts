@@ -26,7 +26,7 @@ export const CreateSessionBody = zod.object({
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
-  "budgetTier": zod.enum(['low', 'mid', 'high'])
+  "tradition": zod.enum(['any', 'western', 'indian', 'east_asian', 'middle_eastern']).describe('Which dressing tradition to shortlist from. \"any\" spans the whole catalog; any other value is a hard filter on the catalog rather than a scoring preference.')
 }),
   "garmentSource": zod.enum(['catalog', 'custom']).optional().describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.')
 })
@@ -38,7 +38,7 @@ export const CreateSessionResponse = zod.object({
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
-  "budgetTier": zod.enum(['low', 'mid', 'high'])
+  "tradition": zod.enum(['any', 'western', 'indian', 'east_asian', 'middle_eastern']).describe('Which dressing tradition to shortlist from. \"any\" spans the whole catalog; any other value is a hard filter on the catalog rather than a scoring preference.')
 }),
   "garmentSource": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
   "status": zod.enum(['created', 'processing', 'ready', 'error']),
@@ -80,7 +80,7 @@ export const StartSessionAnalysisResponse = zod.object({
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
-  "budgetTier": zod.enum(['low', 'mid', 'high'])
+  "tradition": zod.enum(['any', 'western', 'indian', 'east_asian', 'middle_eastern']).describe('Which dressing tradition to shortlist from. \"any\" spans the whole catalog; any other value is a hard filter on the catalog rather than a scoring preference.')
 }),
   "garmentSource": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
   "status": zod.enum(['created', 'processing', 'ready', 'error']),
@@ -109,7 +109,7 @@ export const GetSessionStatusResponse = zod.object({
   "preferences": zod.object({
   "occasion": zod.enum(['wedding_guest']),
   "styleVibe": zod.enum(['classic', 'bold']),
-  "budgetTier": zod.enum(['low', 'mid', 'high'])
+  "tradition": zod.enum(['any', 'western', 'indian', 'east_asian', 'middle_eastern']).describe('Which dressing tradition to shortlist from. \"any\" spans the whole catalog; any other value is a hard filter on the catalog rather than a scoring preference.')
 }),
   "garmentSource": zod.enum(['catalog', 'custom']).describe('\"catalog\" recommends from the curated wedding-guest catalog (default). \"custom\" lets the user try on and get a skin\/color compatibility read for a garment they already have in mind, uploaded as their own photo. Live Mode only — Demo Mode sessions always behave as \"catalog\", since there\'s no pre-captured demo asset for an arbitrary upload.'),
   "status": zod.enum(['created', 'processing', 'ready', 'error']),
@@ -149,16 +149,16 @@ export const GetSessionReportResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "garmentCategory": zod.enum(['full_body', 'upper_body', 'lower_body']),
+  "tradition": zod.enum(['western', 'indian', 'east_asian', 'middle_eastern']).describe('The dressing tradition a catalog garment belongs to.'),
   "imageUrl": zod.string(),
-  "priceTier": zod.enum(['low', 'mid', 'high']),
   "styleVibe": zod.enum(['classic', 'bold', 'either']),
-  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy']),
+  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
   "undertone": zod.enum(['cool', 'warm', 'neutral']),
   "fabricFinish": zod.enum(['matte', 'soft_sheen', 'high_shine']),
-  "silhouette": zod.enum(['midi_dress', 'slip_dress', 'jumpsuit', 'blazer_set', 'maxi_dress', 'wrap_dress']),
+  "silhouette": zod.enum(['midi_dress', 'slip_dress', 'jumpsuit', 'blazer_set', 'maxi_dress', 'wrap_dress', 'saree', 'lehenga', 'anarkali', 'sharara', 'qipao', 'hanbok', 'ao_dai', 'abaya', 'kaftan']).describe('Garment shapes across all supported traditions. Must stay in sync with the catalog — the report response is validated against this enum, so a silhouette missing here fails the whole report rather than one item.'),
   "occasionTags": zod.array(zod.string())
 }),
-  "selectionReasons": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable']))
+  "selectionReasons": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable']))
 })),
   "vtoResults": zod.array(zod.object({
   "catalogItemId": zod.string(),
@@ -169,8 +169,8 @@ export const GetSessionReportResponse = zod.object({
   "scores": zod.array(zod.object({
   "catalogItemId": zod.string(),
   "confidenceScore": zod.number(),
-  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
-  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
+  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
+  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
 })),
@@ -181,7 +181,7 @@ export const GetSessionReportResponse = zod.object({
 }).describe('Optional bonus short animated clip generated from the recommended outfit\'s successful try-on image (YouCam AI Image to Video Generator). Live Mode only.'),zod.null()]),
   "customGarment": zod.union([zod.object({
   "garmentCategory": zod.enum(['full_body', 'upper_body', 'lower_body']),
-  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy']),
+  "colorFamily": zod.enum(['navy', 'emerald', 'sage', 'black', 'rose', 'champagne', 'lavender', 'teal', 'burgundy', 'coral', 'mustard', 'ivory', 'terracotta']),
   "undertone": zod.enum(['cool', 'warm', 'neutral']),
   "imageUrl": zod.string().describe('Same-origin API URL (including a signed access token as a query param) that serves the user\'s own uploaded garment photo, for display.'),
   "vtoStatus": zod.enum(['queued', 'running', 'success', 'error']),
@@ -189,11 +189,11 @@ export const GetSessionReportResponse = zod.object({
   "vtoErrorMessage": zod.string().nullable(),
   "score": zod.union([zod.object({
   "confidenceScore": zod.number(),
-  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
-  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'budget_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'budget_mismatch', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
+  "reasonCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
+  "cautionCodes": zod.array(zod.enum(['wedding_guest_match', 'style_vibe_match', 'cool_tone_supports_redness', 'matte_finish_supports_oiliness', 'contrast_supports_tired_eye_area', 'soft_color_supports_low_radiance', 'bold_color_matches_vibe', 'classic_silhouette_matches_vibe', 'high_shine_camera_caution', 'matte_finish_supports_texture', 'high_shine_texture_caution', 'warm_tone_redness_caution', 'style_vibe_mismatch', 'palette_hero_color', 'palette_harmonious_color', 'palette_neutral_color', 'palette_clash_color', 'color_reading_unavailable'])),
   "userFacingReasons": zod.array(zod.string()),
   "userFacingCautions": zod.array(zod.string())
-}).describe('Skin\/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there\'s no occasion\/style\/budget preference to check a self-picked garment against and fabric finish can\'t be reliably read from a photo.'),zod.null()])
+}).describe('Skin\/color compatibility read for a garment the user uploaded themselves — a narrower signal than OutfitScore, since there\'s no occasion or style preference to check a self-picked garment against and fabric finish can\'t be reliably read from a photo.'),zod.null()])
 }).describe('Present on the report only when `flow` is \"custom\".'),zod.null()]).describe('Non-null only when `flow` is \"custom\".'),
   "colorAnalysis": zod.union([zod.object({
   "season": zod.enum(['light_spring', 'true_spring', 'bright_spring', 'light_summer', 'true_summer', 'soft_summer', 'soft_autumn', 'true_autumn', 'deep_autumn', 'deep_winter', 'true_winter', 'bright_winter']),
@@ -241,5 +241,45 @@ export const GetSessionReportResponse = zod.object({
 }).describe('The two colours used for the side-by-side try-on proof.'),zod.null()])
 }),zod.null()]).describe('The personal colour reading for this session, or null when the colour-tones task returned nothing usable. Null means no palette was measured — clients must say so rather than showing a default.')
 })
+
+
+/**
+ * Starts a YouCam Image-to-Video task for the try-on image of the outfit this session recommends. Deliberately user-triggered rather than automatic — it is the most expensive call in the product, so it only ever runs when the user asks for it. Returns immediately with an updated signed token; the client polls getSessionVideo for progress.
+ * @summary Start generating the bonus outfit video
+ */
+export const StartSessionVideoParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const StartSessionVideoHeader = zod.object({
+  "token": zod.string()
+})
+
+export const StartSessionVideoResponse = zod.object({
+  "sessionToken": zod.string(),
+  "status": zod.enum(['idle', 'queued', 'running', 'success', 'error', 'skipped']),
+  "videoUrl": zod.string().nullable(),
+  "errorMessage": zod.string().nullable()
+}).describe('State of the on-demand bonus outfit video, plus the updated signed session token that carries that state. \"idle\" means the user has not asked for a video yet; \"skipped\" means there was no successful try-on image to animate.')
+
+
+/**
+ * Advances an already-started Image-to-Video task by exactly one status check and returns its state plus an updated signed token. Never starts a task itself, so polling can never incur cost — in Live Mode status is "idle" until startSessionVideo has been called. Demo Mode replays a clip generated offline, so it reports "success" immediately; there is no paid task to protect.
+ * @summary Poll the bonus outfit video task
+ */
+export const GetSessionVideoParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const GetSessionVideoHeader = zod.object({
+  "token": zod.string()
+})
+
+export const GetSessionVideoResponse = zod.object({
+  "sessionToken": zod.string(),
+  "status": zod.enum(['idle', 'queued', 'running', 'success', 'error', 'skipped']),
+  "videoUrl": zod.string().nullable(),
+  "errorMessage": zod.string().nullable()
+}).describe('State of the on-demand bonus outfit video, plus the updated signed session token that carries that state. \"idle\" means the user has not asked for a video yet; \"skipped\" means there was no successful try-on image to animate.')
 
 

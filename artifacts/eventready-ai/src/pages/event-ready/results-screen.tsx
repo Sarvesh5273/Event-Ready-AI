@@ -2,15 +2,33 @@ import React from 'react';
 import type { ResultsScreenProps } from '@/types/screen-props';
 import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
-import { RotateCcw, Check, Info, Star, Play } from 'lucide-react';
+import { RotateCcw, Check, Info, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
+import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
 
-export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreenProps) {
+export function ResultsScreen({
+  report,
+  isDemoMode,
+  onStartOver,
+  video,
+  onGenerateVideo,
+  isGeneratingVideo,
+  videoError,
+}: ResultsScreenProps) {
 
   if (report.flow === 'custom') {
-    return <CustomGarmentResultsScreen report={report} onStartOver={onStartOver} />;
+    return (
+      <CustomGarmentResultsScreen
+        report={report}
+        onStartOver={onStartOver}
+        video={video}
+        onGenerateVideo={onGenerateVideo}
+        isGeneratingVideo={isGeneratingVideo}
+        videoError={videoError}
+      />
+    );
   }
 
   // Find hero outfit
@@ -161,43 +179,22 @@ export function ResultsScreen({ report, isDemoMode, onStartOver }: ResultsScreen
               </div>
               <div className="w-px h-10 bg-border" />
               <div className="flex-1 text-right">
-                <div className="text-sm text-muted-foreground mb-1">Price Tier</div>
-                <div className="capitalize font-medium">{heroOutfit.item.priceTier}</div>
+                <div className="text-sm text-muted-foreground mb-1">Fabric Finish</div>
+                <div className="capitalize font-medium">{heroOutfit.item.fabricFinish.replace('_', ' ')}</div>
               </div>
             </div>
           </motion.div>
         </div>
 
-        {/* Bonus video (Live Mode only, when generation succeeded) */}
-        {report.video?.status === "success" && report.video.videoUrl && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-24 text-center"
-            data-testid="hero-outfit-video-section"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary text-secondary-foreground text-xs font-semibold uppercase tracking-widest mb-6 border border-border/50">
-              <Play className="w-3.5 h-3.5" />
-              See It In Motion
-            </div>
-            <h3 className="text-2xl md:text-3xl font-serif mb-8 text-foreground">{heroOutfit.item.name}, brought to life</h3>
-            <div className="max-w-sm mx-auto aspect-[3/4] bg-card border border-border p-2 shadow-xl">
-              <div className="w-full h-full overflow-hidden bg-secondary">
-                <video
-                  src={resolveDemoAssetUrl(report.video.videoUrl)}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  className="w-full h-full object-cover"
-                  data-testid="hero-outfit-video"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Bonus video — generated on request, never automatically. */}
+        <OutfitVideoSection
+          title={`${heroOutfit.item.name}, brought to life`}
+          testIdPrefix="hero-outfit"
+          video={video}
+          onGenerateVideo={onGenerateVideo}
+          isGeneratingVideo={isGeneratingVideo}
+          videoError={videoError}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8">
           

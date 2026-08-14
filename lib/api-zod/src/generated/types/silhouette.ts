@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * Garment shapes across all supported traditions. Must stay in sync with the catalog — the report response is validated against this enum, so a silhouette missing here fails the whole report rather than one item.
+ */
 export type Silhouette = typeof Silhouette[keyof typeof Silhouette];
 
 
@@ -16,4 +19,13 @@ export const Silhouette = {
   blazer_set: 'blazer_set',
   maxi_dress: 'maxi_dress',
   wrap_dress: 'wrap_dress',
+  saree: 'saree',
+  lehenga: 'lehenga',
+  anarkali: 'anarkali',
+  sharara: 'sharara',
+  qipao: 'qipao',
+  hanbok: 'hanbok',
+  ao_dai: 'ao_dai',
+  abaya: 'abaya',
+  kaftan: 'kaftan',
 } as const;

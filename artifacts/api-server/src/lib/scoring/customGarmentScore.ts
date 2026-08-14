@@ -25,7 +25,7 @@ const VTO_MAX = 10;
  *
  * Reported as a percentage of what could actually be assessed. Deliberately
  * a narrower set of signals than catalog scoring — there is no occasion,
- * style or budget preference to match against a garment the user already
+ * style preference to match against a garment the user already
  * chose for themselves, and fabric finish cannot be read from a photo — so
  * surface it under a distinct label (e.g. "Skin & Color Compatibility"),
  * never as the full catalog "Confidence Score".

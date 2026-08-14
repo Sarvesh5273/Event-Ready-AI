@@ -5,12 +5,12 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { BudgetTier } from './budgetTier';
 import type { StyleVibe } from './styleVibe';
+import type { TraditionPreference } from './traditionPreference';
 import type { UserPreferencesOccasion } from './userPreferencesOccasion';
 
 export interface UserPreferences {
   occasion: UserPreferencesOccasion;
   styleVibe: StyleVibe;
-  budgetTier: BudgetTier;
+  tradition: TraditionPreference;
 }

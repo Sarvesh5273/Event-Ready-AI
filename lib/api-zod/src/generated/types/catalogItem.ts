@@ -5,10 +5,10 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { BudgetTier } from './budgetTier';
 import type { ColorFamily } from './colorFamily';
 import type { FabricFinish } from './fabricFinish';
 import type { GarmentCategory } from './garmentCategory';
+import type { GarmentTradition } from './garmentTradition';
 import type { Silhouette } from './silhouette';
 import type { StyleVibeOrEither } from './styleVibeOrEither';
 import type { Undertone } from './undertone';
@@ -17,8 +17,8 @@ export interface CatalogItem {
   id: string;
   name: string;
   garmentCategory: GarmentCategory;
+  tradition: GarmentTradition;
   imageUrl: string;
-  priceTier: BudgetTier;
   styleVibe: StyleVibeOrEither;
   colorFamily: ColorFamily;
   undertone: Undertone;

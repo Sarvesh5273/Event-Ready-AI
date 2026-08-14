@@ -46,9 +46,9 @@ function WeddingGuestFlow() {
       {flow.screen === 'preferences' && (
         <PreferencesScreen
           styleVibe={flow.styleVibe}
-          budgetTier={flow.budgetTier}
           onStyleVibeChange={flow.setStyleVibe}
-          onBudgetTierChange={flow.setBudgetTier}
+          tradition={flow.tradition}
+          onTraditionChange={flow.setTradition}
           onContinue={flow.confirmPreferences}
           onBack={flow.goToStart}
           wantsDemoPersona={flow.wantsDemoPersona}
@@ -89,7 +89,15 @@ function WeddingGuestFlow() {
       )}
 
       {flow.screen === 'results' && flow.report && (
-        <ResultsScreen report={flow.report} isDemoMode={flow.isDemoMode} onStartOver={flow.restart} />
+        <ResultsScreen
+          report={flow.report}
+          isDemoMode={flow.isDemoMode}
+          onStartOver={flow.restart}
+          video={flow.video}
+          onGenerateVideo={flow.generateVideo}
+          isGeneratingVideo={flow.isGeneratingVideo}
+          videoError={flow.videoError}
+        />
       )}
 
       {flow.screen === 'results' && !flow.report && flow.isLoadingReport && (

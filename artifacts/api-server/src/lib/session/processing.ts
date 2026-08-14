@@ -9,64 +9,45 @@ export const PROCESSING_STEPS = [
   "Ranking the results",
 ] as const;
 
-/**
- * Extra step shown only for Live Mode while the bonus outfit video is being
- * generated. Not included in `PROCESSING_STEPS` because Demo Mode must never
- * see it, and the shared `TOTAL_PROCESSING_MS` timing must not change.
- */
-const LIVE_VIDEO_STEP = "Bringing your look to life" as const;
-
 const STEP_DURATION_MS = 1800;
 export const TOTAL_PROCESSING_MS = PROCESSING_STEPS.length * STEP_DURATION_MS;
 
 export interface EffectiveState {
   status: SessionStatusValue;
   currentStep: number;
-  /** The ordered step labels to display. May include the video step for Live Mode. */
+  /** The ordered step labels to display. Always `PROCESSING_STEPS`. */
   steps: readonly string[];
 }
 
 /**
- * Maps a Live Mode pipeline's current progress onto step indices.
- * Returns the step index and whether the bonus video step should be appended.
+ * Maps a Live Mode pipeline's current progress onto a `PROCESSING_STEPS`
+ * index. The bonus outfit video is not represented here: it is generated
+ * on demand from the results screen, after processing has finished, so it
+ * is never part of this progress bar.
  */
-function computeLiveStep(live: LiveSessionState, garmentSource: GarmentSource): { step: number; includeVideoStep: boolean } {
-  if (!live.skinResolved) return { step: 0, includeVideoStep: false };
+function computeLiveStep(live: LiveSessionState, garmentSource: GarmentSource): number {
+  if (!live.skinResolved) return 0;
 
   if (garmentSource === "custom") {
     const vto = live.custom?.vto;
-    if (!vto) return { step: 1, includeVideoStep: false }; // custom state not initialized yet
+    if (!vto) return 1; // custom state not initialized yet
 
     const terminal = vto.status === "success" || vto.status === "error";
-    if (!terminal) {
-      return { step: vto.status === "running" ? 2 : 1, includeVideoStep: false };
-    }
+    if (!terminal) return vto.status === "running" ? 2 : 1;
 
-    const videoInProgress = live.video?.status === "queued" || live.video?.status === "running";
-    if (videoInProgress) {
-      return { step: PROCESSING_STEPS.length, includeVideoStep: true };
-    }
-
-    return { step: PROCESSING_STEPS.length - 1, includeVideoStep: false };
+    return PROCESSING_STEPS.length - 1;
   }
 
   const vtoTasks = live.vtoTasks ?? [];
-  if (vtoTasks.length === 0) return { step: 1, includeVideoStep: false }; // outfits not selected/VTO not started yet
+  if (vtoTasks.length === 0) return 1; // outfits not selected/VTO not started yet
 
   const allTerminal = vtoTasks.every((t) => t.status === "success" || t.status === "error");
   if (!allTerminal) {
     const anyStarted = vtoTasks.some((t) => t.status !== "queued");
-    return { step: anyStarted ? 2 : 1, includeVideoStep: false };
+    return anyStarted ? 2 : 1;
   }
 
-  // All VTO tasks are done. Check whether the video task is still in flight.
-  const videoInProgress = live.video?.status === "queued" || live.video?.status === "running";
-  if (videoInProgress) {
-    // Step index 4 (the 5th slot) — only visible when includeVideoStep is true.
-    return { step: PROCESSING_STEPS.length, includeVideoStep: true };
-  }
-
-  return { step: PROCESSING_STEPS.length - 1, includeVideoStep: false };
+  return PROCESSING_STEPS.length - 1;
 }
 
 /**
@@ -95,9 +76,7 @@ export function computeEffectiveState(payload: SessionPayload, nowMs: number): E
   // status === "processing"
   if (payload.mode === "live") {
     if (payload.live) {
-      const { step, includeVideoStep } = computeLiveStep(payload.live, payload.garmentSource);
-      const steps = includeVideoStep ? [...PROCESSING_STEPS, LIVE_VIDEO_STEP] : PROCESSING_STEPS;
-      return { status: "processing", currentStep: step, steps };
+      return { status: "processing", currentStep: computeLiveStep(payload.live, payload.garmentSource), steps: PROCESSING_STEPS };
     }
     return { status: "processing", currentStep: 0, steps: PROCESSING_STEPS };
   }

@@ -29,14 +29,6 @@ function scoreForSelection(
     reasons.push("style_vibe_mismatch");
   }
 
-  if (item.priceTier === preferences.budgetTier) {
-    score += 2;
-    reasons.push("budget_match");
-  } else {
-    score -= 2;
-    reasons.push("budget_mismatch");
-  }
-
   // Personal colour has to drive the shortlist, not just reorder it. Only
   // three garments are ever tried on, so a garment cut here can never be
   // recovered by scoring later — shortlisting on anything less than the real
@@ -68,7 +60,7 @@ export interface SelectOutfitsInput {
   /**
    * The palette measured from the user's face, or null when no colour
    * reading is available. When null, shortlisting silently falls back to
-   * style/budget/finish rather than substituting a guessed complexion.
+   * style and finish rather than substituting a guessed complexion.
    */
   colorAnalysis: ColorAnalysis | null;
   /** How many outfits to shortlist. Defaults to 3 (1 recommended + 2 comparisons). */
@@ -83,7 +75,15 @@ export interface SelectOutfitsInput {
  * highest-scoring item.
  */
 export function selectOutfits({ catalog, preferences, skinSignals, colorAnalysis, count = 3 }: SelectOutfitsInput): OutfitCandidate[] {
-  const eligible = catalog.filter((item) => item.occasionTags.includes(preferences.occasion));
+  // Tradition is a hard filter, not a scoring nudge: someone who came here
+  // for a saree should not be shown a jumpsuit because it scored two points
+  // better on finish. Falls back to the whole catalog if a tradition somehow
+  // has no items, so a filter can never empty the shortlist.
+  const byTradition =
+    preferences.tradition === "any" ? catalog : catalog.filter((item) => item.tradition === preferences.tradition);
+  const inTradition = byTradition.length > 0 ? byTradition : catalog;
+
+  const eligible = inTradition.filter((item) => item.occasionTags.includes(preferences.occasion));
   const scored = eligible
     .map((item) => scoreForSelection(item, preferences, skinSignals, colorAnalysis))
     .sort((a, b) => b.score - a.score);

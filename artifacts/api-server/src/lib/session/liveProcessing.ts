@@ -207,32 +207,18 @@ async function advanceCatalogLiveSession(payload: SessionPayload): Promise<Sessi
   const allVtoTerminal =
     live.vtoTasks !== null && live.vtoTasks.length > 0 && live.vtoTasks.every((t) => t.status === "success" || t.status === "error");
 
-  // Once every outfit's try-on has resolved, generate one bonus video clip
-  // for the top-recommended outfit only (never all of them — bounds cost).
-  // This runs as an extra beat appended to the pipeline, so it delays the
-  // "ready" transition rather than the report being built without it.
+  // The bonus outfit video is deliberately NOT generated here. It is the
+  // single most expensive call in the product, so it is only ever started
+  // when the user explicitly asks for it on the results screen — see
+  // `advanceVideoGeneration`. Reaching "ready" therefore no longer waits on
+  // it, which also gets the user to their results noticeably sooner.
   if (allVtoTerminal) {
     clearPendingLiveUpload(payload.sessionId);
-
-    if (!live.video) {
-      live = initVideoTask(payload, live);
-    }
-    if (live.video?.status === "queued") {
-      live = await startVideoTask(payload.sessionId, live);
-    } else if (live.video?.status === "running") {
-      live = await checkVideoTask(payload.sessionId, live);
-    }
   }
 
   const next: SessionPayload = { ...payload, live };
 
-  const videoTerminal =
-    live.video === null ||
-    live.video.status === "success" ||
-    live.video.status === "error" ||
-    live.video.status === "skipped";
-
-  if (allVtoTerminal && videoTerminal) {
+  if (allVtoTerminal) {
     next.status = "ready";
   }
 
@@ -273,30 +259,43 @@ async function advanceCustomLiveSession(payload: SessionPayload): Promise<Sessio
 
   if (vtoTerminal) {
     clearPendingLiveUpload(payload.sessionId);
-
-    if (!live.video) {
-      live = initCustomVideoTask(live);
-    }
-    if (live.video?.status === "queued") {
-      live = await startVideoTask(payload.sessionId, live);
-    } else if (live.video?.status === "running") {
-      live = await checkVideoTask(payload.sessionId, live);
-    }
   }
 
   const next: SessionPayload = { ...payload, live };
 
-  const videoTerminal =
-    live.video === null ||
-    live.video.status === "success" ||
-    live.video.status === "error" ||
-    live.video.status === "skipped";
-
-  if (vtoTerminal && videoTerminal && live.toneResolved) {
+  if (vtoTerminal && live.toneResolved) {
     next.status = "ready";
   }
 
   return next;
+}
+
+/**
+ * Advances the on-demand bonus video by exactly one step, mirroring how
+ * `advanceLiveSession` treats every other YouCam task: init -> start ->
+ * check, one network round trip per call, with all state living in the
+ * signed token.
+ *
+ * Unlike the rest of the pipeline this is never called automatically. The
+ * Image-to-Video call is the most expensive one in the product, so it runs
+ * only when the user presses "Generate video" on the results screen, and
+ * only for the one outfit the report actually recommends.
+ */
+export async function advanceVideoGeneration(payload: SessionPayload): Promise<SessionPayload> {
+  if (!payload.live) return payload;
+
+  let live = payload.live;
+  if (!live.video) {
+    live = payload.garmentSource === "custom" ? initCustomVideoTask(live) : initVideoTask(payload, live);
+  }
+
+  if (live.video?.status === "queued") {
+    live = await startVideoTask(payload.sessionId, live);
+  } else if (live.video?.status === "running") {
+    live = await checkVideoTask(payload.sessionId, live);
+  }
+
+  return { ...payload, live };
 }
 
 async function startCustomVtoTask(sessionId: string, live: LiveSessionState): Promise<LiveSessionState> {

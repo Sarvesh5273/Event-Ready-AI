@@ -6,8 +6,19 @@ import {
   getGetSessionStatusQueryKey,
   useGetSessionReport,
   getGetSessionReportQueryKey,
+  useStartSessionVideo,
+  useGetSessionVideo,
+  getGetSessionVideoQueryKey,
 } from "@workspace/api-client-react";
-import type { StyleVibe, BudgetTier, GarmentCategory, GarmentSource, Session, EventReadyReport } from "@workspace/api-client-react";
+import type {
+  StyleVibe,
+  TraditionPreference,
+  GarmentCategory,
+  GarmentSource,
+  Session,
+  EventReadyReport,
+  SessionVideo,
+} from "@workspace/api-client-react";
 
 export type FlowScreen = "start" | "preferences" | "photo" | "processing" | "results";
 
@@ -24,6 +35,7 @@ export interface UploadedGarment {
 }
 
 const POLL_INTERVAL_MS = 3000;
+const VIDEO_POLL_INTERVAL_MS = 3000;
 
 /** Reads a File into a base64 string (no `data:...;base64,` prefix) for the JSON upload body. */
 function fileToBase64(file: File): Promise<string> {
@@ -55,7 +67,7 @@ function progressRank(s: Session): number {
 export function useEventReadyFlow() {
   const [screen, setScreen] = useState<FlowScreen>("start");
   const [styleVibe, setStyleVibe] = useState<StyleVibe>("bold");
-  const [budgetTier, setBudgetTier] = useState<BudgetTier>("mid");
+  const [tradition, setTradition] = useState<TraditionPreference>("any");
   const [wantsDemoPersona, setWantsDemoPersona] = useState(false);
   const [garmentSource, setGarmentSource] = useState<GarmentSource>("catalog");
   const [garmentCategory, setGarmentCategory] = useState<GarmentCategory>("full_body");
@@ -68,6 +80,12 @@ export function useEventReadyFlow() {
   });
   const [session, setSession] = useState<Session | null>(null);
   const [flowError, setFlowError] = useState<string | null>(null);
+
+  // The bonus video is generated only when the user asks for it, so it is
+  // tracked separately from the report rather than arriving inside it.
+  const [video, setVideo] = useState<SessionVideo | null>(null);
+  const [isPollingVideo, setIsPollingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   // The token changes as the session progresses (created -> processing ->
   // ready/error); always send the most recently received one.
@@ -124,6 +142,75 @@ export function useEventReadyFlow() {
     },
   });
 
+  // Like the other session endpoints, this authenticates with the rolling
+  // signed token carried in a header rather than the URL.
+  const startVideo = useStartSessionVideo({
+    request: {
+      headers: sessionTokenRef.current ? { token: sessionTokenRef.current } : undefined,
+    },
+  });
+
+  // Polling is enabled only after the user presses Generate. The GET endpoint
+  // never starts a task on its own, so this can't spend a credit by accident —
+  // but leaving it disabled until then also avoids pointless requests.
+  const videoQuery = useGetSessionVideo(session?.sessionId ?? "", {
+    query: {
+      enabled: Boolean(session?.sessionId) && isPollingVideo,
+      queryKey: getGetSessionVideoQueryKey(session?.sessionId ?? ""),
+      refetchInterval: (query) => {
+        const data = query.state.data as SessionVideo | undefined;
+        if (!data) return VIDEO_POLL_INTERVAL_MS;
+        return data.status === "queued" || data.status === "running" ? VIDEO_POLL_INTERVAL_MS : false;
+      },
+    },
+    request: {
+      headers: sessionTokenRef.current ? { token: sessionTokenRef.current } : undefined,
+    },
+  });
+
+  const latestVideo = videoQuery.data;
+  useEffect(() => {
+    if (!latestVideo) return;
+    sessionTokenRef.current = latestVideo.sessionToken;
+    setVideo(latestVideo);
+    // Stop on every terminal status, not just success/error — "skipped" is
+    // also terminal, and treating it as in-flight would leave the button
+    // spinning forever.
+    if (latestVideo.status !== "queued" && latestVideo.status !== "running") {
+      setIsPollingVideo(false);
+    }
+  }, [latestVideo]);
+
+  // A transport or auth failure mid-poll would otherwise strand the UI in a
+  // permanent "generating" state with nothing explaining why.
+  useEffect(() => {
+    if (!videoQuery.isError) return;
+    setIsPollingVideo(false);
+    setVideoError("We lost track of your video while it was generating. Please try again.");
+  }, [videoQuery.isError]);
+
+  const generateVideo = useCallback(() => {
+    if (!session?.sessionId) return;
+    setVideoError(null);
+    startVideo.mutate(
+      { sessionId: session.sessionId },
+      {
+        onSuccess: (started) => {
+          sessionTokenRef.current = started.sessionToken;
+          setVideo(started);
+          // Demo Mode returns the pre-baked clip immediately, so only start
+          // polling when the task is actually still running.
+          if (started.status === "queued" || started.status === "running") {
+            setIsPollingVideo(true);
+          }
+        },
+        onError: () => {
+          setVideoError("Something went wrong starting your video. Please try again.");
+        },
+      },
+    );
+  }, [session?.sessionId, startVideo]);
+
   const goToStart = useCallback(() => {
     setScreen("start");
     setFlowError(null);
@@ -141,7 +228,7 @@ export function useEventReadyFlow() {
     setScreen("preferences");
   }, []);
 
-  // The custom-garment flow has no occasion/style/budget preference to
+  // The custom-garment flow has no occasion or style preference to
   // apply (there's no catalog item to rank against them), so it skips the
   // Preferences screen entirely and goes straight to photo upload. It's
   // Live Mode only — there's no pre-captured demo asset for an arbitrary
@@ -160,7 +247,7 @@ export function useEventReadyFlow() {
       setScreen("photo");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wantsDemoPersona, styleVibe, budgetTier]);
+  }, [wantsDemoPersona, styleVibe]);
 
   const setSelfieFile = useCallback((file: File | null) => {
     setPhotos((prev) => {
@@ -195,20 +282,23 @@ export function useEventReadyFlow() {
     setWantsDemoPersona(true);
     beginSession("demo");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe, budgetTier]);
+  }, [styleVibe]);
 
   const continueFromPhotos = useCallback(() => {
     beginSession("live");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe, budgetTier, photos, garmentSource, garment, garmentCategory]);
+  }, [styleVibe, photos, garmentSource, garment, garmentCategory]);
 
   function beginSession(mode: "demo" | "live") {
     setFlowError(null);
+    setVideo(null);
+    setVideoError(null);
+    setIsPollingVideo(false);
     // Demo Mode always replays the fixed catalog-flow persona — there's no
     // pre-captured demo asset for an arbitrary custom-garment upload.
     const effectiveGarmentSource: GarmentSource = mode === "demo" ? "catalog" : garmentSource;
     createSession.mutate(
-      { data: { mode, preferences: { occasion: "wedding_guest", styleVibe, budgetTier }, garmentSource: effectiveGarmentSource } },
+      { data: { mode, preferences: { occasion: "wedding_guest", styleVibe, tradition }, garmentSource: effectiveGarmentSource } },
       {
         onSuccess: async (created) => {
           // Don't move to the Processing screen (and don't enable status
@@ -280,7 +370,7 @@ export function useEventReadyFlow() {
     setWantsDemoPersona(true);
     beginSession("demo");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe, budgetTier]);
+  }, [styleVibe]);
 
   const restart = useCallback(() => {
     setScreen("start");
@@ -289,6 +379,9 @@ export function useEventReadyFlow() {
     setGarmentCategory("full_body");
     setSession(null);
     setFlowError(null);
+    setVideo(null);
+    setVideoError(null);
+    setIsPollingVideo(false);
     sessionTokenRef.current = null;
     setPhotos((prev) => {
       if (prev.selfiePreviewUrl) URL.revokeObjectURL(prev.selfiePreviewUrl);
@@ -315,8 +408,8 @@ export function useEventReadyFlow() {
       screen,
       styleVibe,
       setStyleVibe,
-      budgetTier,
-      setBudgetTier,
+      tradition,
+      setTradition,
       wantsDemoPersona,
       garmentSource,
       garmentCategory,
@@ -333,6 +426,13 @@ export function useEventReadyFlow() {
       report,
       isLoadingReport: reportQuery.isLoading,
       reportError: reportQuery.isError,
+      // Deliberately not falling back to `report.video`: no session produces a
+      // video until the user asks for one, so the only source of truth is the
+      // video endpoint's own state.
+      video,
+      generateVideo,
+      isGeneratingVideo: startVideo.isPending || isPollingVideo,
+      videoError,
       goToStart,
       startFlow,
       startFlowWithDemoPersona,
@@ -346,7 +446,7 @@ export function useEventReadyFlow() {
     [
       screen,
       styleVibe,
-      budgetTier,
+      tradition,
       wantsDemoPersona,
       garmentSource,
       garmentCategory,
@@ -360,6 +460,11 @@ export function useEventReadyFlow() {
       report,
       reportQuery.isLoading,
       reportQuery.isError,
+      video,
+      generateVideo,
+      startVideo.isPending,
+      isPollingVideo,
+      videoError,
       goToStart,
       startFlow,
       startFlowWithDemoPersona,

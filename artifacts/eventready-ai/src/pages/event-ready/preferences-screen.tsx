@@ -1,15 +1,15 @@
 import React from 'react';
 import type { PreferencesScreenProps } from '@/types/screen-props';
-import { StyleVibe, BudgetTier } from '@workspace/api-client-react';
+import { StyleVibe, TraditionPreference } from '@workspace/api-client-react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Sparkles, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function PreferencesScreen({
   styleVibe,
-  budgetTier,
   onStyleVibeChange,
-  onBudgetTierChange,
+  tradition,
+  onTraditionChange,
   onContinue,
   onBack,
   wantsDemoPersona
@@ -20,10 +20,12 @@ export function PreferencesScreen({
     { id: StyleVibe.bold, label: 'Bold & Statement', description: 'Striking patterns, modern cuts, and colors that stand out in a crowd.' }
   ];
 
-  const budgetOptions = [
-    { id: BudgetTier.low, label: 'Under $150', description: 'Accessible & stylish' },
-    { id: BudgetTier.mid, label: '$150 - $350', description: 'Premium quality' },
-    { id: BudgetTier.high, label: 'Over $350', description: 'Luxury investment' }
+  const traditionOptions = [
+    { id: TraditionPreference.any, label: 'Open to anything' },
+    { id: TraditionPreference.western, label: 'Western' },
+    { id: TraditionPreference.indian, label: 'Indian' },
+    { id: TraditionPreference.east_asian, label: 'East Asian' },
+    { id: TraditionPreference.middle_eastern, label: 'Middle Eastern' }
   ];
 
   return (
@@ -45,9 +47,9 @@ export function PreferencesScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-4xl font-serif mb-2">Set your preferences</h1>
+          <h1 className="text-4xl font-serif mb-2">How do you want to show up?</h1>
           <p className="text-muted-foreground text-lg mb-12">
-            Tell us what you're looking for, so we can curate the perfect selection.
+            Your colors come from your photo. This is the one thing we can't measure — the mood you're going for.
           </p>
 
           <div className="space-y-12">
@@ -86,37 +88,43 @@ export function PreferencesScreen({
               </div>
             </section>
 
-            {/* Budget Tier Selection */}
+            {/* Dressing tradition — a hard filter on what we shortlist, not a nudge. */}
             <section>
-              <h2 className="text-xl font-medium mb-4">Budget Range</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {budgetOptions.map(option => (
+              <h2 className="text-xl font-medium mb-2 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-primary" />
+                What are you wearing?
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Your colour analysis works the same either way — this just decides which pieces we shortlist.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {traditionOptions.map(option => (
                   <button
                     key={option.id}
-                    onClick={() => onBudgetTierChange(option.id as BudgetTier)}
-                    data-testid={`select-budget-${option.id}`}
+                    onClick={() => onTraditionChange(option.id)}
+                    data-testid={`select-tradition-${option.id}`}
                     className={cn(
-                      "text-center p-5 border transition-all duration-300",
-                      budgetTier === option.id
-                        ? "border-primary bg-primary text-primary-foreground shadow-md"
-                        : "border-border bg-card hover:border-primary/40 text-foreground"
+                      "px-5 py-3 border transition-all duration-300 text-sm font-medium inline-flex items-center gap-2",
+                      tradition === option.id
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border bg-card hover:border-primary/40 hover:bg-secondary/20"
                     )}
                   >
-                    <div className={cn(
-                      "font-medium text-lg mb-1",
-                      budgetTier === option.id ? "text-primary-foreground" : "text-foreground"
-                    )}>
-                      {option.label}
-                    </div>
-                    <div className={cn(
-                      "text-xs",
-                      budgetTier === option.id ? "text-primary-foreground/80" : "text-muted-foreground"
-                    )}>
-                      {option.description}
-                    </div>
+                    {tradition === option.id && (
+                      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex">
+                        <Check className="w-4 h-4 text-primary" />
+                      </motion.span>
+                    )}
+                    {option.label}
                   </button>
                 ))}
               </div>
+              {wantsDemoPersona && (
+                <p className="text-sm text-muted-foreground mt-4 border-l-2 border-border pl-3" data-testid="tradition-demo-note">
+                  The demo persona replays a fixed set of pre-rendered Western looks, so this filter won't change her
+                  results. Run it with your own photo to see the other traditions.
+                </p>
+              )}
             </section>
           </div>
         </motion.div>

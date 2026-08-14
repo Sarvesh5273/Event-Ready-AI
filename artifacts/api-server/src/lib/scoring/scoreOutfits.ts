@@ -18,7 +18,6 @@ export interface ScoreOutfitsInput {
 
 const OCCASION_MAX = 20;
 const STYLE_MAX = 15;
-const BUDGET_MAX = 10;
 const FINISH_MAX = 15;
 const VTO_MAX = 10;
 
@@ -31,7 +30,6 @@ const VTO_MAX = 10;
  * Point budget:
  *   occasionFit      0-20
  *   styleVibe        0-15
- *   budget           0-10
  *   personalColor    0-30
  *   skinConcernFit   0-15
  *   vtoSuccess       0-10
@@ -55,7 +53,7 @@ export function scoreOutfits({ items, preferences, skinSignals, colorAnalysis, v
     const reasonCodes: ReasonCode[] = [];
     const cautionCodes: ReasonCode[] = [];
     let points = 0;
-    let maxPoints = OCCASION_MAX + STYLE_MAX + BUDGET_MAX + FINISH_MAX + VTO_MAX;
+    let maxPoints = OCCASION_MAX + STYLE_MAX + FINISH_MAX + VTO_MAX;
 
     if (item.occasionTags.includes(preferences.occasion)) {
       points += OCCASION_MAX;
@@ -74,14 +72,6 @@ export function scoreOutfits({ items, preferences, skinSignals, colorAnalysis, v
     } else {
       points += 4;
       reasonCodes.push("style_vibe_mismatch");
-    }
-
-    if (item.priceTier === preferences.budgetTier) {
-      points += BUDGET_MAX;
-      reasonCodes.push("budget_match");
-    } else {
-      points += 3;
-      reasonCodes.push("budget_mismatch");
     }
 
     const colorMatch = colorAnalysis ? judgeGarmentColor(item.colorHex, colorAnalysis) : null;

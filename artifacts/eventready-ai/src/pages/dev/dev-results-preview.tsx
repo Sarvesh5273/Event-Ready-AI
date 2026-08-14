@@ -42,7 +42,7 @@ async function createSession(): Promise<{ sessionId: string; sessionToken: strin
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       mode: 'live',
-      preferences: { occasion: 'wedding_guest', styleVibe: 'classic', budgetTier: 'mid' },
+      preferences: { occasion: 'wedding_guest', styleVibe: 'classic', tradition: 'any' },
       garmentSource: 'custom',
     }),
   });
@@ -117,6 +117,9 @@ type Phase =
 export function DevResultsPreview() {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
   const [activeCase, setActiveCase] = useState<'success' | 'fallback'>('success');
+  // This harness exercises the custom-garment report only; video generation
+  // has its own endpoints and is tested through the main flow.
+  const [devVideoError, setDevVideoError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,6 +251,10 @@ export function DevResultsPreview() {
           <CustomGarmentResultsScreen
             report={displayReport}
             onStartOver={() => window.location.href = '/'}
+            video={null}
+            onGenerateVideo={() => setDevVideoError('Video generation is not wired up in this dev preview — use the main flow to test it.')}
+            isGeneratingVideo={false}
+            videoError={devVideoError}
           />
         </div>
       </>

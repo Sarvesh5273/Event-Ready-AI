@@ -7,3 +7,6 @@
 - [Colour season calibration](color-season-calibration.md) — LAB warm/cool classifiers read falsely warm; validate on a spread of archetypes, not single cases.
 - [YouCam API discovery](youcam-api-discovery.md) — fetch docs as `.md`; the feature-cost endpoint is not a capability inventory.
 - [Measurement vs interpretation in UI](measurement-vs-interpretation-ui.md) — never render a generated axis summary beside curated category copy; show axis meters instead.
+- [YouCam billing & VTO coverage](youcam-billing-and-vto-coverage.md) — failed tasks are refunded; Cloth VTO handles saree/qipao/abaya fine despite its Western-only category enum.
+- [Product-photo colour extraction](product-photo-color-extraction.md) — centre-crop averaging silently blends the backdrop in; use border flood fill w/ adaptive tolerance + largest cluster.
+- [OpenAPI enum drift](openapi-enum-drift.md) — extending a TS union but not the spec enum passes typecheck, then 500s the *whole* response for any row using the new value.

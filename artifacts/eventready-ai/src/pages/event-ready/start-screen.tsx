@@ -30,7 +30,7 @@ export function StartScreen({ onStart, onUseDemoPersona, onStartCustom }: StartS
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-xl mx-auto leading-relaxed">
-            Discover the perfect outfit curated just for you. We analyze your style vibe, complexion, and budget to find your ultimate look.
+            We measure your skin, hair and eye color from a single photo, then find the shades that genuinely suit you — and show you the difference on your own body.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md mx-auto">

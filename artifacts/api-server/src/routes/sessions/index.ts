@@ -13,10 +13,16 @@ import {
   GetSessionReportParams,
   GetSessionReportHeader,
   GetSessionReportResponse,
+  StartSessionVideoParams,
+  StartSessionVideoHeader,
+  StartSessionVideoResponse,
+  GetSessionVideoParams,
+  GetSessionVideoHeader,
+  GetSessionVideoResponse,
 } from "@workspace/api-zod";
 import { createSessionPayload, signSessionToken, verifySessionToken, type SessionPayload } from "../../lib/session/sessionToken";
 import { PROCESSING_STEPS, computeEffectiveState } from "../../lib/session/processing";
-import { advanceLiveSession, startLiveAnalysis } from "../../lib/session/liveProcessing";
+import { advanceLiveSession, advanceVideoGeneration, startLiveAnalysis } from "../../lib/session/liveProcessing";
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
 import { selectOutfits } from "../../lib/scoring/selectOutfits";
@@ -211,6 +217,141 @@ router.get("/sessions/:sessionId/report", async (req, res): Promise<void> => {
   res.status(200).json(GetSessionReportResponse.parse(report));
 });
 
+/** Wire shape for both video endpoints: task state + the token carrying it. */
+function buildVideoResponse(payload: SessionPayload) {
+  const video = payload.live?.video;
+  return {
+    sessionToken: signSessionToken(payload),
+    status: video?.status ?? "idle",
+    videoUrl: video?.videoUrl ?? null,
+    errorMessage: video?.errorMessage ?? null,
+  };
+}
+
+/** Shared token + session checks for the two video endpoints. */
+function authorizeVideoRequest(
+  token: string | undefined,
+  sessionId: string,
+): { payload: SessionPayload } | { error: string; status: number } {
+  const payload = verifySessionToken(token);
+  if (!payload || payload.sessionId !== sessionId) {
+    return { error: "Invalid or expired session token.", status: 401 };
+  }
+  return { payload };
+}
+
+router.post("/sessions/:sessionId/video", async (req, res): Promise<void> => {
+  const params = StartSessionVideoParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const header = StartSessionVideoHeader.safeParse({ token: req.get("token") });
+  if (!header.success) {
+    res.status(400).json({ error: "Missing session token header." });
+    return;
+  }
+
+  const auth = authorizeVideoRequest(header.data.token, params.data.sessionId);
+  if ("error" in auth) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+
+  // Demo Mode replays a video generated offline once — no task, no cost.
+  if (auth.payload.mode === "demo") {
+    res.status(200).json(
+      StartSessionVideoResponse.parse({
+        sessionToken: signSessionToken(auth.payload),
+        status: "success",
+        videoUrl: DEMO_VIDEO_URL,
+        errorMessage: null,
+      }),
+    );
+    return;
+  }
+
+  // A failed attempt is retryable: clearing the terminal error state lets a
+  // second press start a genuinely new task instead of replaying the old
+  // failure forever. Only POST does this — GET still cannot initiate work,
+  // so polling remains incapable of spending a credit. "skipped" is left
+  // alone: it means there was no try-on image to animate, so there is
+  // nothing a retry could do.
+  const retryable =
+    auth.payload.live?.video?.status === "error"
+      ? { ...auth.payload, live: { ...auth.payload.live, video: null } }
+      : auth.payload;
+
+  try {
+    const advanced = await advanceVideoGeneration(retryable);
+    req.log.info({ sessionId: advanced.sessionId, status: advanced.live?.video?.status }, "Started on-demand outfit video");
+    res.status(200).json(StartSessionVideoResponse.parse(buildVideoResponse(advanced)));
+  } catch (err) {
+    req.log.error({ err, sessionId: auth.payload.sessionId }, "Failed to start on-demand outfit video");
+    res.status(200).json(
+      StartSessionVideoResponse.parse({
+        sessionToken: signSessionToken(auth.payload),
+        status: "error",
+        videoUrl: null,
+        errorMessage: "The video couldn't be generated right now.",
+      }),
+    );
+  }
+});
+
+router.get("/sessions/:sessionId/video", async (req, res): Promise<void> => {
+  const params = GetSessionVideoParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const header = GetSessionVideoHeader.safeParse({ token: req.get("token") });
+  if (!header.success) {
+    res.status(400).json({ error: "Missing session token header." });
+    return;
+  }
+
+  const auth = authorizeVideoRequest(header.data.token, params.data.sessionId);
+  if ("error" in auth) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+
+  // Demo Mode's clip was generated offline and always exists, so this reports
+  // "success" even before POST — the "idle until started" rule exists purely to
+  // protect paid Live Mode tasks, and there is nothing to protect here. The UI
+  // still routes Demo through the same button, because it only polls after POST.
+  if (auth.payload.mode === "demo") {
+    res.status(200).json(
+      GetSessionVideoResponse.parse({
+        sessionToken: signSessionToken(auth.payload),
+        status: "success",
+        videoUrl: DEMO_VIDEO_URL,
+        errorMessage: null,
+      }),
+    );
+    return;
+  }
+
+  // Polling must never *initiate* a paid task — only advance one the user
+  // already started with POST. Without this guard a stray poll (or a
+  // refresh) would silently spend an Image-to-Video credit.
+  if (!auth.payload.live?.video) {
+    res.status(200).json(GetSessionVideoResponse.parse(buildVideoResponse(auth.payload)));
+    return;
+  }
+
+  try {
+    const advanced = await advanceVideoGeneration(auth.payload);
+    res.status(200).json(GetSessionVideoResponse.parse(buildVideoResponse(advanced)));
+  } catch (err) {
+    req.log.error({ err, sessionId: auth.payload.sessionId }, "Failed to advance on-demand outfit video");
+    res.status(200).json(GetSessionVideoResponse.parse(buildVideoResponse(auth.payload)));
+  }
+});
+
 // Serves the raw bytes of a Live Mode custom-garment upload for display on
 // the results screen. Deliberately outside the OpenAPI/zod-typed surface —
 // it's consumed directly as an `<img src>`, which can't attach the `token`
@@ -284,12 +425,10 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     vtoResults,
     scores,
     prepTips: PREP_TIPS,
-    // Pre-baked demo video generated once offline via the YouCam
-    // Image-to-Video API for the bold-emerald-jumpsuit VTO image.
-    // Always shown in Demo Mode (it showcases the API feature regardless
-    // of which outfit is ranked #1 by the scoring engine).
-    // Served as a static public asset — zero API cost at runtime.
-    video: { status: "success" as const, videoUrl: DEMO_VIDEO_URL },
+    // Null so Demo Mode shows the same "Generate video" affordance as Live
+    // Mode rather than a second, auto-playing UI path. Pressing it serves
+    // the pre-baked demo clip instantly — see the video endpoints above.
+    video: null,
     customGarment: null,
     colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,
   };
@@ -389,10 +528,10 @@ function buildLiveReport(payload: SessionPayload): EventReadyReport {
     vtoResults,
     scores,
     prepTips: PREP_TIPS,
-    // By the time the report is fetched (`status === "ready"`), the video
-    // task is guaranteed to be terminal — see `advanceLiveSession`'s
-    // `videoTerminal` gate — so `live.video` here is always non-null and
-    // never "queued"/"running".
+    // Almost always null: video is generated on request, so a session reaches
+    // "ready" long before one exists. Kept only so a report fetched after the
+    // user has already generated one still carries it. The results screen
+    // drives off the video endpoints, not this field.
     video,
     customGarment: null,
     colorAnalysis: colorAnalysis ? toColorReport(colorAnalysis) : null,

@@ -1,4 +1,10 @@
-import type { StyleVibe, BudgetTier, EventReadyReport, GarmentCategory } from "@workspace/api-client-react";
+import type {
+  StyleVibe,
+  TraditionPreference,
+  EventReadyReport,
+  GarmentCategory,
+  SessionVideo,
+} from "@workspace/api-client-react";
 
 export interface StartScreenProps {
   onStart: () => void;
@@ -9,9 +15,9 @@ export interface StartScreenProps {
 
 export interface PreferencesScreenProps {
   styleVibe: StyleVibe;
-  budgetTier: BudgetTier;
   onStyleVibeChange: (vibe: StyleVibe) => void;
-  onBudgetTierChange: (tier: BudgetTier) => void;
+  tradition: TraditionPreference;
+  onTraditionChange: (tradition: TraditionPreference) => void;
   onContinue: () => void;
   onBack: () => void;
   /** True when the user already chose "Use demo persona" — continuing skips the photo step. */
@@ -47,7 +53,19 @@ export interface ProcessingScreenProps {
   onBack: () => void;
 }
 
-export interface ResultsScreenProps {
+/**
+ * The bonus outfit video is generated only when the user asks for it (it is
+ * the most expensive call in the pipeline), so results screens receive its
+ * state and trigger rather than reading a video off the report.
+ */
+export interface OutfitVideoProps {
+  video: SessionVideo | null;
+  onGenerateVideo: () => void;
+  isGeneratingVideo: boolean;
+  videoError: string | null;
+}
+
+export interface ResultsScreenProps extends OutfitVideoProps {
   report: EventReadyReport;
   isDemoMode: boolean;
   onStartOver: () => void;

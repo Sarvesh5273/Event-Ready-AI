@@ -12,7 +12,6 @@ export type ReasonCode = typeof ReasonCode[keyof typeof ReasonCode];
 export const ReasonCode = {
   wedding_guest_match: 'wedding_guest_match',
   style_vibe_match: 'style_vibe_match',
-  budget_match: 'budget_match',
   cool_tone_supports_redness: 'cool_tone_supports_redness',
   matte_finish_supports_oiliness: 'matte_finish_supports_oiliness',
   contrast_supports_tired_eye_area: 'contrast_supports_tired_eye_area',
@@ -23,7 +22,6 @@ export const ReasonCode = {
   matte_finish_supports_texture: 'matte_finish_supports_texture',
   high_shine_texture_caution: 'high_shine_texture_caution',
   warm_tone_redness_caution: 'warm_tone_redness_caution',
-  budget_mismatch: 'budget_mismatch',
   style_vibe_mismatch: 'style_vibe_mismatch',
   palette_hero_color: 'palette_hero_color',
   palette_harmonious_color: 'palette_harmonious_color',

@@ -9,7 +9,6 @@ export type { ColorReport };
 
 export type StyleVibe = "classic" | "bold";
 export type StyleVibeOrEither = "classic" | "bold" | "either";
-export type BudgetTier = "low" | "mid" | "high";
 export type SessionMode = "demo" | "live";
 export type SessionStatusValue = "created" | "processing" | "ready" | "error";
 export type GarmentCategory = "full_body" | "upper_body" | "lower_body";
@@ -22,7 +21,11 @@ export type ColorFamily =
   | "champagne"
   | "lavender"
   | "teal"
-  | "burgundy";
+  | "burgundy"
+  | "coral"
+  | "mustard"
+  | "ivory"
+  | "terracotta";
 export type Undertone = "cool" | "warm" | "neutral";
 export type FabricFinish = "matte" | "soft_sheen" | "high_shine";
 export type Silhouette =
@@ -31,7 +34,27 @@ export type Silhouette =
   | "jumpsuit"
   | "blazer_set"
   | "maxi_dress"
-  | "wrap_dress";
+  | "wrap_dress"
+  | "saree"
+  | "lehenga"
+  | "anarkali"
+  | "sharara"
+  | "qipao"
+  | "hanbok"
+  | "ao_dai"
+  | "abaya"
+  | "kaftan";
+
+/**
+ * The dressing tradition a garment belongs to. Wedding guests do not all
+ * dress Western, and the try-on model was verified to render draped and
+ * layered garments (saree pallu, lehenga dupatta, hanbok chima, abaya)
+ * correctly, so the catalog is not restricted to Western silhouettes.
+ */
+export type GarmentTradition = "western" | "indian" | "east_asian" | "middle_eastern";
+
+/** A tradition filter for the shortlist, plus "any" for the whole catalog. */
+export type TraditionPreference = GarmentTradition | "any";
 export type SkinSignalLevel = "low" | "medium" | "high" | "unknown";
 export type VtoTaskStatus = "queued" | "running" | "success" | "error";
 
@@ -46,7 +69,6 @@ export type GarmentSource = "catalog" | "custom";
 export type ReasonCode =
   | "wedding_guest_match"
   | "style_vibe_match"
-  | "budget_match"
   | "cool_tone_supports_redness"
   | "matte_finish_supports_oiliness"
   | "matte_finish_supports_texture"
@@ -57,7 +79,6 @@ export type ReasonCode =
   | "high_shine_camera_caution"
   | "high_shine_texture_caution"
   | "warm_tone_redness_caution"
-  | "budget_mismatch"
   | "style_vibe_mismatch"
   // Personal-colour verdicts, derived by comparing the garment's measured
   // colour to the palette measured from the user's own face.
@@ -70,13 +91,20 @@ export type ReasonCode =
 export interface UserPreferences {
   occasion: "wedding_guest";
   styleVibe: StyleVibe;
-  budgetTier: BudgetTier;
+  /**
+   * Which dressing tradition to shortlist from. "any" spans the whole
+   * catalog; anything else is a hard filter rather than a scoring nudge —
+   * someone who came here for a saree does not want a jumpsuit ranked above
+   * it because the jumpsuit scored two points better on finish.
+   */
+  tradition: TraditionPreference;
 }
 
 export interface CatalogItem {
   id: string;
   name: string;
   garmentCategory: GarmentCategory;
+  tradition: GarmentTradition;
   imageUrl: string;
   /**
    * The garment's actual colour, sampled from its product photo rather than
@@ -86,7 +114,6 @@ export interface CatalogItem {
    * garment and could not be computed for anything outside this catalog.
    */
   colorHex: string;
-  priceTier: BudgetTier;
   styleVibe: StyleVibeOrEither;
   colorFamily: ColorFamily;
   undertone: Undertone;
@@ -141,7 +168,7 @@ export interface EventReadyVideo {
 /**
  * Skin/color compatibility read for a garment the user uploaded themselves
  * (the "custom" flow). Deliberately a NARROWER signal than `OutfitScore`:
- * there's no occasion/style/budget preference to check a self-picked
+ * there's no occasion or style preference to check a self-picked
  * garment against, and fabric finish can't be reliably read from a photo,
  * so this only ever reflects color/undertone-driven skin fit + try-on
  * success. Keep it a distinct type (and distinct UI label) so it's never

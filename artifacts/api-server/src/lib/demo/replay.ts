@@ -7,7 +7,7 @@ import { PREP_TIPS } from "../content/prepTips";
  * baked ahead of time (no live YouCam calls): the raw skin scores stand in
  * for a captured Skin Analysis response, and the 3 catalog items below are
  * the only ones with a pre-rendered try-on image, so Demo Mode always
- * selects from just these three. Live user preferences (style vibe, budget)
+ * selects from just these three. Live user preferences (style vibe)
  * still run through the real `selectOutfits`/`scoreOutfits` rule engine
  * against this fixed data — only the underlying photos are canned.
  */

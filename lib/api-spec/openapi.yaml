@@ -153,6 +153,76 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
+  /sessions/{sessionId}/video:
+    post:
+      operationId: startSessionVideo
+      tags: [sessions]
+      summary: Start generating the bonus outfit video
+      description: >-
+        Starts a YouCam Image-to-Video task for the try-on image of the
+        outfit this session recommends. Deliberately user-triggered rather
+        than automatic — it is the most expensive call in the product, so it
+        only ever runs when the user asks for it. Returns immediately with an
+        updated signed token; the client polls getSessionVideo for progress.
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Video generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionVideo"
+        "400":
+          description: Invalid or mismatched session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    get:
+      operationId: getSessionVideo
+      tags: [sessions]
+      summary: Poll the bonus outfit video task
+      description: >-
+        Advances an already-started Image-to-Video task by exactly one status
+        check and returns its state plus an updated signed token. Never
+        starts a task itself, so polling can never incur cost — in Live Mode
+        status is "idle" until startSessionVideo has been called. Demo Mode
+        replays a clip generated offline, so it reports "success" immediately;
+        there is no paid task to protect.
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Current video task state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionVideo"
+        "400":
+          description: Invalid or mismatched session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -175,9 +245,6 @@ components:
     StyleVibeOrEither:
       type: string
       enum: [classic, bold, either]
-    BudgetTier:
-      type: string
-      enum: [low, mid, high]
     SessionMode:
       type: string
       description: >-
@@ -215,6 +282,10 @@ components:
           lavender,
           teal,
           burgundy,
+          coral,
+          mustard,
+          ivory,
+          terracotta,
         ]
     Undertone:
       type: string
@@ -224,8 +295,28 @@ components:
       enum: [matte, soft_sheen, high_shine]
     Silhouette:
       type: string
+      description: >-
+        Garment shapes across all supported traditions. Must stay in sync with
+        the catalog — the report response is validated against this enum, so a
+        silhouette missing here fails the whole report rather than one item.
       enum:
-        [midi_dress, slip_dress, jumpsuit, blazer_set, maxi_dress, wrap_dress]
+        [
+          midi_dress,
+          slip_dress,
+          jumpsuit,
+          blazer_set,
+          maxi_dress,
+          wrap_dress,
+          saree,
+          lehenga,
+          anarkali,
+          sharara,
+          qipao,
+          hanbok,
+          ao_dai,
+          abaya,
+          kaftan,
+        ]
     SkinSignalLevel:
       type: string
       enum: [low, medium, high, unknown]
@@ -234,7 +325,6 @@ components:
       enum:
         - wedding_guest_match
         - style_vibe_match
-        - budget_match
         - cool_tone_supports_redness
         - matte_finish_supports_oiliness
         - contrast_supports_tired_eye_area
@@ -245,7 +335,6 @@ components:
         - matte_finish_supports_texture
         - high_shine_texture_caution
         - warm_tone_redness_caution
-        - budget_mismatch
         - style_vibe_mismatch
         - palette_hero_color
         - palette_harmonious_color
@@ -272,6 +361,39 @@ components:
       required:
         - status
         - videoUrl
+    SessionVideo:
+      type: object
+      description: >-
+        State of the on-demand bonus outfit video, plus the updated signed
+        session token that carries that state. "idle" means the user has not
+        asked for a video yet; "skipped" means there was no successful try-on
+        image to animate.
+      properties:
+        sessionToken:
+          type: string
+        status:
+          type: string
+          enum: [idle, queued, running, success, error, skipped]
+        videoUrl:
+          type: ["string", "null"]
+        errorMessage:
+          type: ["string", "null"]
+      required:
+        - sessionToken
+        - status
+        - videoUrl
+        - errorMessage
+    GarmentTradition:
+      type: string
+      description: The dressing tradition a catalog garment belongs to.
+      enum: [western, indian, east_asian, middle_eastern]
+    TraditionPreference:
+      type: string
+      description: >-
+        Which dressing tradition to shortlist from. "any" spans the whole
+        catalog; any other value is a hard filter on the catalog rather than a
+        scoring preference.
+      enum: [any, western, indian, east_asian, middle_eastern]
     UserPreferences:
       type: object
       properties:
@@ -280,12 +402,12 @@ components:
           enum: [wedding_guest]
         styleVibe:
           $ref: "#/components/schemas/StyleVibe"
-        budgetTier:
-          $ref: "#/components/schemas/BudgetTier"
+        tradition:
+          $ref: "#/components/schemas/TraditionPreference"
       required:
         - occasion
         - styleVibe
-        - budgetTier
+        - tradition
     SessionInput:
       type: object
       properties:
@@ -374,10 +496,10 @@ components:
           type: string
         garmentCategory:
           $ref: "#/components/schemas/GarmentCategory"
+        tradition:
+          $ref: "#/components/schemas/GarmentTradition"
         imageUrl:
           type: string
-        priceTier:
-          $ref: "#/components/schemas/BudgetTier"
         styleVibe:
           $ref: "#/components/schemas/StyleVibeOrEither"
         colorFamily:
@@ -396,8 +518,8 @@ components:
         - id
         - name
         - garmentCategory
+        - tradition
         - imageUrl
-        - priceTier
         - styleVibe
         - colorFamily
         - undertone
@@ -489,7 +611,7 @@ components:
       description: >-
         Skin/color compatibility read for a garment the user uploaded
         themselves — a narrower signal than OutfitScore, since there's no
-        occasion/style/budget preference to check a self-picked garment
+        occasion or style preference to check a self-picked garment
         against and fabric finish can't be reliably read from a photo.
       properties:
         confidenceScore:

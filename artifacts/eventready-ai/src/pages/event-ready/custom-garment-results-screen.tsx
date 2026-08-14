@@ -1,11 +1,13 @@
 import React from 'react';
 import type { EventReadyReport } from '@workspace/api-client-react';
+import type { OutfitVideoProps } from '@/types/screen-props';
 import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
-import { RotateCcw, Check, Info, Shirt, Play } from 'lucide-react';
+import { RotateCcw, Check, Info, Shirt } from 'lucide-react';
+import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
 
-interface CustomGarmentResultsScreenProps {
+interface CustomGarmentResultsScreenProps extends OutfitVideoProps {
   report: EventReadyReport;
   onStartOver: () => void;
 }
@@ -18,7 +20,14 @@ interface CustomGarmentResultsScreenProps {
  * a narrower point budget and its own "Skin & Color Compatibility" label
  * so it's never confused with the catalog confidence score.
  */
-export function CustomGarmentResultsScreen({ report, onStartOver }: CustomGarmentResultsScreenProps) {
+export function CustomGarmentResultsScreen({
+  report,
+  onStartOver,
+  video,
+  onGenerateVideo,
+  isGeneratingVideo,
+  videoError,
+}: CustomGarmentResultsScreenProps) {
   const garment = report.customGarment;
 
   if (!garment) {
@@ -185,35 +194,14 @@ export function CustomGarmentResultsScreen({ report, onStartOver }: CustomGarmen
           </motion.div>
         </div>
 
-        {report.video?.status === 'success' && report.video.videoUrl && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-24 text-center"
-            data-testid="custom-garment-video-section"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary text-secondary-foreground text-xs font-semibold uppercase tracking-widest mb-6 border border-border/50">
-              <Play className="w-3.5 h-3.5" />
-              See It In Motion
-            </div>
-            <h3 className="text-2xl md:text-3xl font-serif mb-8 text-foreground">Your garment, brought to life</h3>
-            <div className="max-w-sm mx-auto aspect-[3/4] bg-card border border-border p-2 shadow-xl">
-              <div className="w-full h-full overflow-hidden bg-secondary">
-                <video
-                  src={resolveDemoAssetUrl(report.video.videoUrl)}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  className="w-full h-full object-cover"
-                  data-testid="custom-garment-video"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
+        <OutfitVideoSection
+          title="Your garment, brought to life"
+          testIdPrefix="custom-garment"
+          video={video}
+          onGenerateVideo={onGenerateVideo}
+          isGeneratingVideo={isGeneratingVideo}
+          videoError={videoError}
+        />
 
         {report.prepTips.length > 0 && (
           <motion.div
