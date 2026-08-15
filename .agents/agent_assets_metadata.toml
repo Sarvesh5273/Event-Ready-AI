@@ -14,3 +14,10 @@ uri = "file://attached_assets/eventready_final_shooting_script.md"
 type = "text"
 title = "EventReady AI — Final Shooting Script (2:35)"
 description = "The merged shoot-ready guide: timestamped beats, exact clicks, on-screen text, voiceover with pause marks, master clip list, and upload rules."
+
+[[outputs]]
+id = "W_jxE8g8W8JQ_T994rgso"
+uri = "file://attached_assets/eventready_website_context.md"
+type = "text"
+title = "EventReady AI — Product & Design Context"
+description = "Full context pack for UI/UX generation: positioning, exact colour tokens and type scale, screen-by-screen specs with verbatim copy, motion vocabulary, voice rules and failure states."
