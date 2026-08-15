@@ -1,0 +1,86 @@
+Redesign the EventReady AI homepage as a launch-ready SaaS marketing experience whose primary goal is conversion, while also making the product feel distinctive enough for a public launch, accelerator applications, and investor evaluation.
+
+EventReady AI is a wedding-guest outfit decision assistant. A user provides photos, the product measures their skin, hair, and eye colours, determines a colour palette, evaluates outfit colours and styles, and gives a clear recommendation with supporting evidence. The core positioning is:
+
+“Not a filter. A verdict.”
+
+The website should communicate that EventReady does not merely generate or visualize outfits. Its main value is helping someone decide what to wear with confidence.
+
+The homepage currently has three important entry paths and these must remain prominent:
+
+1. Start My Styling — for users who want EventReady to choose and style an outfit for them.
+2. Check an Outfit — for users who have already chosen clothing and want to know whether it works for them.
+3. Try Demo Persona — for users who want to experience the product immediately without uploading photos.
+
+Do not redesign this as a generic AI SaaS landing page, generic fashion ecommerce page, or dashboard.
+
+The design direction should be premium, contemporary, fashion-tech, cinematic, and highly visual. We are considering a scroll-driven pseudo-3D “world” as part of the experience. The homepage should therefore be designed around the idea that scrolling can tell the EventReady story visually rather than simply revealing disconnected sections.
+
+However, the cinematic experience must support conversion rather than exist only as visual decoration.
+
+The ideal narrative is:
+
+uncertainty → measurement → interpretation → comparison → verdict → action
+
+The opening experience should make a visitor immediately understand the problem:
+“I have an event. I don't know what to wear. EventReady can actually tell me.”
+
+Explore a cinematic, pseudo-3D hero experience that could later be powered by pre-rendered AI video and scroll-scrubbing. For now, build the complete interaction and visual structure using high-quality placeholders or generated-style visual treatments rather than requiring the final video assets.
+
+The pseudo-3D hero should feel like one continuous visual journey rather than a collection of unrelated animations. It should be possible later to replace the placeholder visual sequence with connected scroll-scrubbed video clips.
+
+The hero should communicate the product transformation visually:
+a person / outfit → their colour information being measured → colour options being evaluated → a comparison between colours → a final recommendation.
+
+Avoid excessive 3D effects, random floating cards, parallax for the sake of parallax, or animations that distract from the message.
+
+After the cinematic opening, transition into clean, highly polished product sections that make the product understandable and trustworthy.
+
+The page should include strong sections around:
+
+* What EventReady actually measures.
+* Why the recommendation is different from ordinary outfit generators.
+* The “same silhouette, two colours” proof concept.
+* A realistic preview of the final recommendation / result experience.
+* How the process works from photo to verdict.
+* The three ways to use the product.
+* A strong conversion section leading back to Start My Styling.
+* A concise final CTA.
+
+Use modern asymmetric layouts, large image surfaces, layered composition, generous whitespace, subtle borders, and sophisticated typography. Bento-style layouts may be used selectively where they help explain evidence or product capabilities, but do not make the entire homepage a grid of cards.
+
+The visual system should feel cohesive and premium. It should be possible to introduce a distinctive EventReady brand colour later, so do not hard-code the existing Bordeaux palette as an unquestionable final decision.
+
+Use the existing EventReady copy and product language as the source of truth where appropriate. Preserve the distinction between:
+“Measured from your photo”
+and
+“Your Palette”
+because measurement and interpretation are deliberately different concepts.
+
+Trust is a major conversion requirement. The UI should communicate that EventReady does not invent a colour answer when a photo cannot be measured reliably. Failure/degraded states should therefore feel intentional and trustworthy rather than hidden.
+
+Design for:
+
+* desktop first
+* strong mobile adaptation
+* accessibility
+* fast perceived performance
+* reduced-motion fallback
+* a future scroll-scrubbed video implementation
+
+Do not implement a full video-generation pipeline yet.
+
+First create the complete homepage experience and visual system so that we can evaluate:
+
+1. whether the pseudo-3D concept is actually helping the product,
+2. whether the page feels modern and premium,
+3. whether the three entry actions are obvious,
+4. whether the value proposition is immediately understandable,
+5. whether the experience feels credible enough for a paid SaaS product.
+
+Do not preserve the existing visual design merely because it already exists. Improve the design substantially where necessary.
+
+Most importantly, optimize for the combination of:
+premium visual identity + product clarity + trust + conversion.
+
+The final result should feel like a serious product launch website, not a design experiment.
