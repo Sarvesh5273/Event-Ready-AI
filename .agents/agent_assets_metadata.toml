@@ -7,3 +7,10 @@ uri = "file://attached_assets/creator_brief_eventready_product_launch.md"
 type = "text"
 title = "EventReady AI Product Launch Video Script"
 description = "A timed 2:20 advertising-style voiceover, shot list, recording directions, editing rules, and capture checklist for the Devpost demo video."
+
+[[outputs]]
+id = "swNYb1CkphftIkxlHm_dY"
+uri = "file://attached_assets/eventready_final_shooting_script.md"
+type = "text"
+title = "EventReady AI — Final Shooting Script (2:35)"
+description = "The merged shoot-ready guide: timestamped beats, exact clicks, on-screen text, voiceover with pause marks, master clip list, and upload rules."

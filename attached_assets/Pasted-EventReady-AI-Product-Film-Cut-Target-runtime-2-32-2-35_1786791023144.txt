@@ -1,0 +1,342 @@
+EventReady AI — Product Film Cut
+Target runtime: 2:32–2:35
+Format: 1920×1080 landscape
+Recording: Separate clips, edited together
+Tone: Premium consumer AI product launch
+Goal: Make EventReady feel like a finished product.
+0:00–0:07 — THE HOOK
+Show
+Three extremely fast finished-result cuts:
+0:00–0:02 — Recommended try-on
+0:02–0:04 — Alternative #1
+0:04–0:06 — Alternative #2
+0:06–0:07 — Freeze on the winning outfit + match score.
+
+No cursor.
+
+On-screen text
+SEEING ISN'T DECIDING
+Voiceover
+“Seeing yourself in an outfit is easy. Knowing which one actually works is harder.”
+Audio
+One subtle shutter/click between outfit changes.
+Important: Do NOT introduce the product yet. Make the viewer curious first.
+
+0:07–0:18 — THE PRODUCT PROMISE
+Show
+Landing page.
+Slow, cinematic movement toward:
+
+Your personal wedding guest stylist
+
+Then settle on:
+
+Start my styling
+
+On-screen text
+MEET EVENTREADY AI
+Voiceover
+“EventReady turns one photo, your preferences, and the occasion into one clear styling decision.”
+At approximately 0:17, click Start my styling.
+0:18–0:34 — MAKE IT PERSONAL
+Show
+Preferences screen.
+Select:
+
+0:19 — Classic Elegance / Bold & Statement
+0:23 — Daytime / Evening
+0:27 — Western / Indian / East Asian / Middle Eastern
+0:32 — Continue
+
+Zoom subtly into the selected state each time.
+
+On-screen text
+YOUR EVENT. YOUR STYLE. YOUR WORLD.
+Voiceover
+“Tell it the occasion. Your style. The tradition. The time of day.”
+Then:
+“The recommendation changes with you.”
+That final line should land exactly as you click Continue.
+0:34–0:43 — TWO PHOTOS
+Show
+0:34 — Empty upload page.
+Hard cut.
+
+0:36 — Selfie already uploaded.
+
+0:38 — Full-body photo already uploaded.
+
+0:40 — Cursor moves to Analyze & Style.
+
+0:42 — Click.
+
+On-screen text
+TWO PHOTOS. THAT'S IT.
+Voiceover
+“Give EventReady a clear selfie and a full-body photo.”
+Pause briefly.
+“Then let it work.”
+This is much more cinematic than explaining the upload mechanics.
+0:43–0:56 — THE ENGINE
+Show
+Curating your look screen.
+Show all four real steps:
+
+Reading skin signals
+Selecting event-ready looks
+Generating try-ons
+Ranking the results
+
+Let the progress actually advance.
+
+Compress the real wait into roughly 13 seconds.
+
+Never hold a dead spinner.
+
+On-screen text
+IT DOES THE WORK.
+Voiceover
+“It reads your visible colouring, evaluates the event, builds candidate looks, and ranks what fits best.”
+That is enough.
+Don't explain the underlying APIs here.
+
+0:56–1:08 — FIRST REVEAL
+Show
+Results page opens.
+First hold on:
+
+The Perfect Match
+
+Then smoothly scroll to the colour analysis.
+
+Show:
+
+Season
+Skin colour
+Hair colour
+Eye colour
+Eyebrow colour
+Palette
+On-screen text
+MEASURED. NOT GUESSED.
+Small secondary line:
+
+12-season colour analysis
+
+Voiceover
+“First, EventReady finds the colours that naturally work with you.”
+Let the interface do the explaining.
+1:08–1:22 — THE PROOF
+Show
+Scroll to the side-by-side colour comparison.
+Both outfits must remain fully visible.
+
+Pause.
+
+Show:
+
+Best colour
+Comparison colour
+Point gap
+
+On-screen text
+SAME PERSON. ONLY THE COLOUR CHANGES.
+Voiceover
+“And it doesn't just tell you. It proves it.”
+Pause.
+“Same person. Same pose. Same lighting. Only the colour changes.”
+Editing
+Do not rush this.
+This is your most important evidence shot.
+
+Give the judges time to actually look.
+
+1:22–1:32 — FROM ANALYSIS TO ADVICE
+Show
+Slowly move through the skin-reading section.
+Show facial overlay and signals.
+
+On-screen text
+YOUR COLOUR BECOMES YOUR STYLE
+Voiceover
+“Those signals then become practical styling guidance—from colour and finish to how the look works for the occasion.”
+No mention of diagnosis.
+No technical lecture.
+
+1:32–1:51 — THE BIG PAYOFF
+Show
+Scroll to the primary recommendation.
+First:
+
+Full try-on
+
+Then move toward:
+
+Match %
+
+Outfit name
+
+Why it works
+
+Colour palette
+
+Silhouette
+
+Fabric finish
+
+On-screen text
+ONE LOOK. WITH A REASON.
+Voiceover
+“Instead of giving you another endless grid…”
+Brief pause.
+“EventReady gives you one strongest match.”
+Then:
+“And tells you why.”
+As you highlight the visible reasons:
+“Colour. Lighting. Silhouette. Fabric.”
+Editing
+This should be your longest uninterrupted product shot.
+Do not cover the interface with giant animations.
+
+The real UI is the hero.
+
+1:51–2:04 — SEE IT MOVE
+Show
+Scroll to:
+See It In Motion
+
+Click:
+
+Generate video
+
+Immediately cut away from the generation wait.
+
+Then show the completed video playing.
+
+Give it at least 5 seconds.
+
+On-screen text
+NOW SEE IT MOVE
+Voiceover
+“And when you find the look, you can see it in motion before you commit.”
+This sounds like a real consumer feature rather than an AI demo.
+2:04–2:14 — ALTERNATIVES WITHOUT THE OVERWHELM
+Show
+Scroll to:
+Other strong matches
+
+Show both alternatives.
+
+Pause briefly on their scores and explanations.
+
+On-screen text
+MORE OPTIONS. LESS GUESSWORK.
+Voiceover
+“There are still alternatives. They're just ranked for you.”
+That's much stronger than explaining that alternatives exist.
+2:14–2:27 — FROM DECISION TO SHOPPING
+Show
+Scroll to:
+Shop your palette
+
+Show:
+
+Palette colour
+Hex code
+2–3 listing cards
+Retailer
+Product
+Price
+Move naturally across the listings.
+On-screen text
+KNOW THE COLOUR. FIND THE PIECE.
+Voiceover
+“And once you know the colours that work, EventReady helps you find real pieces to take that decision into the real world.”
+That connects recommendation → commerce.
+2:27–2:35 — BRAND CLOSE
+Show
+Three extremely fast cuts:
+0:00–0:02
+
+Measured facial colours
+
+0:02–0:04
+
+Controlled colour proof
+
+0:04–0:06
+
+Winning try-on
+
+Then immediately transition to the clean EventReady landing hero.
+
+First on-screen text
+MEASURE. COMPARE. DECIDE.
+Then replace with:
+
+EVENTREADY AI
+
+NOT A FILTER. A VERDICT.
+
+Voiceover
+“Measure what works. See the proof. Make the decision.”
+Pause.
+“EventReady AI.”
+Pause.
+“Not a filter. A verdict.”
+Music cuts cleanly on “verdict.”
+Hold the logo/hero for roughly one second.
+
+The recording strategy I'd use
+Don't record this as one giant session.
+Capture these clean master clips:
+
+Landing hero
+Start my styling click
+Preference selection — Classic/Bold
+Time selection
+Tradition selection
+Continue
+Empty upload screen
+Completed selfie upload
+Completed full-body upload
+Analyze & Style click
+Full processing sequence
+Colour-season reveal
+Colour proof
+Skin-reading section
+Winning outfit full view
+Winning score + reasons
+Generate Video click
+Finished motion video
+Alternative #1
+Alternative #2
+Shopping results
+Final hero
+Then construct the 2:35 film from those.
+And these are the rules I'd make non-negotiable
+Never say:
+“hackathon”
+“prototype”
+“project”
+“we built”
+“our system”
+“our model”
+
+Instead say:
+
+EventReady
+EventReady analyzes
+EventReady recommends
+EventReady compares
+EventReady helps you decide
+
+That tiny linguistic change makes a surprising difference.
+
+Also don't spend screen time proving that the technology exists. Show the result of the technology.
+
+The judges can see the AI working. What they need to feel is:
+
+“This is polished enough that someone could use it tomorrow.”
+
+And honestly, your controlled colour comparison + one clear winner + real shopping results is a stronger story than trying to cram every AI capability into the video.
