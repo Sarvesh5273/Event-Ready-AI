@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "0Lo0BfDCi1VMsq5jrOxS0"
+uri = "file://attached_assets/creator_brief_eventready_product_launch.md"
+type = "text"
+title = "EventReady AI Product Launch Video Script"
+description = "A timed 2:20 advertising-style voiceover, shot list, recording directions, editing rules, and capture checklist for the Devpost demo video."
