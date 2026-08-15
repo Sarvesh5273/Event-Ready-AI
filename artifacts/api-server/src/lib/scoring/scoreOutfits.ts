@@ -1,8 +1,9 @@
 import type { ColorAnalysis } from "../color/season";
 import { MAX_COLOR_POINTS, judgeGarmentColor } from "../color/match";
 import type { CatalogItem, NormalizedSkinSignals, OutfitScore, ReasonCode, UserPreferences, VtoResult } from "../types";
-import { COLOR_VERDICT_REASON, REASON_COPY } from "./reasonCodes";
+import { COLOR_VERDICT_REASON, REASON_COPY, REASON_DISPLAY_PRIORITY } from "./reasonCodes";
 import { computeFinishFit } from "./skinColorFit";
+import { TIME_OF_DAY_MAX, computeTimeOfDayFit } from "./timeOfDayFit";
 
 export interface ScoreOutfitsInput {
   items: CatalogItem[];
@@ -32,6 +33,7 @@ const VTO_MAX = 10;
  *   styleVibe        0-15
  *   personalColor    0-30
  *   skinConcernFit   0-15
+ *   timeOfDayFit     0-10
  *   vtoSuccess       0-10
  *   cautionPenalty   0-20 (subtracted)
  * Final score is clamped to 0-100.
@@ -53,7 +55,7 @@ export function scoreOutfits({ items, preferences, skinSignals, colorAnalysis, v
     const reasonCodes: ReasonCode[] = [];
     const cautionCodes: ReasonCode[] = [];
     let points = 0;
-    let maxPoints = OCCASION_MAX + STYLE_MAX + FINISH_MAX + VTO_MAX;
+    let maxPoints = OCCASION_MAX + STYLE_MAX + FINISH_MAX + TIME_OF_DAY_MAX + VTO_MAX;
 
     if (item.occasionTags.includes(preferences.occasion)) {
       points += OCCASION_MAX;
@@ -91,6 +93,13 @@ export function scoreOutfits({ items, preferences, skinSignals, colorAnalysis, v
     reasonCodes.push(...finishFit.reasonCodes);
     cautionCodes.push(...finishFit.cautionCodes);
 
+    // Scored independently of the skin-based finish rules above: when the two
+    // disagree (sheen suits the evening but not oily skin) the user sees both
+    // the reason and the caution rather than one quietly cancelling the other.
+    const timeFit = computeTimeOfDayFit(item.fabricFinish, preferences.timeOfDay);
+    points += timeFit.points;
+    reasonCodes.push(timeFit.reasonCode);
+
     const vto = vtoResults.find((v) => v.catalogItemId === item.id);
     if (vto?.status === "success") {
       points += VTO_MAX;
@@ -101,13 +110,23 @@ export function scoreOutfits({ items, preferences, skinSignals, colorAnalysis, v
       Math.min(100, Math.round((100 * (points - finishFit.cautionPoints)) / maxPoints)),
     );
 
+    // Ordered for reading, not by the order the rules happen to fire in. The
+    // results screen shows only the first few reasons and a single caution, so
+    // without this the three most generic lines win every card and the measured
+    // colour verdict — the whole point of the product — falls off the bottom.
+    // Sort is stable, so rule order still breaks ties within a tier.
+    const byPriority = (a: ReasonCode, b: ReasonCode) =>
+      REASON_DISPLAY_PRIORITY[a] - REASON_DISPLAY_PRIORITY[b];
+    const orderedReasons = [...reasonCodes].sort(byPriority);
+    const orderedCautions = [...cautionCodes].sort(byPriority);
+
     return {
       catalogItemId: item.id,
       confidenceScore,
-      reasonCodes,
-      cautionCodes,
-      userFacingReasons: reasonCodes.map((code) => REASON_COPY[code]),
-      userFacingCautions: cautionCodes.map((code) => REASON_COPY[code]),
+      reasonCodes: orderedReasons,
+      cautionCodes: orderedCautions,
+      userFacingReasons: orderedReasons.map((code) => REASON_COPY[code]),
+      userFacingCautions: orderedCautions.map((code) => REASON_COPY[code]),
     };
   });
 }

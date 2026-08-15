@@ -6,11 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { StyleVibe } from './styleVibe';
+import type { TimeOfDay } from './timeOfDay';
 import type { TraditionPreference } from './traditionPreference';
 import type { UserPreferencesOccasion } from './userPreferencesOccasion';
 
 export interface UserPreferences {
   occasion: UserPreferencesOccasion;
   styleVibe: StyleVibe;
+  timeOfDay: TimeOfDay;
   tradition: TraditionPreference;
 }

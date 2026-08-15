@@ -9,6 +9,7 @@ import type { ColorReport } from './colorReport';
 import type { CustomGarmentResult } from './customGarmentResult';
 import type { EventReadyVideo } from './eventReadyVideo';
 import type { GarmentSource } from './garmentSource';
+import type { MeasurementNotice } from './measurementNotice';
 import type { NormalizedSkinSignals } from './normalizedSkinSignals';
 import type { OutfitCandidate } from './outfitCandidate';
 import type { OutfitScore } from './outfitScore';
@@ -40,4 +41,6 @@ export interface EventReadyReport {
   proofShot: ProofShot | null;
   /** Real listings in the measured palette colours. Null when no palette was measured — with no measurement there is nothing honest to shop from. */
   shopping: ShopYourPalette | null;
+  /** Why part of the reading is missing, or null when everything was measured. Without this a rejected selfie leaves the palette, proof shot and shopping sections quietly absent with no reason given, which reads as a bug rather than as a refusal to invent data. */
+  measurementNotice: MeasurementNotice | null;
 }

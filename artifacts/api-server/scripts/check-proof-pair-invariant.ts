@@ -23,7 +23,7 @@ import { pickGarmentProofPair } from "../src/lib/scoring/proofPair";
 import { scoreOutfits, pickRecommendedCatalogItemId } from "../src/lib/scoring/scoreOutfits";
 import { selectOutfits } from "../src/lib/scoring/selectOutfits";
 import { normalizeSkinSignals } from "../src/lib/scoring/skinSignals";
-import type { FacialColorTones, StyleVibe, Tradition, UserPreferences, VtoResult } from "../src/lib/types";
+import type { FacialColorTones, StyleVibe, TimeOfDay, Tradition, UserPreferences, VtoResult } from "../src/lib/types";
 
 /** A spread of colourings so the check is not tuned to one persona. */
 const PERSONAS: Array<{ label: string; tones: FacialColorTones }> = [
@@ -53,6 +53,13 @@ const VIBES: StyleVibe[] = [...new Set(weddingGuestCatalog.map((item) => item.st
   (vibe): vibe is StyleVibe => vibe !== "either",
 );
 const OCCASIONS = [...new Set(weddingGuestCatalog.flatMap((item) => item.occasionTags))];
+const TIMES: TimeOfDay[] = ["day", "evening"];
+/**
+ * Crossed with the occasions so the sweep exercises both lighting branches.
+ * Time of day reweights fabric finish, which reorders the shortlist, so a
+ * sweep that only ever ran one branch would miss half the selection space.
+ */
+const OCCASION_TIMES = OCCASIONS.flatMap((occasion) => TIMES.map((timeOfDay) => ({ occasion, timeOfDay })));
 
 let checked = 0;
 let withPair = 0;
@@ -63,15 +70,15 @@ for (const persona of PERSONAS) {
 
   for (const tradition of TRADITIONS) {
     for (const styleVibe of VIBES) {
-      for (const occasion of OCCASIONS) {
-        const preferences = { occasion, styleVibe, tradition } as UserPreferences;
+      for (const { occasion, timeOfDay } of OCCASION_TIMES) {
+        const preferences = { occasion, styleVibe, timeOfDay, tradition } as UserPreferences;
         checked += 1;
 
         const proofPair = pickGarmentProofPair({ catalog: weddingGuestCatalog, preferences, colorAnalysis });
         if (!proofPair) continue;
         withPair += 1;
 
-        const where = `${persona.label} / ${tradition} / ${styleVibe} / ${occasion}`;
+        const where = `${persona.label} / ${tradition} / ${styleVibe} / ${occasion} / ${timeOfDay}`;
 
         if (proofPair.best.silhouette !== proofPair.worst.silhouette) {
           failures.push(`${where}: pair spans two silhouettes — the comparison is not controlled`);

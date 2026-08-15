@@ -1,5 +1,6 @@
 import type {
   StyleVibe,
+  TimeOfDay,
   TraditionPreference,
   EventReadyReport,
   GarmentCategory,
@@ -16,6 +17,9 @@ export interface StartScreenProps {
 export interface PreferencesScreenProps {
   styleVibe: StyleVibe;
   onStyleVibeChange: (vibe: StyleVibe) => void;
+  /** Drives the fabric-finish term in shortlisting and scoring — see `timeOfDayFit`. */
+  timeOfDay: TimeOfDay;
+  onTimeOfDayChange: (timeOfDay: TimeOfDay) => void;
   tradition: TraditionPreference;
   onTraditionChange: (tradition: TraditionPreference) => void;
   onContinue: () => void;

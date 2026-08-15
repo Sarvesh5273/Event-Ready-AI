@@ -1,6 +1,7 @@
 import { MAX_COLOR_POINTS, judgeGarmentColor } from "../color/match";
 import type { ColorAnalysis } from "../color/season";
 import { COLOR_VERDICT_REASON } from "./reasonCodes";
+import { TIME_OF_DAY_MAX, computeTimeOfDayFit } from "./timeOfDayFit";
 import type { CatalogItem, NormalizedSkinSignals, OutfitCandidate, ReasonCode, UserPreferences } from "../types";
 
 interface ScoredCandidate {
@@ -49,6 +50,13 @@ function scoreForSelection(
     score -= 2;
     reasons.push("high_shine_camera_caution");
   }
+
+  // Applied at shortlist stage too, not just final scoring: only three
+  // garments are ever tried on, so a finish that suits the hour has to be able
+  // to change which pieces make it that far.
+  const timeFit = computeTimeOfDayFit(item.fabricFinish, preferences.timeOfDay);
+  score += (timeFit.points / TIME_OF_DAY_MAX) * 2;
+  reasons.push(timeFit.reasonCode);
 
   return { item, score, reasons };
 }

@@ -74,6 +74,18 @@ export interface LiveSessionState {
   skinResolved: boolean;
   skinTaskId: string | null;
   skinSignals: NormalizedSkinSignals | null;
+  /**
+   * Why the selfie-derived tasks fell back, if they did — a short YouCam code
+   * such as `error_src_face_too_small`, never the human-readable sentence.
+   *
+   * These are the difference between an honest "we could not read this face"
+   * and an unexplained blank section. They are kept terse and optional on
+   * purpose: this token is echoed as an HTTP request header on every poll,
+   * so anything verbose here risks HTTP 431. The user-facing copy is derived
+   * from these codes at report-build time — see `measurementNotice.ts`.
+   */
+  skinFailureCode?: string | null;
+  toneFailureCode?: string | null;
   /** True once Facial Colour Tones has resolved (success OR graceful fallback). */
   toneResolved: boolean;
   toneTaskId: string | null;

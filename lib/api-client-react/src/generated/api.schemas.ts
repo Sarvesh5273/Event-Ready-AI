@@ -165,6 +165,10 @@ export const ReasonCode = {
   palette_clash_color: 'palette_clash_color',
   palette_washed_out_color: 'palette_washed_out_color',
   color_reading_unavailable: 'color_reading_unavailable',
+  evening_sheen_match: 'evening_sheen_match',
+  evening_matte_flat: 'evening_matte_flat',
+  daytime_matte_match: 'daytime_matte_match',
+  daytime_shine_heavy: 'daytime_shine_heavy',
 } as const;
 
 export type VtoTaskStatus = typeof VtoTaskStatus[keyof typeof VtoTaskStatus];
@@ -246,6 +250,17 @@ export const TraditionPreference = {
   middle_eastern: 'middle_eastern',
 } as const;
 
+/**
+ * When the event is. Daylight and evening light treat fabric finish differently, so this moves real points in shortlisting and scoring.
+ */
+export type TimeOfDay = typeof TimeOfDay[keyof typeof TimeOfDay];
+
+
+export const TimeOfDay = {
+  day: 'day',
+  evening: 'evening',
+} as const;
+
 export type UserPreferencesOccasion = typeof UserPreferencesOccasion[keyof typeof UserPreferencesOccasion];
 
 
@@ -256,6 +271,7 @@ export const UserPreferencesOccasion = {
 export interface UserPreferences {
   occasion: UserPreferencesOccasion;
   styleVibe: StyleVibe;
+  timeOfDay: TimeOfDay;
   tradition: TraditionPreference;
 }
 
@@ -540,6 +556,34 @@ export interface ColorReport {
 }
 
 /**
+ * Which part of the reading is missing.
+ */
+export type MeasurementNoticeScope = typeof MeasurementNoticeScope[keyof typeof MeasurementNoticeScope];
+
+
+export const MeasurementNoticeScope = {
+  palette: 'palette',
+  skin: 'skin',
+  both: 'both',
+} as const;
+
+/**
+ * An explanation for something the app declined to measure. The live pipeline degrades gracefully when YouCam rejects a selfie; this is what stops that graceful degradation from being silent.
+ */
+export interface MeasurementNotice {
+  /** Short YouCam or synthetic reason code, e.g. error_src_face_too_small. */
+  code: string;
+  /** Which part of the reading is missing. */
+  scope: MeasurementNoticeScope;
+  /** Short headline for the notice. */
+  title: string;
+  /** One paragraph — what happened, what we left out rather than guess, and what the user can do next. */
+  detail: string;
+  /** True when retaking the photo would plausibly fix it. */
+  retakeHelps: boolean;
+}
+
+/**
  * A real, buyable garment on a retailer's own product page.
  */
 export interface ShopListing {
@@ -601,5 +645,7 @@ export interface EventReadyReport {
   proofShot: ProofShot | null;
   /** Real listings in the measured palette colours. Null when no palette was measured — with no measurement there is nothing honest to shop from. */
   shopping: ShopYourPalette | null;
+  /** Why part of the reading is missing, or null when everything was measured. Without this a rejected selfie leaves the palette, proof shot and shopping sections quietly absent with no reason given, which reads as a bug rather than as a refusal to invent data. */
+  measurementNotice: MeasurementNotice | null;
 }
 

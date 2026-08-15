@@ -90,11 +90,23 @@ export type ReasonCode =
   | "palette_neutral_color"
   | "palette_clash_color"
   | "palette_washed_out_color"
-  | "color_reading_unavailable";
+  | "color_reading_unavailable"
+  | "evening_sheen_match"
+  | "evening_matte_flat"
+  | "daytime_matte_match"
+  | "daytime_shine_heavy";
+
+/**
+ * When the event actually is. Asked because daylight and evening light treat
+ * fabric finish differently — see `timeOfDayFit`. It moves real points in both
+ * shortlisting and scoring rather than being collected and ignored.
+ */
+export type TimeOfDay = "day" | "evening";
 
 export interface UserPreferences {
   occasion: "wedding_guest";
   styleVibe: StyleVibe;
+  timeOfDay: TimeOfDay;
   /**
    * Which dressing tradition to shortlist from. "any" spans the whole
    * catalog; anything else is a hard filter rather than a scoring nudge —
@@ -302,6 +314,27 @@ export interface EventReadyReport {
    * to shop from.
    */
   shopping: ShopYourPalette | null;
+  /**
+   * Why part of the reading is missing, or null when everything was measured.
+   *
+   * Without this a rejected selfie produces a results page with sections
+   * quietly absent and no reason given, which looks like a bug instead of
+   * the deliberate refusal to invent a palette that it actually is.
+   */
+  measurementNotice: MeasurementNotice | null;
+}
+
+/** An explanation for something the app declined to measure — see `measurementNotice.ts`. */
+export interface MeasurementNotice {
+  /** Short YouCam (or synthetic) reason code, e.g. `error_src_face_too_small`. */
+  code: string;
+  /** Which part of the reading is missing. */
+  scope: 'palette' | 'skin' | 'both';
+  title: string;
+  /** One paragraph: what happened, what we did instead, and what to do next. */
+  detail: string;
+  /** True when retaking the photo would plausibly fix it. */
+  retakeHelps: boolean;
 }
 
 /** One half of the side-by-side proof: a real garment, tried on for real. */

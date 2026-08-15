@@ -47,6 +47,8 @@ function WeddingGuestFlow() {
         <PreferencesScreen
           styleVibe={flow.styleVibe}
           onStyleVibeChange={flow.setStyleVibe}
+          timeOfDay={flow.timeOfDay}
+          onTimeOfDayChange={flow.setTimeOfDay}
           tradition={flow.tradition}
           onTraditionChange={flow.setTradition}
           onContinue={flow.confirmPreferences}

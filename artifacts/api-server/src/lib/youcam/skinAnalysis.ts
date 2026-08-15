@@ -128,6 +128,15 @@ export function mapSkinAnalysisOutputToOverlays(output: YouCamSkinOutputItem[]):
 interface SkinTaskStatusResponse {
   results?: { output: YouCamSkinOutputItem[] };
   task_status: "running" | "success" | "error";
+  /**
+   * YouCam's own reason for the failure. Its docs describe these fields
+   * inconsistently and either may be absent, so both are optional and read
+   * defensively — the code is what tells a rejected *photo* (face too small,
+   * no face found) apart from a service-side fault, which is the difference
+   * between "retake your selfie" and "try again later".
+   */
+  error?: string;
+  error_code?: string;
 }
 
 export interface SkinAnalysisStatusResult {
@@ -136,6 +145,8 @@ export interface SkinAnalysisStatusResult {
   rawOutput?: YouCamSkinOutputItem[];
   overlays?: SkinOverlaySet | null;
   errorMessage?: string;
+  /** Raw YouCam code, e.g. `error_src_face_too_small`. Undefined if absent. */
+  errorCode?: string;
 }
 
 /**
@@ -158,7 +169,11 @@ export async function checkYouCamSkinAnalysisStatus(taskId: string): Promise<Ski
   }
 
   if (result.task_status === "error") {
-    return { status: "error", errorMessage: "YouCam Skin Analysis task failed." };
+    return {
+      status: "error",
+      errorCode: result.error_code,
+      errorMessage: result.error ?? "YouCam Skin Analysis task failed.",
+    };
   }
 
   return { status: "running" };

@@ -12,10 +12,12 @@
 - [OpenAPI enum drift](openapi-enum-drift.md) — extending a TS union but not the spec enum passes typecheck, then 500s the *whole* response for any row using the new value.
 - [OpenAPI `integer` breaks zod codegen](openapi-zod-integer-codegen.md) — Orval emits v4-only `zod.int()`; use `type: number` and say "whole number" in the description.
 - [Negative controls must be excluded](negative-control-exclusion.md) — a deliberately-bad comparison item can win the blended ranking; exclude it from the shortlist, don't assume ordering separates them.
+- [Graceful fallbacks must record why](silent-fallback-needs-reason.md) — record a reason code at every fallback site incl. timeout sweeps; never blame one shared failure on a cached result.
 - [Unmeasured fallbacks must clear handles](unmeasured-fallback-must-clear-handles.md) — when substituting neutral defaults, drop the task id too, or a later re-read pairs real evidence with the "unmeasured" verdict.
 - [Presigned URLs in public fixtures](public-fixture-presigned-urls.md) — captured API responses in `public/` leak AWS signatures and expire; rewrite URLs to baked local copies at capture time.
 - [Hair measurement cross-check](hair-measurement-cross-check.md) — a returned hair swatch may be skin/background; reject it when it reads much lighter than the brows.
 - [Value-contrast scoring](value-contrast-scoring.md) — contrast needs its own additive points on a floor curve; failure verdicts must cap their score; never default an unmeasured value.
 - [Demo fixtures couple to scoring](demo-fixture-engine-coupling.md) — a scoring change can silently blank a conditional demo section that depends on baked renders.
 - [Colour-family bucket labelling](color-family-bucket-labelling.md) — RGB family matching is hue-blind when dark; never head a third-party bucket with your own measured colour name.
+- [Scoring input visibility](scoring-input-visibility.md) — "the scores changed" is a false finish line; a truncated reason list buries the newest and most specific reason.
 - [Baked listing index](baked-listing-index.md) — generating a committed real-listings index with agent-side search: the filters and image gotchas that decide quality.

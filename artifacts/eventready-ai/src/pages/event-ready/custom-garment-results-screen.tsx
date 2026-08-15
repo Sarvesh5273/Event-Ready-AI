@@ -4,6 +4,7 @@ import type { OutfitVideoProps } from '@/types/screen-props';
 import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Shirt } from 'lucide-react';
+import { MeasurementNoticeBanner } from './measurement-notice-banner';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
 import { ShopYourPaletteSection } from './shop-your-palette-section';
@@ -47,6 +48,13 @@ export function CustomGarmentResultsScreen({
   return (
     <div className="min-h-[100dvh] bg-background pt-16 pb-24 font-sans">
       <div className="max-w-6xl mx-auto px-6">
+        {/* Same reasoning as the catalog flow: this reframes everything below. */}
+        {report.measurementNotice && (
+          <div className="mb-10">
+            <MeasurementNoticeBanner notice={report.measurementNotice} onStartOver={onStartOver} />
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

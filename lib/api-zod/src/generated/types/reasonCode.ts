@@ -29,4 +29,8 @@ export const ReasonCode = {
   palette_clash_color: 'palette_clash_color',
   palette_washed_out_color: 'palette_washed_out_color',
   color_reading_unavailable: 'color_reading_unavailable',
+  evening_sheen_match: 'evening_sheen_match',
+  evening_matte_flat: 'evening_matte_flat',
+  daytime_matte_match: 'daytime_matte_match',
+  daytime_shine_heavy: 'daytime_shine_heavy',
 } as const;

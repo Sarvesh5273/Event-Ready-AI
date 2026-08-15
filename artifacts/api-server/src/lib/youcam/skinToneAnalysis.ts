@@ -60,12 +60,16 @@ interface ToneTaskStatusResponse {
   task_status: "running" | "success" | "error";
   results?: { color?: YouCamColorBlock };
   error?: string;
+  /** See the matching field on Skin Analysis — read defensively, may be absent. */
+  error_code?: string;
 }
 
 export interface SkinToneAnalysisStatusResult {
   status: "running" | "success" | "error";
   tones?: FacialColorTones;
   errorMessage?: string;
+  /** Raw YouCam code, e.g. `error_src_face_too_small`. Undefined if absent. */
+  errorCode?: string;
 }
 
 /** Normalises YouCam's colour block, defaulting every absent field to null. */
@@ -97,7 +101,11 @@ export async function checkYouCamSkinToneAnalysisStatus(
     // A "success" with no skin colour is useless downstream — surface it as
     // an error so the caller falls back instead of analysing a null face.
     if (!tones.skinColor) {
-      return { status: "error", errorMessage: "Facial colour analysis returned no skin colour." };
+      return {
+        status: "error",
+        errorCode: "no_skin_color",
+        errorMessage: "Facial colour analysis returned no skin colour.",
+      };
     }
 
     return { status: "success", tones };
@@ -106,6 +114,7 @@ export async function checkYouCamSkinToneAnalysisStatus(
   if (result.task_status === "error") {
     return {
       status: "error",
+      errorCode: result.error_code,
       errorMessage: result.error ?? "YouCam Facial Colour Tones task failed.",
     };
   }

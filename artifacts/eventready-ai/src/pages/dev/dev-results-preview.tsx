@@ -43,7 +43,7 @@ async function createSession(): Promise<{ sessionId: string; sessionToken: strin
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       mode: 'live',
-      preferences: { occasion: 'wedding_guest', styleVibe: 'classic', tradition: 'any' },
+      preferences: { occasion: 'wedding_guest', styleVibe: 'classic', timeOfDay: 'evening', tradition: 'any' },
       garmentSource: 'custom',
     }),
   });
@@ -160,7 +160,7 @@ export function DevResultsPreview() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               mode: 'demo',
-              preferences: { occasion: 'wedding_guest', styleVibe: 'classic', tradition: 'any' },
+              preferences: { occasion: 'wedding_guest', styleVibe: 'classic', timeOfDay: 'evening', tradition: 'any' },
               garmentSource: 'catalog',
             }),
           });

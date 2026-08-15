@@ -19,6 +19,7 @@ import {
   peekPendingLiveUpload,
   storePendingLiveUpload,
 } from "./liveUploadStore";
+import { measurementCodeFromError } from "./measurementNotice";
 import type { CustomGarmentLiveState, LiveSessionState, LiveVideoState, LiveVtoTaskState, SessionPayload } from "./sessionToken";
 import type { GarmentCategory, VtoResult } from "../types";
 
@@ -143,7 +144,18 @@ async function startSelfieTasks(
     fileId = (await uploadFileToYouCam(selfieBytes, selfieContentType, `selfie_${Date.now()}.jpg`)).fileId;
   } catch (err) {
     logger.warn({ err, sessionId }, "Selfie upload to YouCam failed — continuing without skin or colour analysis");
-    return { ...next, skinResolved: true, skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS, toneResolved: true };
+    const code = measurementCodeFromError(err);
+    // Only blame the upload for what the upload was actually needed for. A
+    // cache hit is a real measurement, and claiming it is unavailable would
+    // be the exact kind of false statement this notice exists to prevent.
+    return {
+      ...next,
+      skinResolved: true,
+      skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS,
+      toneResolved: true,
+      skinFailureCode: cachedSkin ? null : code,
+      toneFailureCode: cachedTones ? null : code,
+    };
   }
 
   if (!cachedSkin) {
@@ -152,7 +164,12 @@ async function startSelfieTasks(
       next = { ...next, skinTaskId: taskId };
     } catch (err) {
       logger.warn({ err, sessionId }, "Failed to start YouCam Skin Analysis — falling back to neutral signals");
-      next = { ...next, skinResolved: true, skinSignals: NEUTRAL_SKIN_SIGNALS };
+      next = {
+        ...next,
+        skinResolved: true,
+        skinSignals: NEUTRAL_SKIN_SIGNALS,
+        skinFailureCode: measurementCodeFromError(err),
+      };
     }
   }
 
@@ -162,7 +179,7 @@ async function startSelfieTasks(
       next = { ...next, toneTaskId: taskId };
     } catch (err) {
       logger.warn({ err, sessionId }, "Failed to start YouCam Facial Colour Tones — continuing without a palette");
-      next = { ...next, toneResolved: true };
+      next = { ...next, toneResolved: true, toneFailureCode: measurementCodeFromError(err) };
     }
   }
 
@@ -484,14 +501,29 @@ async function checkSkinTask(sessionId: string, live: LiveSessionState): Promise
     }
 
     if (result.status === "error") {
-      logger.warn({ sessionId }, "YouCam Skin Analysis task failed — falling back to neutral signals");
-      return { ...live, skinResolved: true, skinTaskId: null, skinSignals: NEUTRAL_SKIN_SIGNALS };
+      logger.warn(
+        { sessionId, reason: result.errorMessage, code: result.errorCode },
+        "YouCam Skin Analysis task failed — falling back to neutral signals",
+      );
+      return {
+        ...live,
+        skinResolved: true,
+        skinTaskId: null,
+        skinSignals: NEUTRAL_SKIN_SIGNALS,
+        skinFailureCode: result.errorCode ?? "unknown",
+      };
     }
 
     return live; // still running — check again next poll
   } catch (err) {
     logger.warn({ err, sessionId }, "Skin Analysis status check errored — falling back to neutral signals");
-    return { ...live, skinResolved: true, skinTaskId: null, skinSignals: NEUTRAL_SKIN_SIGNALS };
+    return {
+      ...live,
+      skinResolved: true,
+      skinTaskId: null,
+      skinSignals: NEUTRAL_SKIN_SIGNALS,
+      skinFailureCode: measurementCodeFromError(err),
+    };
   }
 }
 
@@ -517,16 +549,16 @@ async function checkToneTask(sessionId: string, live: LiveSessionState): Promise
 
     if (result.status === "error") {
       logger.warn(
-        { sessionId, reason: result.errorMessage },
+        { sessionId, reason: result.errorMessage, code: result.errorCode },
         "YouCam Facial Colour Tones failed — continuing without a palette",
       );
-      return { ...live, toneResolved: true };
+      return { ...live, toneResolved: true, toneFailureCode: result.errorCode ?? "unknown" };
     }
 
     return live; // still running — check again next poll
   } catch (err) {
     logger.warn({ err, sessionId }, "Facial Colour Tones status check errored — continuing without a palette");
-    return { ...live, toneResolved: true };
+    return { ...live, toneResolved: true, toneFailureCode: measurementCodeFromError(err) };
   }
 }
 
@@ -555,20 +587,30 @@ function resolveStalledSelfieTasks(payload: SessionPayload, live: LiveSessionSta
   let next = live;
 
   if (!next.toneResolved && !next.toneTaskId) {
-    next = { ...next, toneResolved: true };
+    next = { ...next, toneResolved: true, toneFailureCode: next.toneFailureCode ?? "task_unavailable" };
   }
 
   const startedAt = payload.analyzeStartedAt ? Date.parse(payload.analyzeStartedAt) : NaN;
   const timedOut = Number.isFinite(startedAt) && Date.now() - startedAt > SELFIE_TASK_TIMEOUT_MS;
   if (!timedOut) return next;
 
+  // A timeout is a fallback like any other, so it has to record why too —
+  // otherwise a wedged YouCam task produces neutral signals or a missing
+  // palette that the report cannot tell apart from a clean reading.
   if (!next.skinResolved) {
     logger.warn({ sessionId: payload.sessionId }, "Skin Analysis timed out — falling back to neutral signals");
-    next = { ...next, skinResolved: true, skinTaskId: null, skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS };
+    const substituted = !next.skinSignals;
+    next = {
+      ...next,
+      skinResolved: true,
+      skinTaskId: null,
+      skinSignals: next.skinSignals ?? NEUTRAL_SKIN_SIGNALS,
+      skinFailureCode: substituted ? next.skinFailureCode ?? "timeout" : next.skinFailureCode ?? null,
+    };
   }
   if (!next.toneResolved) {
     logger.warn({ sessionId: payload.sessionId }, "Facial Colour Tones timed out — continuing without a palette");
-    next = { ...next, toneResolved: true };
+    next = { ...next, toneResolved: true, toneFailureCode: next.toneFailureCode ?? "timeout" };
   }
 
   return next;

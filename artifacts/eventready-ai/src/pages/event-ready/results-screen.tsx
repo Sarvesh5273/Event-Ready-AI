@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
+import { MeasurementNoticeBanner } from './measurement-notice-banner';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
 import { ProofShotSection } from './proof-shot-section';
@@ -61,6 +62,14 @@ export function ResultsScreen({
       
       <div className="max-w-6xl mx-auto px-6">
         
+        {/* Above the header on purpose: this changes how everything below it
+            should be read, so it cannot sit further down the page. */}
+        {report.measurementNotice && (
+          <div className="mb-10">
+            <MeasurementNoticeBanner notice={report.measurementNotice} onStartOver={onStartOver} />
+          </div>
+        )}
+
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

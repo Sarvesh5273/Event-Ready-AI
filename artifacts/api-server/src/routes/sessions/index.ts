@@ -25,6 +25,7 @@ import { PROCESSING_STEPS, computeEffectiveState } from "../../lib/session/proce
 import { advanceLiveSession, advanceVideoGeneration, startLiveAnalysis } from "../../lib/session/liveProcessing";
 import { weddingGuestCatalog } from "../../lib/catalog/weddingGuestCatalog";
 import { buildShopYourPalette } from "../../lib/shopping/shopYourPalette";
+import { buildMeasurementNotice } from "../../lib/session/measurementNotice";
 import { normalizeSkinSignals } from "../../lib/scoring/skinSignals";
 import { selectOutfits } from "../../lib/scoring/selectOutfits";
 import { pickRecommendedCatalogItemId, scoreOutfits } from "../../lib/scoring/scoreOutfits";
@@ -474,6 +475,9 @@ function buildDemoReport(payload: SessionPayload): EventReadyReport {
     // answers "where do I get this colour", which outlives the three outfits
     // we happened to render.
     shopping: colorReport ? buildShopYourPalette(colorReport.heroColors, payload.preferences.tradition) : null,
+    // Demo Mode replays a fixture that always measures cleanly, so there is
+    // never anything to explain away here.
+    measurementNotice: null,
   };
 }
 
@@ -576,6 +580,7 @@ async function buildLiveReport(payload: SessionPayload): Promise<EventReadyRepor
       // Still worth shopping: the palette was measured from their face, not
       // taken from the garment they uploaded.
       shopping: colorReport ? buildShopYourPalette(colorReport.heroColors, payload.preferences.tradition) : null,
+      measurementNotice: buildMeasurementNotice(payload.live),
     };
   }
 
@@ -627,6 +632,7 @@ async function buildLiveReport(payload: SessionPayload): Promise<EventReadyRepor
     customGarment: null,
     colorAnalysis: colorReport,
     shopping: colorReport ? buildShopYourPalette(colorReport.heroColors, payload.preferences.tradition) : null,
+    measurementNotice: buildMeasurementNotice(payload.live),
     // Recomputed rather than carried on the session — see `selectLiveOutfits`
     // for why this is deterministic and why the token stays small.
     proofShot: toProofShot(

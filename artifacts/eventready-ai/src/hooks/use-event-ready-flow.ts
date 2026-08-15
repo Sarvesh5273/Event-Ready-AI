@@ -12,6 +12,7 @@ import {
 } from "@workspace/api-client-react";
 import type {
   StyleVibe,
+  TimeOfDay,
   TraditionPreference,
   GarmentCategory,
   GarmentSource,
@@ -67,6 +68,8 @@ function progressRank(s: Session): number {
 export function useEventReadyFlow() {
   const [screen, setScreen] = useState<FlowScreen>("start");
   const [styleVibe, setStyleVibe] = useState<StyleVibe>("bold");
+  // Weddings skew evening, so that is the more useful default of the two.
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("evening");
   const [tradition, setTradition] = useState<TraditionPreference>("any");
   const [wantsDemoPersona, setWantsDemoPersona] = useState(false);
   const [garmentSource, setGarmentSource] = useState<GarmentSource>("catalog");
@@ -246,8 +249,11 @@ export function useEventReadyFlow() {
     } else {
       setScreen("photo");
     }
+    // `beginSession` closes over every preference, so all of them belong here.
+    // Omitting one means a preference chosen after this callback was last
+    // memoised is silently sent as its previous value.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wantsDemoPersona, styleVibe]);
+  }, [wantsDemoPersona, styleVibe, timeOfDay, tradition]);
 
   const setSelfieFile = useCallback((file: File | null) => {
     setPhotos((prev) => {
@@ -282,12 +288,12 @@ export function useEventReadyFlow() {
     setWantsDemoPersona(true);
     beginSession("demo");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe]);
+  }, [styleVibe, timeOfDay, tradition]);
 
   const continueFromPhotos = useCallback(() => {
     beginSession("live");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe, photos, garmentSource, garment, garmentCategory]);
+  }, [styleVibe, timeOfDay, tradition, photos, garmentSource, garment, garmentCategory]);
 
   function beginSession(mode: "demo" | "live") {
     setFlowError(null);
@@ -298,7 +304,7 @@ export function useEventReadyFlow() {
     // pre-captured demo asset for an arbitrary custom-garment upload.
     const effectiveGarmentSource: GarmentSource = mode === "demo" ? "catalog" : garmentSource;
     createSession.mutate(
-      { data: { mode, preferences: { occasion: "wedding_guest", styleVibe, tradition }, garmentSource: effectiveGarmentSource } },
+      { data: { mode, preferences: { occasion: "wedding_guest", styleVibe, timeOfDay, tradition }, garmentSource: effectiveGarmentSource } },
       {
         onSuccess: async (created) => {
           // Don't move to the Processing screen (and don't enable status
@@ -370,7 +376,7 @@ export function useEventReadyFlow() {
     setWantsDemoPersona(true);
     beginSession("demo");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [styleVibe]);
+  }, [styleVibe, timeOfDay, tradition]);
 
   const restart = useCallback(() => {
     setScreen("start");
@@ -408,6 +414,8 @@ export function useEventReadyFlow() {
       screen,
       styleVibe,
       setStyleVibe,
+      timeOfDay,
+      setTimeOfDay,
       tradition,
       setTradition,
       wantsDemoPersona,
@@ -446,6 +454,7 @@ export function useEventReadyFlow() {
     [
       screen,
       styleVibe,
+      timeOfDay,
       tradition,
       wantsDemoPersona,
       garmentSource,
