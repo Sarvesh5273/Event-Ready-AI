@@ -2,20 +2,59 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>EventReady AI</title>
-    <meta name="description" content="EventReady AI — built on Replit. Update this description to reflect the app." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>EventReady AI — Not a filter. A verdict.</title>
+    <meta
+      name="description"
+      content="Upload one photo. EventReady AI measures your skin, hair and eye colour, finds the shades that genuinely suit you, and shows you the difference on your own body."
+    />
     <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="EventReady AI" />
-    <meta property="og:description" content="EventReady AI — built on Replit. Update this description to reflect the app." />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F3ED" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#240F12" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="EventReady AI" />
+    <meta property="og:title" content="EventReady AI — Not a filter. A verdict." />
+    <meta
+      property="og:description"
+      content="Upload one photo. EventReady AI measures your skin, hair and eye colour, finds the shades that genuinely suit you, and shows you the difference on your own body."
+    />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="EventReady AI — Not a filter. A verdict. A measured colour palette shown as eight swatches."
+    />
+
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="EventReady AI" />
-    <meta name="twitter:description" content="EventReady AI — built on Replit. Update this description to reflect the app." />
+    <meta name="twitter:title" content="EventReady AI — Not a filter. A verdict." />
+    <meta
+      name="twitter:description"
+      content="Upload one photo. EventReady AI measures your skin, hair and eye colour, finds the shades that genuinely suit you, and shows you the difference on your own body."
+    />
+    <meta name="twitter:image" content="/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="EventReady AI — Not a filter. A verdict. A measured colour palette shown as eight swatches."
+    />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Must stay byte-identical to the @import in src/index.css so the browser
+         fetches the stylesheet once. Declared here as well because a <link> in
+         <head> starts the font request earlier than a CSS @import can. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

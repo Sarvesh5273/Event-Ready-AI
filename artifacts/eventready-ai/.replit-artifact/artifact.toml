@@ -1,7 +1,7 @@
 kind = "web"
 previewPath = "/"
 title = "EventReady AI"
-description = "EventReady AI is an occasion-first wedding guest outfit decision assistant. Users pick a style vibe and budget, use a demo persona (or upload their own selfie and full-body photo), and see a curated selection of 3 outfit try-ons with an explainable confidence score and reasons for the recommended look, powered by a rule-based engine and replayed YouCam Skin Analysis / Apparel Virtual Try-On outputs in Demo Mode."
+description = "EventReady AI is a wedding guest outfit decision assistant. The user uploads a close-up selfie and a full-body photo; YouCam Skin Analysis and Facial Colour Tones measure their skin, hair, eye and eyebrow colour, and that reading is classified into a 12-season colour palette in CIELAB. YouCam Apparel Virtual Try-On then composites shortlisted garments onto the user's own photo, and a rule-based engine ranks them with an explainable confidence score, the reasons behind it, and a side-by-side proof shot showing the same silhouette in the best and worst colour for that palette. Preferences cover style vibe, time of day, and dress tradition (Western, Indian, East Asian, Middle Eastern). Results also include a skin-signal read, event prep notes, an optional image-to-video clip, and shopping leads matched to the measured palette. A Demo Mode replays pre-captured YouCam outputs for a fixed persona, and a second flow scores a garment the user already owns or is considering."
 version = "1.0.0"
 id = "artifacts/eventready-ai"
 router = "path"
