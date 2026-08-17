@@ -348,35 +348,38 @@ const Hero = ({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) =>
             </button>
           </div>
 
-          {/* RIGHT — placeholder portrait */}
+          {/* RIGHT — hero portrait */}
           <div className="lg:col-span-5">
-            <motion.div style={prefersReducedMotion ? undefined : { y }} className="relative aspect-[3/4] w-full">
-              <PlaceholderBlock gradient={`linear-gradient(160deg, ${N1}, ${N2})`} className="absolute inset-0" markColor={INK} markOpacity={0.18}>
-                <div className="absolute top-4 right-4">
-                  <span
-                    className="inline-flex items-center rounded-full px-3.5 py-1.5"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(6px)' }}
-                  >
-                    <span className="font-sans" style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.04em', color: INK }}>
-                      True Autumn · Season
-                    </span>
-                  </span>
-                </div>
-                <div
-                  className="absolute bottom-0 inset-x-0 flex items-center justify-between gap-2 px-4 py-3"
-                  style={{ backgroundColor: 'rgba(13,13,13,0.86)' }}
+            <motion.div style={prefersReducedMotion ? undefined : { y }} className="relative aspect-[3/4] w-full overflow-hidden">
+              <img
+                src="/images/hero-portrait.jpg"
+                alt="Event-ready styling in True Autumn palette"
+                className="absolute inset-0 w-full h-full object-cover object-top"
+              />
+              <div className="absolute top-4 right-4">
+                <span
+                  className="inline-flex items-center rounded-full px-3.5 py-1.5"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(6px)' }}
                 >
-                  <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: LIME }}>
-                    ΔE 0.4
+                  <span className="font-sans" style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.04em', color: INK }}>
+                    True Autumn · Season
                   </span>
-                  <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: WHITE }}>
-                    MATCH 98/100
-                  </span>
-                  <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.6)' }}>
-                    MEASURED
-                  </span>
-                </div>
-              </PlaceholderBlock>
+                </span>
+              </div>
+              <div
+                className="absolute bottom-0 inset-x-0 flex items-center justify-between gap-2 px-4 py-3"
+                style={{ backgroundColor: 'rgba(13,13,13,0.86)' }}
+              >
+                <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: LIME }}>
+                  ΔE 0.4
+                </span>
+                <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: WHITE }}>
+                  MATCH 98/100
+                </span>
+                <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.6)' }}>
+                  MEASURED
+                </span>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -475,24 +478,26 @@ const Statement = () => (
 
           {/* Right column — 40% */}
           <div className="lg:w-[40%] flex flex-col gap-3">
-            <div className="relative flex-1" style={{ minHeight: '200px' }}>
-              <PlaceholderBlock
-                gradient={`linear-gradient(155deg, ${WARM_BLOCK}, ${N2})`}
-                className="absolute inset-0"
-                markColor={INK}
-                markOpacity={0.12}
+            <div className="relative flex-1 overflow-hidden" style={{ minHeight: '200px' }}>
+              <img
+                src="/images/science-face.jpg"
+                alt="Skin tone analysis"
+                className="absolute inset-0 w-full h-full object-cover object-center"
               />
             </div>
-            <div className="relative flex-1" style={{ minHeight: '200px' }}>
-              <PlaceholderBlock gradient={`linear-gradient(155deg, ${N3}, ${DARKWARM1})`} className="absolute inset-0" markColor={WHITE} markOpacity={0.16}>
-                <div className="absolute bottom-5 left-5">
-                  <span className="inline-flex items-center rounded-full px-3.5 py-1.5" style={{ backgroundColor: LIME, color: INK }}>
-                    <span className="font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.14em', fontWeight: 700 }}>
-                      Best Match Verified
-                    </span>
+            <div className="relative flex-1 overflow-hidden" style={{ minHeight: '200px' }}>
+              <img
+                src="/images/science-outfit.jpg"
+                alt="Best match garment"
+                className="absolute inset-0 w-full h-full object-cover object-center"
+              />
+              <div className="absolute bottom-5 left-5">
+                <span className="inline-flex items-center rounded-full px-3.5 py-1.5" style={{ backgroundColor: LIME, color: INK }}>
+                  <span className="font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.14em', fontWeight: 700 }}>
+                    Best Match Verified
                   </span>
-                </div>
-              </PlaceholderBlock>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -540,21 +545,26 @@ const PaletteMatch: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           </button>
 
           <div className="grid grid-cols-3 gap-3">
-            {thumbs.map((hex, i) => (
-              <PlaceholderBlock
-                key={i}
-                gradient={`linear-gradient(160deg, ${hex}, ${INK})`}
-                className="relative aspect-[3/4]"
-                markOpacity={0.2}
-                markColor={WHITE}
-              />
+            {[
+              { src: '/images/palette-thumb-terracotta.jpg', alt: 'Terracotta palette' },
+              { src: '/images/palette-thumb-olive.jpg', alt: 'Olive palette' },
+              { src: '/images/palette-thumb-amber.jpg', alt: 'Amber palette' },
+            ].map((img, i) => (
+              <div key={i} className="relative aspect-[3/4] overflow-hidden">
+                <img src={img.src} alt={img.alt} className="absolute inset-0 w-full h-full object-cover object-top" />
+              </div>
             ))}
           </div>
         </Reveal>
 
         <Reveal delay={0.1} className="lg:col-span-7">
-          <div className="relative" style={{ height: 'min(60vh, 640px)' }}>
-            <PlaceholderBlock gradient={`linear-gradient(160deg, ${N1}, ${SIENNA})`} className="absolute inset-0" markOpacity={0.14} markColor={INK}>
+          <div className="relative overflow-hidden" style={{ height: 'min(60vh, 640px)' }}>
+            <img
+              src="/images/palette-main.jpg"
+              alt="True Autumn full body palette match"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%)' }} />
               <div className="absolute top-5 right-5">
                 <span
                   className="inline-flex items-center rounded-full px-4 py-2"
@@ -577,8 +587,7 @@ const PaletteMatch: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
-            </PlaceholderBlock>
-          </div>
+            </div>
         </Reveal>
       </div>
     </section>
@@ -818,8 +827,13 @@ const MeasurementData = () => (
         <div className="flex flex-col gap-8">
           <Reveal>
             <article className="border" style={{ borderColor: inkAlpha(0.14), backgroundColor: WHITE }}>
-              <div className="relative" style={{ height: '340px', background: `linear-gradient(160deg, #E6B99E, ${SIENNA})` }}>
-                <SilhouetteMark className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[55%]" color={INK} opacity={0.14} />
+              <div className="relative overflow-hidden" style={{ height: '340px' }}>
+                <img
+                  src="/images/measurement-skin.jpg"
+                  alt="Skin channel measurement"
+                  className="absolute inset-0 w-full h-full object-cover object-top"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.2) 100%)' }} />
                 <span className="absolute top-4 left-4 inline-flex items-center rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(13,13,13,0.82)' }}>
                   <span className="font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.14em', color: WHITE, fontWeight: 700 }}>
                     Skin Channel
@@ -972,19 +986,27 @@ const FinalCTA = ({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps
       </Reveal>
 
       <Reveal delay={0.12} className="grid grid-cols-2 gap-3">
-        <div className="relative aspect-[3/4]">
-          <PlaceholderBlock gradient={`linear-gradient(170deg, #6B7280, ${DARKWARM2})`} className="absolute inset-0" markColor={WHITE} markOpacity={0.18}>
-            <span className="absolute bottom-4 left-4 font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.7)' }}>
-              Off-Palette
-            </span>
-          </PlaceholderBlock>
+        <div className="relative aspect-[3/4] overflow-hidden">
+          <img
+            src="/images/cta-off-palette.jpg"
+            alt="Off-palette outfit example"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 55%)' }} />
+          <span className="absolute bottom-4 left-4 font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.85)' }}>
+            Off-Palette
+          </span>
         </div>
-        <div className="relative aspect-[3/4] mt-8">
-          <PlaceholderBlock gradient={`linear-gradient(170deg, ${AMBER}, ${TERRACOTTA})`} className="absolute inset-0" markColor={INK} markOpacity={0.16}>
-            <span className="absolute bottom-4 left-4 font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(13,13,13,0.68)' }}>
-              True Autumn Match
-            </span>
-          </PlaceholderBlock>
+        <div className="relative aspect-[3/4] mt-8 overflow-hidden">
+          <img
+            src="/images/cta-match.jpg"
+            alt="True Autumn perfect match"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 55%)' }} />
+          <span className="absolute bottom-4 left-4 font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.85)' }}>
+            True Autumn Match
+          </span>
         </div>
       </Reveal>
     </div>
