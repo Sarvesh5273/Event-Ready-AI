@@ -599,8 +599,6 @@ const PaletteMatch: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 /* ------------------------------------------------------------------ */
 
 const TryOnExperience: React.FC<{ onUseDemoPersona: () => void }> = ({ onUseDemoPersona }) => {
-  const [filter, setFilter] = useState<'best' | 'avoid' | 'all'>('best');
-  const [verdict, setVerdict] = useState<'yes' | 'no' | null>(null);
   const [selected, setSelected] = useState(0);
   const active = TRUE_AUTUMN[selected];
 
@@ -613,86 +611,95 @@ const TryOnExperience: React.FC<{ onUseDemoPersona: () => void }> = ({ onUseDemo
               The Try-On Studio
             </SectionTag>
             <h2 className="font-sans tracking-[-0.03em] leading-[0.96]" style={{ fontSize: 'clamp(1.875rem,4vw,3rem)', fontWeight: 700 }}>
-              Find Your Palette Match
+              See Every Shade On A Real Body
             </h2>
           </div>
-          <div className="flex items-center gap-2.5">
-            <FilterChip label="Best Match" active={filter === 'best'} dark onClick={() => setFilter('best')} />
-            <FilterChip label="Avoid" active={filter === 'avoid'} dark onClick={() => setFilter('avoid')} />
-            <FilterChip label="All" active={filter === 'all'} dark onClick={() => setFilter('all')} />
-          </div>
+          <span className="uppercase shrink-0" style={{ fontFamily: MONO, fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.4)' }}>
+            Interactive Demo
+          </span>
         </Reveal>
 
         <Reveal delay={0.1} className="grid lg:grid-cols-2 gap-3 mb-10">
-          <div className="relative aspect-[3/4] lg:aspect-auto lg:h-[64vh]">
-            <div className="absolute inset-0" style={{ background: `linear-gradient(165deg, ${DARKWARM1}, ${DARKWARM2})` }}>
-              <div
-                className="absolute inset-0 transition-opacity duration-500"
-                style={{ backgroundColor: active.hex, opacity: 0.38, mixBlendMode: 'soft-light' }}
-              />
-              <div
-                className="absolute inset-0 opacity-[0.08] pointer-events-none"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 16px)',
-                }}
-              />
-              <SilhouetteMark className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[62%]" color={WHITE} opacity={0.22} />
-              <div className="absolute top-5 left-5 font-sans uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.55)' }}>
-                Preview · {active.name}
-              </div>
+          {/* Left — real model with live colour wash */}
+          <div className="relative aspect-[3/4] lg:aspect-auto lg:h-[64vh] overflow-hidden">
+            {/* Base model photo */}
+            <img
+              src="/images/tryon-model.jpg"
+              alt="Try-on model"
+              className="absolute inset-0 w-full h-full object-cover object-top"
+            />
+            {/* Live colour tint — changes as user picks swatches */}
+            <div
+              className="absolute inset-0 transition-all duration-500"
+              style={{ backgroundColor: active.hex, opacity: 0.42, mixBlendMode: 'soft-light' }}
+            />
+            {/* Subtle vignette */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(0,0,0,0.55) 100%)' }} />
+            {/* Label */}
+            <div className="absolute top-5 left-5">
+              <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(13,13,13,0.72)', backdropFilter: 'blur(6px)' }}>
+                <span className="w-2.5 h-2.5 rounded-full shrink-0 transition-colors duration-500" style={{ backgroundColor: active.hex, border: '1.5px solid rgba(255,255,255,0.4)' }} />
+                <span className="font-sans uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.8)' }}>
+                  {active.name}
+                </span>
+              </span>
+            </div>
+            {/* Score badge */}
+            <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
+              <span className="font-sans uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.1em', color: LIME }}>
+                ΔE {(Math.abs((selected * 7 + 3) % 19 - 9) * 0.1 + 0.2).toFixed(1)}
+              </span>
+              <span className="font-sans uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)' }}>
+                Pick a swatch to preview
+              </span>
             </div>
           </div>
 
+          {/* Right — feature explainer */}
           <div className="flex flex-col justify-between p-7 md:p-10 border" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
             <div>
-              <span className="font-sans block mb-3" style={{ fontSize: '0.75rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)' }}>
-                Image requirement: full-body photo
-              </span>
-              <p className="font-sans leading-relaxed mb-8" style={{ fontSize: '0.9375rem', color: 'rgba(255,255,255,0.72)', fontWeight: 300 }}>
-                Swipe or pick a shade below — the render updates instantly so you can compare fit and colour before you commit.
-              </p>
-              <div className="flex items-center gap-3 mb-10">
-                <button
-                  onClick={() => setVerdict('yes')}
-                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 border transition-colors"
-                  style={{ borderColor: verdict === 'yes' ? LIME : 'rgba(255,255,255,0.3)', color: verdict === 'yes' ? LIME : WHITE }}
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span className="font-sans font-semibold" style={{ fontSize: '0.8125rem' }}>
-                    Yes
-                  </span>
-                </button>
-                <button
-                  onClick={() => setVerdict('no')}
-                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 border transition-colors"
-                  style={{ borderColor: verdict === 'no' ? '#E0556A' : 'rgba(255,255,255,0.3)', color: verdict === 'no' ? '#E0556A' : WHITE }}
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span className="font-sans font-semibold" style={{ fontSize: '0.8125rem' }}>
-                    No
-                  </span>
-                </button>
-                {verdict && (
-                  <span className="font-sans" style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
-                    {verdict === 'yes' ? 'Saved to your shortlist.' : 'Noted — showing fewer like this.'}
-                  </span>
-                )}
+              <div className="flex items-center gap-2 mb-6">
+                <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: LIME }} />
+                <span className="font-sans uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)' }}>
+                  How it works
+                </span>
               </div>
+
+              <div className="space-y-6 mb-10">
+                {[
+                  { n: '01', title: 'Upload your photo', body: 'One clear face photo. EventReady measures your skin, hair, and eye colour in CIELAB space.' },
+                  { n: '02', title: 'Get your season', body: 'We classify your 12-season palette — the scientific grouping that tells you exactly which shades work.' },
+                  { n: '03', title: 'See every garment graded', body: 'Each outfit gets a ΔE compatibility score. Not a guess — a measurement.' },
+                ].map((step) => (
+                  <div key={step.n} className="flex gap-5">
+                    <span className="shrink-0 mt-0.5" style={{ fontFamily: MONO, fontSize: '0.625rem', color: LIME, letterSpacing: '0.1em' }}>{step.n}</span>
+                    <div>
+                      <p className="font-sans font-semibold mb-1" style={{ fontSize: '0.9375rem', color: WHITE }}>{step.title}</p>
+                      <p className="font-sans leading-relaxed" style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)', fontWeight: 300 }}>{step.body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="font-sans" style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.03em' }}>
+                ↑ Pick any swatch below to preview how each palette colour reads on a real body.
+              </p>
             </div>
+
             <button
               onClick={onUseDemoPersona}
-              className="group inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 w-full sm:w-auto transition-transform hover:-translate-y-0.5"
+              className="group inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 w-full sm:w-auto mt-8 transition-transform hover:-translate-y-0.5"
               style={{ backgroundColor: LIME, color: INK }}
             >
               <span className="font-sans font-bold" style={{ fontSize: '0.875rem' }}>
-                Try with AI
+                Try with AI — no photo needed
               </span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </Reveal>
 
+        {/* Swatch picker */}
         <Reveal delay={0.16} className="flex items-center gap-3 overflow-x-auto pb-2">
           {TRUE_AUTUMN.map((s, i) => (
             <button
@@ -719,10 +726,19 @@ const TryOnExperience: React.FC<{ onUseDemoPersona: () => void }> = ({ onUseDemo
 /*  7 — GARMENT CARDS GRID                                              */
 /* ------------------------------------------------------------------ */
 
+const STYLE_GARMENTS = [
+  { name: 'Silk Saree', tag: 'Traditional', src: '/images/garment-saree.jpg', score: 97 },
+  { name: 'Embroidered Lehenga', tag: 'Traditional', src: '/images/garment-lehenga.jpg', score: 94 },
+  { name: 'Satin Evening Gown', tag: 'Western Formal', src: '/images/garment-gown.jpg', score: 91 },
+  { name: 'Cocktail Dress', tag: 'Western', src: '/images/garment-cocktail.jpg', score: 88 },
+  { name: 'Power Blazer Set', tag: 'Contemporary', src: '/images/garment-blazer.jpg', score: 85 },
+  { name: 'Kurta-Palazzo Fusion', tag: 'Fusion', src: '/images/garment-fusion.jpg', score: 93 },
+  { name: 'Amber Midi Dress', tag: 'Casual Chic', src: '/images/garment-midi.jpg', score: 89 },
+  { name: 'Tailored Jumpsuit', tag: 'Modern', src: '/images/garment-jumpsuit.jpg', score: 82 },
+] as const;
+
 const GarmentGrid = () => {
-  const [curated, setCurated] = useState(true);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
-  const dotColors = [LIME, WINE, INK];
 
   const toggleFav = (i: number) => {
     setFavorites((prev) => {
@@ -733,71 +749,67 @@ const GarmentGrid = () => {
     });
   };
 
-  const visible = curated ? GARMENTS.slice(0, 4) : GARMENTS;
-
   return (
     <section id="garments" style={{ backgroundColor: WHITE }}>
       <div className="px-6 md:px-10 lg:px-16 py-20 md:py-28">
-        <Reveal className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-12">
-          <h2 className="font-sans tracking-[-0.03em]" style={{ fontSize: 'clamp(1.75rem,3.5vw,2.5rem)', fontWeight: 700, color: INK }}>
-            Garments Graded For You
-          </h2>
-          <div className="flex items-center gap-3">
-            {curated ? (
-              <>
-                <span className="inline-flex items-center rounded-full px-4 py-2" style={{ backgroundColor: LIME, color: INK }}>
-                  <span className="font-sans font-bold" style={{ fontSize: '0.75rem' }}>
-                    Best for your palette
-                  </span>
-                </span>
-                <button onClick={() => setCurated(false)} className="font-sans" style={{ fontSize: '0.75rem', color: inkAlpha(0.5) }}>
-                  Remove filter ×
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setCurated(true)}
-                className="inline-flex items-center rounded-full px-4 py-2 border"
-                style={{ borderColor: inkAlpha(0.25) }}
-              >
-                <span className="font-sans font-semibold" style={{ fontSize: '0.75rem', color: INK }}>
-                  Show best matches only
-                </span>
-              </button>
-            )}
+        <Reveal className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-12">
+          <div>
+            <SectionTag tone="lime" className="mb-5">Every Style</SectionTag>
+            <h2 className="font-sans tracking-[-0.03em]" style={{ fontSize: 'clamp(1.75rem,3.5vw,2.5rem)', fontWeight: 700, color: INK }}>
+              Every Style. Graded.
+            </h2>
           </div>
+          <p className="font-sans max-w-xs" style={{ fontSize: '0.875rem', color: inkAlpha(0.55), fontWeight: 300 }}>
+            Saree to suit, lehenga to gown — EventReady scores compatibility across every style, not just western wear.
+          </p>
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
-          {visible.map((g, i) => (
+          {STYLE_GARMENTS.map((g, i) => (
             <Reveal key={g.name} delay={i * 0.05}>
-              <div className="group relative mb-4 overflow-hidden" style={{ height: '300px' }}>
-                <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]" style={{ background: g.gradient }}>
-                  <div
-                    className="absolute inset-0 opacity-[0.06]"
-                    style={{ backgroundImage: 'repeating-linear-gradient(135deg, #000 0px, #000 1px, transparent 1px, transparent 16px)' }}
-                  />
-                  <SilhouetteMark className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[55%]" color={WHITE} opacity={0.2} />
-                </div>
+              <div className="group relative mb-4 overflow-hidden" style={{ height: '320px' }}>
+                {/* Photo */}
+                <img
+                  src={g.src}
+                  alt={g.name}
+                  className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+                {/* Bottom gradient for legibility */}
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.52) 0%, transparent 48%)' }} />
+                {/* Style tag — bottom left */}
+                <span
+                  className="absolute bottom-3 left-3 inline-flex items-center rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: 'rgba(13,13,13,0.75)', backdropFilter: 'blur(4px)' }}
+                >
+                  <span className="font-sans uppercase" style={{ fontSize: '0.5625rem', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
+                    {g.tag}
+                  </span>
+                </span>
+                {/* Score badge — bottom right */}
+                <span
+                  className="absolute bottom-3 right-3 inline-flex items-center rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: LIME }}
+                >
+                  <span style={{ fontFamily: MONO, fontSize: '0.5625rem', letterSpacing: '0.08em', color: INK, fontWeight: 700 }}>
+                    {g.score}
+                  </span>
+                </span>
+                {/* Heart */}
                 <button
                   onClick={() => toggleFav(i)}
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
                   aria-label={`Favourite ${g.name}`}
                 >
                   <Heart className="w-4 h-4" style={{ color: favorites.has(i) ? WINE : INK, fill: favorites.has(i) ? WINE : 'none' }} />
                 </button>
               </div>
-              <div className="flex items-center justify-between mb-1.5">
-                <h3 className="font-sans" style={{ fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
-                  {g.name}
-                </h3>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {dotColors.map((c, di) => (
-                  <span key={di} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c }} />
-                ))}
-              </div>
+              <h3 className="font-sans mb-1" style={{ fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
+                {g.name}
+              </h3>
+              <p className="font-sans" style={{ fontSize: '0.75rem', color: inkAlpha(0.45) }}>
+                ΔE-graded · {g.tag}
+              </p>
             </Reveal>
           ))}
         </div>
