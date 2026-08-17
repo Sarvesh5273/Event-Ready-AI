@@ -12,6 +12,14 @@ Built for the **YouCam / Perfect Corp API Hackathon**.
 
 ---
 
+![EventReady AI landing page](docs/screenshots/landing.jpg)
+
+<p align="center">
+  <img src="docs/screenshots/mobile.jpg" width="300" alt="EventReady AI on mobile" />
+</p>
+
+---
+
 ## What it does
 
 **1. Measures you — doesn't guess.**
