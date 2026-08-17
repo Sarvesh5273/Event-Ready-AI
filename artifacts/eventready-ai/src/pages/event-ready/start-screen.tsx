@@ -1,43 +1,76 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import type { StartScreenProps } from '@/types/screen-props';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
-import { ArrowRight, ArrowUpRight, Crosshair, Gauge, ScanLine, ShieldCheck, Check, X } from 'lucide-react';
-import { DEMO_PERSONA_FULL_BODY_URL } from '@/lib/demoAssets';
+import { ArrowRight, Check, X, Heart } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
-/*  Visual system                                                      */
-/*  Warm neutral foundation + bordeaux (sparingly) + cool cyan data    */
+/*  Visual system — LuxeMira-style layout, EventReady content          */
+/*  White / near-black base, neon lime interactive accent,             */
+/*  bordeaux reserved for EventReady brand moments                     */
 /* ------------------------------------------------------------------ */
 
-const INK = '#181210'; // near-black warm
-const PAPER = '#F5F0EB'; // warm white
-const PAPER_2 = '#EDE6DE'; // slightly deeper warm neutral
-const WINE = '#7C1F33'; // bordeaux accent (sparingly)
-const CYAN = '#1FC8D6'; // cool instrument accent for data UI
-const CYAN_DIM = '#0E8A96';
+const WHITE = '#FFFFFF';
+const OFFWHITE = '#F8F5F0';
+const TICKER_BG = '#F0EDE8';
+const INK = '#0D0D0D';
+const LIME = '#C1FF4D';
+const WINE = '#7C1F33';
+
+const N1 = '#D4CFC9';
+const N2 = '#B8B0A6';
+const N3 = '#8B7F76';
+const WARM_BLOCK = '#E8E2D8';
+const TERRACOTTA = '#C96A52';
+const RUST = '#9C3D26';
+const OLIVE = '#5E6135';
+const AMBER = '#D99C38';
+const SIENNA = '#B85B42';
+const CHOCOLATE = '#3A231C';
+const FOREST = '#2A4B36';
+const MUSTARD = '#C79F3F';
+const DARKWARM1 = '#2A2420';
+const DARKWARM2 = '#1A1510';
+
+const MONO = "'Space Mono', ui-monospace, SFMono-Regular, monospace";
+
+const inkAlpha = (a: number) => `rgba(13,13,13,${a})`;
+const limeAlpha = (a: number) => `rgba(193,255,77,${a})`;
 
 const TRUE_AUTUMN = [
-  { name: 'Warm Terracotta', hex: '#C96A52' },
-  { name: 'Deep Rust', hex: '#9C3D26' },
-  { name: 'Olive', hex: '#5E6135' },
-  { name: 'Golden Amber', hex: '#D99C38' },
-  { name: 'Burnt Sienna', hex: '#B85B42' },
-  { name: 'Dark Chocolate', hex: '#3A231C' },
-  { name: 'Forest Green', hex: '#2A4B36' },
-  { name: 'Mustard', hex: '#C79F3F' },
+  { name: 'Warm Terracotta', hex: TERRACOTTA },
+  { name: 'Deep Rust', hex: RUST },
+  { name: 'Olive', hex: OLIVE },
+  { name: 'Golden Amber', hex: AMBER },
+  { name: 'Burnt Sienna', hex: SIENNA },
+  { name: 'Dark Chocolate', hex: CHOCOLATE },
+  { name: 'Forest Green', hex: FOREST },
+  { name: 'Mustard', hex: MUSTARD },
 ];
 
-export function StartScreen(props: StartScreenProps) {
+const GARMENTS: { name: string; gradient: string }[] = [
+  { name: 'Terracotta Wrap Dress', gradient: `linear-gradient(160deg, ${TERRACOTTA}, ${CHOCOLATE})` },
+  { name: 'Rust Midi Skirt', gradient: `linear-gradient(160deg, ${RUST}, ${CHOCOLATE})` },
+  { name: 'Olive Blazer', gradient: `linear-gradient(160deg, ${OLIVE}, ${FOREST})` },
+  { name: 'Amber Maxi Dress', gradient: `linear-gradient(160deg, ${AMBER}, ${RUST})` },
+  { name: 'Sienna Trench Coat', gradient: `linear-gradient(160deg, ${SIENNA}, ${CHOCOLATE})` },
+  { name: 'Forest Slip Dress', gradient: `linear-gradient(160deg, ${FOREST}, ${CHOCOLATE})` },
+  { name: 'Mustard Knit Cardigan', gradient: `linear-gradient(160deg, ${MUSTARD}, ${RUST})` },
+  { name: 'Chocolate Tailored Trousers', gradient: `linear-gradient(160deg, ${CHOCOLATE}, #000000)` },
+];
+
+export function StartScreen({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) {
   return (
-    <div className="flex flex-col font-sans" style={{ backgroundColor: PAPER, color: INK }}>
-      <Hero {...props} />
-      <ClaimStrip />
-      <Process />
-      <Measurement />
-      <PaletteAnatomy />
-      <Proof />
-      <Trust />
-      <FinalCTA {...props} />
+    <div className="flex flex-col font-sans" style={{ backgroundColor: WHITE, color: INK }}>
+      <GrainOverlay />
+      <Nav onStart={onStart} onUseDemoPersona={onUseDemoPersona} onStartCustom={onStartCustom} />
+      <Hero onStart={onStart} onUseDemoPersona={onUseDemoPersona} onStartCustom={onStartCustom} />
+      <TickerStrip />
+      <Statement />
+      <PaletteMatch onStart={onStart} />
+      <TryOnExperience onUseDemoPersona={onUseDemoPersona} />
+      <GarmentGrid />
+      <MeasurementData />
+      <FinalCTA onStart={onStart} onUseDemoPersona={onUseDemoPersona} onStartCustom={onStartCustom} />
       <Footer />
     </div>
   );
@@ -47,222 +80,341 @@ export function StartScreen(props: StartScreenProps) {
 /*  Small primitives                                                   */
 /* ------------------------------------------------------------------ */
 
-const Eyebrow: React.FC<{ children: React.ReactNode; accent?: string; className?: string }> = ({
-  children,
-  accent = WINE,
+const GrainOverlay = () => (
+  <div
+    className="fixed inset-0 pointer-events-none z-[60] opacity-[0.025] mix-blend-overlay"
+    style={{
+      backgroundImage:
+        "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+    }}
+  />
+);
+
+/** Abstract mannequin mark used in every placeholder — never a photo. */
+const SilhouetteMark: React.FC<{ className?: string; opacity?: number; color?: string }> = ({
   className = '',
+  opacity = 0.16,
+  color = INK,
 }) => (
-  <div className={`flex items-center gap-3 ${className}`}>
-    <span className="h-px w-7" style={{ backgroundColor: accent }} />
-    <span
-      className="uppercase font-mono"
-      style={{ letterSpacing: '0.28em', fontSize: '0.6875rem', color: accent, fontWeight: 600 }}
-    >
-      {children}
-    </span>
+  <svg viewBox="0 0 100 160" className={className} style={{ opacity }} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="22" r="14" fill={color} />
+    <path
+      d="M50 38 C24 38 14 58 14 90 L14 150 C14 155 18 159 24 159 L76 159 C82 159 86 155 86 150 L86 90 C86 58 76 38 50 38Z"
+      fill={color}
+    />
+  </svg>
+);
+
+/** Gradient-fill placeholder standing in for photography, with a subtle diagonal texture. */
+const PlaceholderBlock: React.FC<{
+  gradient: string;
+  className?: string;
+  children?: React.ReactNode;
+  showMark?: boolean;
+  markOpacity?: number;
+  markColor?: string;
+}> = ({ gradient, className = '', children, showMark = true, markOpacity = 0.16, markColor = INK }) => (
+  <div className={`overflow-hidden ${className}`} style={{ background: gradient }}>
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage:
+          'repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 16px)',
+      }}
+    />
+    {showMark && (
+      <SilhouetteMark
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[58%]"
+        opacity={markOpacity}
+        color={markColor}
+      />
+    )}
+    {children}
   </div>
 );
 
-/** Floating measurement reticle pinned onto a photo surface. */
-const Reticle: React.FC<{
-  top: string;
-  left: string;
-  label: string;
-  value: string;
-  valueColor?: string;
-  align?: 'top' | 'bottom';
-}> = ({ top, left, label, value, valueColor = CYAN, align = 'top' }) => (
-  <div className="absolute pointer-events-none" style={{ top, left }}>
-    <div className="relative w-10 h-10 flex items-center justify-center">
-      <span className="absolute inset-0 border" style={{ borderColor: 'rgba(245,240,235,0.55)' }} />
-      <span className="absolute left-1/2 top-0 -translate-x-1/2 h-3 w-px" style={{ backgroundColor: 'rgba(245,240,235,0.55)' }} />
-      <span className="absolute left-1/2 bottom-0 -translate-x-1/2 h-3 w-px" style={{ backgroundColor: 'rgba(245,240,235,0.55)' }} />
-      <span className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-px" style={{ backgroundColor: 'rgba(245,240,235,0.55)' }} />
-      <span className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-px" style={{ backgroundColor: 'rgba(245,240,235,0.55)' }} />
-      <span className="w-1 h-1" style={{ backgroundColor: valueColor }} />
-      <span
-        className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono backdrop-blur-md px-2 py-1 border"
-        style={{
-          [align === 'top' ? 'bottom' : 'top']: 'calc(100% + 6px)',
-          backgroundColor: 'rgba(24,18,16,0.62)',
-          borderColor: 'rgba(31,200,214,0.35)',
-          fontSize: '0.625rem',
-          letterSpacing: '0.14em',
-          color: PAPER,
-        } as React.CSSProperties}
-      >
-        <span style={{ color: 'rgba(245,240,235,0.55)' }}>{label} </span>
-        <span style={{ color: valueColor }}>{value}</span>
+const SectionTag: React.FC<{
+  children: React.ReactNode;
+  tone?: 'lime' | 'dark' | 'outline';
+  outlineOnDark?: boolean;
+  className?: string;
+}> = ({ children, tone = 'outline', outlineOnDark = false, className = '' }) => {
+  const toneStyle: React.CSSProperties =
+    tone === 'lime'
+      ? { backgroundColor: LIME, color: INK }
+      : tone === 'dark'
+        ? { backgroundColor: INK, color: WHITE }
+        : {
+            backgroundColor: 'transparent',
+            color: outlineOnDark ? WHITE : INK,
+            border: `1.5px solid ${outlineOnDark ? 'rgba(255,255,255,0.32)' : inkAlpha(0.2)}`,
+          };
+  return (
+    <span className={`inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 ${className}`} style={toneStyle}>
+      <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: WINE }} />
+      <span className="font-sans uppercase whitespace-nowrap" style={{ fontSize: '0.6875rem', letterSpacing: '0.16em', fontWeight: 700 }}>
+        {children}
       </span>
+    </span>
+  );
+};
+
+const FilterChip: React.FC<{ label: string; active?: boolean; dark?: boolean; onClick?: () => void }> = ({
+  label,
+  active,
+  dark,
+  onClick,
+}) => (
+  <button
+    onClick={onClick}
+    className="rounded-full px-4 py-2 font-sans transition-all"
+    style={{
+      fontSize: '0.75rem',
+      fontWeight: 700,
+      backgroundColor: active ? LIME : 'transparent',
+      color: active ? INK : dark ? 'rgba(255,255,255,0.75)' : inkAlpha(0.65),
+      border: active ? '1.5px solid transparent' : `1.5px solid ${dark ? 'rgba(255,255,255,0.28)' : inkAlpha(0.22)}`,
+    }}
+  >
+    {label}
+  </button>
+);
+
+/** Scroll-triggered reveal — transform/opacity only, skipped for reduced motion. */
+const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({
+  children,
+  className = '',
+  delay = 0,
+}) => {
+  const prefersReducedMotion = useReducedMotion();
+  if (prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  1 — NAVIGATION                                                      */
+/* ------------------------------------------------------------------ */
+
+const Nav: React.FC<{ onStart: () => void; onUseDemoPersona: () => void; onStartCustom: () => void }> = ({
+  onStart,
+  onUseDemoPersona,
+  onStartCustom,
+}) => (
+  <header
+    className="sticky top-0 z-50 border-b"
+    style={{ backgroundColor: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', borderColor: inkAlpha(0.08) }}
+  >
+    <div className="mx-auto max-w-[1680px] flex items-center justify-between px-6 md:px-10 py-4">
+      <div className="flex items-center gap-2.5">
+        <span className="w-2 h-2 rotate-45 shrink-0" style={{ backgroundColor: LIME, border: `1px solid ${INK}` }} />
+        <span className="font-sans font-extrabold tracking-tight" style={{ fontSize: '1.1875rem', color: INK }}>
+          EventReady <span style={{ color: WINE }}>AI</span>
+        </span>
+      </div>
+
+      <nav className="hidden md:flex items-center gap-9">
+        <button
+          onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+          className="font-sans transition-opacity hover:opacity-55"
+          style={{ fontSize: '0.875rem', fontWeight: 600, color: INK }}
+        >
+          How It Works
+        </button>
+        <button
+          onClick={onUseDemoPersona}
+          className="font-sans transition-opacity hover:opacity-55"
+          style={{ fontSize: '0.875rem', fontWeight: 600, color: INK }}
+        >
+          Try Demo
+        </button>
+        <button
+          onClick={onStartCustom}
+          className="font-sans transition-opacity hover:opacity-55"
+          style={{ fontSize: '0.875rem', fontWeight: 600, color: INK }}
+        >
+          Check an Outfit
+        </button>
+      </nav>
+
+      <button
+        onClick={onStart}
+        className="group inline-flex items-center gap-2 rounded-full px-5 py-2.5 transition-transform hover:-translate-y-0.5"
+        style={{ backgroundColor: LIME, color: INK }}
+      >
+        <span className="font-sans font-bold whitespace-nowrap" style={{ fontSize: '0.8125rem' }}>
+          <span className="hidden sm:inline">Start My Styling</span>
+          <span className="sm:hidden">Start Styling</span>
+        </span>
+        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+      </button>
     </div>
-  </div>
+  </header>
 );
 
 /* ------------------------------------------------------------------ */
-/*  1 — HERO : full-bleed image, measurement overlay, sans display     */
+/*  2 — HERO                                                            */
 /* ------------------------------------------------------------------ */
 
 const Hero = ({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) => {
   const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const prefersReducedMotion = useReducedMotion();
-
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '18%']);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '12%']);
 
   return (
-    <section ref={ref} className="relative min-h-[100dvh] overflow-hidden" style={{ backgroundColor: INK }}>
-      {/* Image surface — structurally ready for a scroll-scrubbed video later */}
-      <motion.div
-        style={prefersReducedMotion ? {} : { y, scale }}
-        className="absolute inset-0 origin-top"
-      >
-        <img
-          src={DEMO_PERSONA_FULL_BODY_URL}
-          alt="Styled woman in a warm-toned occasion outfit, measured by EventReady AI"
-          className="w-full h-full object-cover object-[center_18%]"
-        />
-        {/* Warm-to-ink gradient so left-aligned text reads on any imagery */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(100deg, rgba(24,18,16,0.92) 0%, rgba(24,18,16,0.72) 38%, rgba(24,18,16,0.18) 70%, rgba(24,18,16,0.05) 100%)' }}
-        />
-        {/* Instrument grid */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.16]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(31,200,214,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(31,200,214,0.25) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-            mixBlendMode: 'screen',
-          }}
-        />
-      </motion.div>
-
-      {/* Measurement reticles overlaid onto the figure */}
-      <motion.div style={prefersReducedMotion ? {} : { opacity: overlayOpacity }} className="absolute inset-0 pointer-events-none">
-        <Reticle top="22%" left="58%" label="SKIN_L*" value="#E6B99E" align="bottom" />
-        <Reticle top="14%" left="64%" label="HAIR_L*" value="#4A3B32" />
-        <Reticle top="33%" left="70%" label="EYE_L*" value="#5C4D3C" align="bottom" />
-        <Reticle top="64%" left="55%" label="GARMENT" value="#B85B42" valueColor="#D99C38" />
-      </motion.div>
-
-      {/* Content overlay */}
-      <motion.div
-        style={prefersReducedMotion ? {} : { opacity: overlayOpacity }}
-        className="relative z-10 min-h-[100dvh] flex flex-col justify-between px-6 md:px-12 lg:px-20 py-8 md:py-10"
-      >
-        {/* Top bar */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Crosshair className="w-4 h-4" style={{ color: CYAN }} />
-            <span className="font-mono uppercase" style={{ letterSpacing: '0.3em', fontSize: '0.6875rem', color: PAPER }}>
-              EventReady AI
-            </span>
-          </div>
-          <span className="font-mono uppercase hidden sm:block" style={{ letterSpacing: '0.24em', fontSize: '0.625rem', color: 'rgba(245,240,235,0.5)' }}>
-            CIELAB · 12-Season · v2.4
-          </span>
-        </div>
-
-        {/* Main block */}
-        <div className="max-w-2xl">
-          <Eyebrow accent={CYAN} className="mb-8">
-            Measured. Not guessed.
-          </Eyebrow>
-
-          <h1
-            className="font-sans leading-[0.98] tracking-[-0.03em] mb-7"
-            style={{ fontSize: 'clamp(2.75rem, 7vw, 5.75rem)', fontWeight: 600, color: PAPER }}
-          >
-            Not a filter.
-            <br />
-            <span className="font-serif italic" style={{ fontWeight: 500, color: WINE }}>
-              A verdict.
-            </span>
-          </h1>
-
-          <p
-            className="font-sans leading-relaxed mb-10 max-w-xl"
-            style={{ fontSize: '1.0625rem', color: 'rgba(245,240,235,0.72)', fontWeight: 300 }}
-          >
-            Upload one photo. EventReady measures your skin, hair and eye colour in CIELAB,
-            classifies your 12-season palette, then proves the result on your own body —
-            same silhouette, best versus worst colour, side by side.
-          </p>
-
-          {/* CTAs — all three, primary dominant */}
-          <div className="flex flex-col gap-3 max-w-md">
-            <button
-              onClick={onStart}
-              data-testid="button-start-flow"
-              className="group flex items-center justify-between px-7 py-5 transition-all hover:-translate-y-0.5"
-              style={{ backgroundColor: WINE, color: PAPER, boxShadow: '0 10px 30px -12px rgba(124,31,51,0.7)' }}
-            >
-              <span className="font-mono uppercase" style={{ letterSpacing: '0.18em', fontSize: '0.8125rem', fontWeight: 600 }}>
-                Start My Styling
+    <section ref={ref} className="relative min-h-[100dvh] flex flex-col justify-center" style={{ backgroundColor: WHITE }}>
+      <div className="px-6 md:px-10 lg:px-16 pt-16 pb-12 w-full">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* LEFT — copy */}
+          <div className="lg:col-span-7">
+            <h1 className="leading-[0.86] tracking-[-0.04em] mb-7">
+              <span className="block font-sans" style={{ fontSize: 'clamp(3rem,7.2vw,6.75rem)', fontWeight: 800, color: INK }}>
+                Your Colour
               </span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            <button
-              onClick={onUseDemoPersona}
-              data-testid="button-use-demo-persona"
-              className="group flex items-center justify-between px-7 py-5 border transition-all hover:bg-white/[0.04]"
-              style={{ borderColor: 'rgba(245,240,235,0.28)', color: PAPER }}
-            >
-              <span className="font-mono uppercase" style={{ letterSpacing: '0.16em', fontSize: '0.75rem', fontWeight: 500 }}>
-                Try Demo — No photos needed
+              <span className="block font-serif italic" style={{ fontSize: 'clamp(3rem,7.2vw,6.75rem)', fontWeight: 600, color: WINE }}>
+                Measured.
               </span>
-              <ArrowUpRight className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
-            </button>
+              <span className="block font-sans" style={{ fontSize: 'clamp(3rem,7.2vw,6.75rem)', fontWeight: 800, color: INK }}>
+                Verified.
+              </span>
+            </h1>
 
-            <button
-              onClick={onStartCustom}
-              data-testid="button-start-custom"
-              className="group text-left transition-colors pt-2"
-              style={{ color: 'rgba(245,240,235,0.62)' }}
+            <div
+              className="inline-flex items-center gap-2.5 rounded-full px-4 py-1.5 mb-7"
+              style={{ border: `1.5px solid ${limeAlpha(0.9)}`, backgroundColor: limeAlpha(0.16) }}
             >
-              <span className="block text-sm font-light mb-1">
+              <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: WINE }} />
+              <span className="font-sans uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.14em', fontWeight: 700, color: INK }}>
+                12-Season · CIELAB · Precision
+              </span>
+            </div>
+
+            <p className="font-sans leading-relaxed mb-10 max-w-md" style={{ fontSize: '1.0625rem', color: inkAlpha(0.64), fontWeight: 300 }}>
+              Upload one photo. EventReady measures your skin, hair and eye colour from a single photo.
+            </p>
+
+            <div className="flex flex-col gap-3 max-w-md mb-8">
+              <button
+                onClick={onStart}
+                data-testid="button-start-flow"
+                className="group inline-flex items-center justify-between rounded-full px-7 py-4 transition-transform hover:-translate-y-0.5"
+                style={{ backgroundColor: LIME, color: INK }}
+              >
+                <span className="font-sans font-bold" style={{ fontSize: '0.9375rem' }}>
+                  Start My Styling
+                </span>
+                <span className="inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">
+                  →
+                </span>
+              </button>
+
+              <button
+                onClick={onUseDemoPersona}
+                data-testid="button-use-demo-persona"
+                className="group inline-flex items-center justify-between rounded-full px-7 py-4 border transition-colors hover:bg-black/[0.03]"
+                style={{ borderColor: inkAlpha(0.3), color: INK }}
+              >
+                <span className="font-sans font-semibold" style={{ fontSize: '0.875rem' }}>
+                  Try Demo — No photos needed
+                </span>
+                <span className="inline-block transition-transform group-hover:translate-x-1" aria-hidden="true">
+                  ↗
+                </span>
+              </button>
+            </div>
+
+            <button onClick={onStartCustom} data-testid="button-start-custom" className="group block text-left">
+              <span className="block font-sans mb-1" style={{ fontSize: '0.875rem', color: inkAlpha(0.6) }}>
                 Already have something in mind?
               </span>
               <span
-                className="font-mono uppercase underline underline-offset-[6px] decoration-1 group-hover:decoration-2 transition-all"
-                style={{ letterSpacing: '0.14em', fontSize: '0.75rem', textDecorationColor: CYAN, color: PAPER }}
+                className="font-sans font-semibold underline underline-offset-4 decoration-1 group-hover:decoration-2 transition-all"
+                style={{ fontSize: '0.875rem', color: INK, textDecorationColor: WINE }}
               >
                 Check it before you buy
               </span>
             </button>
           </div>
+
+          {/* RIGHT — placeholder portrait */}
+          <div className="lg:col-span-5">
+            <motion.div style={prefersReducedMotion ? undefined : { y }} className="relative aspect-[3/4] w-full">
+              <PlaceholderBlock gradient={`linear-gradient(160deg, ${N1}, ${N2})`} className="absolute inset-0" markColor={INK} markOpacity={0.18}>
+                <div className="absolute top-4 right-4">
+                  <span
+                    className="inline-flex items-center rounded-full px-3.5 py-1.5"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(6px)' }}
+                  >
+                    <span className="font-sans" style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.04em', color: INK }}>
+                      True Autumn · Season
+                    </span>
+                  </span>
+                </div>
+                <div
+                  className="absolute bottom-0 inset-x-0 flex items-center justify-between gap-2 px-4 py-3"
+                  style={{ backgroundColor: 'rgba(13,13,13,0.86)' }}
+                >
+                  <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: LIME }}>
+                    ΔE 0.4
+                  </span>
+                  <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: WHITE }}>
+                    MATCH 98/100
+                  </span>
+                  <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.6)' }}>
+                    MEASURED
+                  </span>
+                </div>
+              </PlaceholderBlock>
+            </motion.div>
+          </div>
         </div>
 
-        {/* Bottom instrument readout bar */}
+        {/* Below the split */}
         <div
-          className="flex flex-wrap items-center gap-x-8 gap-y-2 border-t pt-5 font-mono uppercase"
-          style={{ borderColor: 'rgba(245,240,235,0.16)', letterSpacing: '0.18em', fontSize: '0.625rem', color: 'rgba(245,240,235,0.5)' }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-t mt-14 pt-8"
+          style={{ borderColor: inkAlpha(0.1) }}
         >
-          <span style={{ color: CYAN }}>● LIVE SCAN</span>
-          <span>ΔE&nbsp;0.4</span>
-          <span>SEASON&nbsp;TRUE&nbsp;AUTUMN</span>
-          <span className="hidden md:inline">MATCH&nbsp;98/100</span>
-          <span className="ml-auto hidden lg:inline">SCROLL TO INSPECT →</span>
+          <div className="flex items-center gap-4">
+            <div className="flex -space-x-1.5">
+              {TRUE_AUTUMN.slice(0, 5).map((s) => (
+                <span key={s.hex} className="w-8 h-8 rounded-full border-2" style={{ backgroundColor: s.hex, borderColor: WHITE }} />
+              ))}
+            </div>
+            <span className="font-sans" style={{ fontSize: '0.8125rem', color: inkAlpha(0.55) }}>
+              12-season palette colours
+            </span>
+          </div>
+          <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.75rem', letterSpacing: '0.08em', color: inkAlpha(0.5) }}>
+            Measured, not guessed.
+          </span>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/*  2 — CLAIM STRIP : horizontal marquee, warm neutral, light          */
+/*  3 — TICKER STRIP                                                    */
 /* ------------------------------------------------------------------ */
 
-const ClaimStrip = () => {
+const TickerStrip = () => {
   const prefersReducedMotion = useReducedMotion();
   const items = [
-    'Colour science, not AI vibes',
-    'CIELAB measurement',
+    'Colour science',
     '12-season classification',
+    'CIELAB measurement',
     'Same-silhouette proof',
     'A verdict, not a guess',
     'ΔE-graded compatibility',
@@ -270,22 +422,19 @@ const ClaimStrip = () => {
   const row = [...items, ...items];
 
   return (
-    <section className="overflow-hidden border-y" style={{ backgroundColor: PAPER_2, borderColor: 'rgba(24,18,16,0.1)' }}>
+    <section className="overflow-hidden border-y" style={{ backgroundColor: TICKER_BG, borderColor: inkAlpha(0.1) }}>
       <div className="flex items-center py-4">
         <motion.div
           className="flex shrink-0 items-center gap-8 pr-8"
-          animate={prefersReducedMotion ? {} : { x: ['0%', '-50%'] }}
-          transition={prefersReducedMotion ? {} : { duration: 26, ease: 'linear', repeat: Infinity }}
+          animate={prefersReducedMotion ? undefined : { x: ['0%', '-50%'] }}
+          transition={prefersReducedMotion ? undefined : { duration: 28, ease: 'linear', repeat: Infinity }}
         >
           {row.map((t, i) => (
             <div key={i} className="flex items-center gap-8 shrink-0">
-              <span
-                className="font-mono uppercase whitespace-nowrap"
-                style={{ letterSpacing: '0.22em', fontSize: '0.75rem', color: INK, fontWeight: 500 }}
-              >
+              <span className="uppercase whitespace-nowrap font-sans" style={{ letterSpacing: '0.14em', fontSize: '0.8125rem', color: INK, fontWeight: 700 }}>
                 {t}
               </span>
-              <span className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: WINE }} />
+              <span className="w-2 h-2 rotate-45 shrink-0" style={{ backgroundColor: WINE }} />
             </div>
           ))}
         </motion.div>
@@ -295,220 +444,352 @@ const ClaimStrip = () => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  3 — PROCESS : asymmetric bento, MEASURE dominates, DARK            */
+/*  4 — STATEMENT / BRAND SECTION                                       */
 /* ------------------------------------------------------------------ */
 
-const Process = () => {
-  const steps = [
-    { n: '01', key: 'MEASURE', title: 'Skin · hair · eye extraction', body: 'CIELAB values pulled from a single photo, lighting artifacts factored out. Empirical data — not an opinion.', Icon: ScanLine },
-    { n: '02', key: 'INTERPRET', title: '12-season classification', body: 'Your metrics mapped against established seasonal colour theory to find the one palette that sharpens your contrast.', Icon: Gauge },
-    { n: '03', key: 'COMPARE', title: 'Garment evaluation', body: 'Every candidate colour graded by ΔE distance from your palette. A score, not a hunch.', Icon: Crosshair },
-    { n: '04', key: 'VERDICT', title: 'Proof shot + verdict', body: 'The same silhouette rendered in best vs worst palette colour. You see the evidence before you decide.', Icon: Check },
-  ];
-  const DominantIcon = steps[0].Icon;
-
-  return (
-    <section className="relative" style={{ backgroundColor: INK, color: PAPER }}>
-      <div className="px-6 md:px-12 lg:px-20 py-24 md:py-32">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
-          <div>
-            <Eyebrow accent={CYAN} className="mb-6">
-              The Methodology
-            </Eyebrow>
-            <h2
-              className="font-sans leading-[0.98] tracking-[-0.03em] max-w-xl"
-              style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', fontWeight: 600 }}
-            >
-              Four stages. No stage is a guess.
-            </h2>
-          </div>
-          <p className="font-sans font-light max-w-sm" style={{ fontSize: '0.9375rem', color: 'rgba(245,240,235,0.6)' }}>
-            Each stage hands the next a measurement, not a mood. The pipeline is auditable end to end.
-          </p>
-        </div>
-
-        {/* Asymmetric grid: MEASURE dominates the left, three stack on the right */}
-        <div className="grid lg:grid-cols-12 gap-px" style={{ backgroundColor: 'rgba(245,240,235,0.12)' }}>
-          {/* Dominant cell */}
-          <div className="lg:col-span-7 relative overflow-hidden p-8 md:p-12 lg:p-14 min-h-[360px] lg:min-h-[520px] flex flex-col justify-between" style={{ backgroundColor: INK }}>
-            <div className="absolute inset-0 opacity-30">
-              <img src={DEMO_PERSONA_FULL_BODY_URL} alt="" className="w-full h-full object-cover object-[center_20%] grayscale-[35%]" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(24,18,16,0.85), rgba(24,18,16,0.35))' }} />
+const Statement = () => (
+  <section id="how-it-works" style={{ backgroundColor: WHITE }}>
+    <div className="px-6 md:px-10 lg:px-16 py-20 md:py-28">
+      <Reveal>
+        <div className="flex flex-col lg:flex-row gap-3">
+          {/* Large dark block — 60% */}
+          <div className="lg:w-[60%] relative flex flex-col justify-between p-8 md:p-14" style={{ backgroundColor: INK, minHeight: '420px' }}>
+            <SectionTag tone="outline" outlineOnDark>
+              Brand Principle
+            </SectionTag>
+            <div className="mt-10 lg:mt-0">
+              <p className="font-sans leading-[1.05] tracking-[-0.02em] mb-6" style={{ fontSize: 'clamp(2rem,4.2vw,3.75rem)', fontWeight: 700, color: WHITE }}>
+                Clear colour science puts your outfit where it matters.
+              </p>
+              <p className="font-serif italic leading-relaxed max-w-md" style={{ fontSize: '1.125rem', fontWeight: 500, color: LIME }}>
+                Not on the algorithm. Not on a filter. On you.
+              </p>
             </div>
-            <div className="relative flex items-center justify-between">
-              <span className="font-mono" style={{ fontSize: '0.6875rem', letterSpacing: '0.28em', color: CYAN }}>{steps[0].key}</span>
-              <span className="font-sans" style={{ fontSize: '3.5rem', fontWeight: 300, color: 'rgba(245,240,235,0.18)', lineHeight: 1 }}>{steps[0].n}</span>
-            </div>
-            <div className="relative">
-              <DominantIcon className="w-6 h-6 mb-5" style={{ color: CYAN }} />
-              <h3 className="font-sans mb-4" style={{ fontSize: 'clamp(1.5rem,3vw,2.25rem)', fontWeight: 600, letterSpacing: '-0.02em' }}>{steps[0].title}</h3>
-              <p className="font-sans font-light max-w-md leading-relaxed" style={{ fontSize: '1rem', color: 'rgba(245,240,235,0.7)' }}>{steps[0].body}</p>
-            </div>
-          </div>
-
-          {/* Stacked cells */}
-          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-px" style={{ backgroundColor: 'rgba(245,240,235,0.12)' }}>
-            {steps.slice(1).map((s) => {
-              const Icon = s.Icon;
-              return (
-              <div key={s.n} className="relative p-7 md:p-9 flex flex-col justify-between min-h-[150px] lg:min-h-[170px]" style={{ backgroundColor: INK }}>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono" style={{ fontSize: '0.6875rem', letterSpacing: '0.28em', color: CYAN }}>{s.key}</span>
-                  <span className="font-sans" style={{ fontSize: '1.75rem', fontWeight: 300, color: 'rgba(245,240,235,0.18)', lineHeight: 1 }}>{s.n}</span>
-                </div>
-                <div>
-                  <Icon className="w-5 h-5 mb-3" style={{ color: CYAN }} />
-                  <h3 className="font-sans mb-2" style={{ fontSize: '1.1875rem', fontWeight: 600, letterSpacing: '-0.01em' }}>{s.title}</h3>
-                  <p className="font-sans font-light leading-relaxed" style={{ fontSize: '0.875rem', color: 'rgba(245,240,235,0.62)' }}>{s.body}</p>
-                </div>
-              </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  4 — MEASUREMENT : instrument readouts, split, LIGHT neutral        */
-/* ------------------------------------------------------------------ */
-
-const Measurement = () => {
-  const reads = [
-    { label: 'SKIN', metric: 'L* 79.4 / a* 18.2', hex: '#E6B99E' },
-    { label: 'HAIR', metric: 'L* 31.6 / a* 12.0', hex: '#4A3B32' },
-    { label: 'EYE', metric: 'L* 38.1 / a* 14.7', hex: '#5C4D3C' },
-  ];
-
-  return (
-    <section className="relative" style={{ backgroundColor: PAPER }}>
-      <div className="grid lg:grid-cols-2">
-        {/* Visual side (left on desktop) */}
-        <div className="relative min-h-[60vh] lg:min-h-[760px] overflow-hidden order-2 lg:order-1" style={{ backgroundColor: PAPER_2 }}>
-          <img src={DEMO_PERSONA_FULL_BODY_URL} alt="Measurement subject" className="absolute inset-0 w-full h-full object-cover object-[center_22%]" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(245,240,235,0) 55%, rgba(245,240,235,0.85) 100%)' }} />
-          {/* reticles on the visual */}
-          <Reticle top="26%" left="42%" label="SKIN" value="#E6B99E" align="bottom" />
-          <Reticle top="12%" left="50%" label="HAIR" value="#4A3B32" />
-          <Reticle top="38%" left="58%" label="EYE" value="#5C4D3C" align="bottom" />
-          <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: INK }}>
-            <span style={{ color: CYAN_DIM }}>● CAPTURE OK</span>
-            <span>ΔE 0.4 · 95% CONF</span>
-          </div>
-        </div>
-
-        {/* Instrument panel side (right) */}
-        <div className="order-1 lg:order-2 px-6 md:px-12 lg:px-16 py-20 lg:py-24 flex flex-col justify-center" style={{ backgroundColor: PAPER }}>
-          <Eyebrow accent={WINE} className="mb-6">
-            Measured from your photo
-          </Eyebrow>
-          <h2 className="font-sans leading-[1.02] tracking-[-0.03em] mb-6" style={{ fontSize: 'clamp(1.875rem,3.5vw,2.75rem)', fontWeight: 600 }}>
-            What the sensor returns.
-          </h2>
-          <p className="font-sans font-light leading-relaxed mb-10 max-w-md" style={{ fontSize: '1rem', color: 'rgba(24,18,16,0.66)' }}>
-            Three channels, three exact hex values, factored out of lighting bias. This is empirical
-            data — the raw input everything else is built on.
-          </p>
-
-          {/* Readouts */}
-          <div className="border" style={{ borderColor: 'rgba(24,18,16,0.14)' }}>
-            <div className="flex items-center justify-between px-4 py-3 border-b font-mono uppercase" style={{ borderColor: 'rgba(24,18,16,0.14)', backgroundColor: INK, color: PAPER, fontSize: '0.625rem', letterSpacing: '0.24em' }}>
-              <span style={{ color: CYAN }}>● INSTRUMENT OUTPUT</span>
-              <span style={{ opacity: 0.6 }}>CH 03</span>
-            </div>
-            <div className="divide-y" style={{ borderColor: 'rgba(24,18,16,0.12)' }}>
-              {reads.map((r) => (
-                <div key={r.label} className="flex items-center justify-between px-4 py-5" style={{ borderBottom: '1px solid rgba(24,18,16,0.12)' }}>
-                  <div className="flex items-center gap-4">
-                    <span className="w-7 h-7 border" style={{ backgroundColor: r.hex, borderColor: 'rgba(24,18,16,0.2)' }} />
-                    <div>
-                      <div className="font-mono uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.5)' }}>{r.label}</div>
-                      <div className="font-mono" style={{ fontSize: '0.75rem', color: INK }}>{r.metric}</div>
-                    </div>
-                  </div>
-                  <span className="font-mono" style={{ fontSize: '1rem', color: CYAN_DIM, fontWeight: 600 }}>{r.hex}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Procedural transition → classification */}
-          <div className="flex items-center gap-4 my-8">
-            <span className="h-px flex-1" style={{ backgroundColor: 'rgba(24,18,16,0.18)' }} />
-            <ArrowRight className="w-4 h-4" style={{ color: WINE }} />
-            <span className="font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.5)' }}>INTERPRET</span>
-            <span className="h-px flex-1" style={{ backgroundColor: 'rgba(24,18,16,0.18)' }} />
-          </div>
-
-          {/* Classification result */}
-          <div className="flex items-stretch border" style={{ borderColor: 'rgba(24,18,16,0.14)' }}>
-            <div className="px-5 py-6 flex flex-col justify-center" style={{ backgroundColor: WINE, color: PAPER }}>
-              <span className="font-mono uppercase mb-1" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', opacity: 0.7 }}>Classification</span>
-              <span className="font-sans" style={{ fontSize: '1.5rem', fontWeight: 600, letterSpacing: '-0.01em' }}>True Autumn</span>
-            </div>
-            <div className="flex-1 px-5 py-6 flex flex-col justify-center" style={{ backgroundColor: PAPER }}>
-              <span className="font-mono uppercase mb-1" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.5)' }}>Your Palette</span>
-              <span className="font-sans font-light" style={{ fontSize: '0.9375rem', color: 'rgba(24,18,16,0.72)' }}>
-                The interpretation of the measurement — not the measurement itself.
+            <div className="flex items-center gap-3 mt-10">
+              <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: LIME }} />
+              <span className="font-sans uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.18em', color: 'rgba(255,255,255,0.5)' }}>
+                EventReady AI · Colour Method
               </span>
             </div>
           </div>
+
+          {/* Right column — 40% */}
+          <div className="lg:w-[40%] flex flex-col gap-3">
+            <div className="relative flex-1" style={{ minHeight: '200px' }}>
+              <PlaceholderBlock
+                gradient={`linear-gradient(155deg, ${WARM_BLOCK}, ${N2})`}
+                className="absolute inset-0"
+                markColor={INK}
+                markOpacity={0.12}
+              />
+            </div>
+            <div className="relative flex-1" style={{ minHeight: '200px' }}>
+              <PlaceholderBlock gradient={`linear-gradient(155deg, ${N3}, ${DARKWARM1})`} className="absolute inset-0" markColor={WHITE} markOpacity={0.16}>
+                <div className="absolute bottom-5 left-5">
+                  <span className="inline-flex items-center rounded-full px-3.5 py-1.5" style={{ backgroundColor: LIME, color: INK }}>
+                    <span className="font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.14em', fontWeight: 700 }}>
+                      Best Match Verified
+                    </span>
+                  </span>
+                </div>
+              </PlaceholderBlock>
+            </div>
+          </div>
         </div>
+      </Reveal>
+    </div>
+  </section>
+);
+
+/* ------------------------------------------------------------------ */
+/*  5 — PALETTE MATCH / DISCOVERY                                       */
+/* ------------------------------------------------------------------ */
+
+const PaletteMatch: React.FC<{ onStart: () => void }> = ({ onStart }) => {
+  const thumbs = [TERRACOTTA, OLIVE, AMBER];
+  return (
+    <section style={{ backgroundColor: OFFWHITE }}>
+      <div className="px-6 md:px-10 lg:px-16 py-20 md:py-28 grid lg:grid-cols-12 gap-12 lg:gap-8 items-start">
+        <Reveal className="lg:col-span-5">
+          <SectionTag tone="outline" className="mb-6">
+            Discovery
+          </SectionTag>
+          <h2 className="leading-[0.92] tracking-[-0.03em] mb-8">
+            <span className="block font-sans" style={{ fontWeight: 300, fontSize: 'clamp(2.5rem,5.5vw,4.25rem)', color: INK }}>
+              Find Your
+            </span>
+            <span className="block font-sans" style={{ fontWeight: 800, fontSize: 'clamp(2.5rem,5.5vw,4.25rem)', color: INK }}>
+              Palette Match.
+            </span>
+          </h2>
+
+          <button
+            onClick={onStart}
+            className="group w-full flex items-center justify-between px-6 py-5 mb-8 border transition-colors hover:border-black"
+            style={{ borderColor: inkAlpha(0.25), backgroundColor: WHITE }}
+          >
+            <span className="font-sans" style={{ fontSize: '1rem', color: inkAlpha(0.45) }}>
+              Your palette match...
+            </span>
+            <span
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:translate-x-1"
+              style={{ backgroundColor: LIME }}
+            >
+              <ArrowRight className="w-4 h-4" style={{ color: INK }} />
+            </span>
+          </button>
+
+          <div className="grid grid-cols-3 gap-3">
+            {thumbs.map((hex, i) => (
+              <PlaceholderBlock
+                key={i}
+                gradient={`linear-gradient(160deg, ${hex}, ${INK})`}
+                className="relative aspect-[3/4]"
+                markOpacity={0.2}
+                markColor={WHITE}
+              />
+            ))}
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.1} className="lg:col-span-7">
+          <div className="relative" style={{ height: 'min(60vh, 640px)' }}>
+            <PlaceholderBlock gradient={`linear-gradient(160deg, ${N1}, ${SIENNA})`} className="absolute inset-0" markOpacity={0.14} markColor={INK}>
+              <div className="absolute top-5 right-5">
+                <span
+                  className="inline-flex items-center rounded-full px-4 py-2"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(6px)' }}
+                >
+                  <span className="font-sans" style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.03em', color: INK }}>
+                    True Autumn · Best Match
+                  </span>
+                </span>
+              </div>
+              <div className="absolute bottom-5 left-5">
+                <button
+                  onClick={onStart}
+                  className="group inline-flex items-center gap-2 rounded-full px-5 py-3 transition-transform hover:-translate-y-0.5"
+                  style={{ backgroundColor: LIME, color: INK }}
+                >
+                  <span className="font-sans font-bold" style={{ fontSize: '0.8125rem' }}>
+                    Explore Matches
+                  </span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </PlaceholderBlock>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/*  5 — PALETTE ANATOMY : asymmetric swatch grid, warm neutral          */
+/*  6 — TRY-ON EXPERIENCE                                               */
 /* ------------------------------------------------------------------ */
 
-const PaletteAnatomy = () => {
+const TryOnExperience: React.FC<{ onUseDemoPersona: () => void }> = ({ onUseDemoPersona }) => {
+  const [filter, setFilter] = useState<'best' | 'avoid' | 'all'>('best');
+  const [verdict, setVerdict] = useState<'yes' | 'no' | null>(null);
+  const [selected, setSelected] = useState(0);
+  const active = TRUE_AUTUMN[selected];
+
   return (
-    <section className="relative" style={{ backgroundColor: PAPER_2 }}>
-      <div className="px-6 md:px-12 lg:px-20 py-24 md:py-28">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
-          <div className="max-w-xl">
-            <Eyebrow accent={WINE} className="mb-5">
-              Anatomy of a Palette
-            </Eyebrow>
-            <h2 className="font-sans leading-[1.0] tracking-[-0.03em] mb-5" style={{ fontSize: 'clamp(2rem,4.5vw,3.25rem)', fontWeight: 600 }}>
-              True Autumn
+    <section id="try-on" style={{ backgroundColor: INK, color: WHITE }}>
+      <div className="px-6 md:px-10 lg:px-16 pt-20 md:pt-28 pb-14">
+        <Reveal className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
+          <div>
+            <SectionTag tone="outline" outlineOnDark className="mb-5">
+              The Try-On Studio
+            </SectionTag>
+            <h2 className="font-sans tracking-[-0.03em] leading-[0.96]" style={{ fontSize: 'clamp(1.875rem,4vw,3rem)', fontWeight: 700 }}>
+              Find Your Palette Match
             </h2>
-            <p className="font-sans font-light leading-relaxed" style={{ fontSize: '1rem', color: 'rgba(24,18,16,0.66)' }}>
-              A balanced ecosystem of hue, value and chroma. Wear these and the face reads in focus —
-              not the dress.
-            </p>
           </div>
-          <div className="font-mono uppercase border-b pb-2" style={{ borderColor: 'rgba(24,18,16,0.2)', fontSize: '0.6875rem', letterSpacing: '0.22em', color: 'rgba(24,18,16,0.55)' }}>
-            8 of 32 base shades
+          <div className="flex items-center gap-2.5">
+            <FilterChip label="Best Match" active={filter === 'best'} dark onClick={() => setFilter('best')} />
+            <FilterChip label="Avoid" active={filter === 'avoid'} dark onClick={() => setFilter('avoid')} />
+            <FilterChip label="All" active={filter === 'all'} dark onClick={() => setFilter('all')} />
           </div>
-        </div>
+        </Reveal>
 
-        {/* Asymmetric grid: first swatch dominates */}
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-3 md:gap-4">
-          {/* Dominant swatch */}
-          <div className="col-span-2 md:col-span-6 md:row-span-2 group">
-            <div className="relative h-64 md:h-[440px] border transition-transform duration-500 group-hover:-translate-y-1" style={{ backgroundColor: TRUE_AUTUMN[0].hex, borderColor: 'rgba(24,18,16,0.16)' }}>
-              <div className="absolute left-5 top-5 font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(255,255,255,0.7)' }}>PRIMARY</div>
-            </div>
-            <div className="mt-3 flex items-baseline justify-between">
-              <span className="font-sans" style={{ fontSize: '0.9375rem', fontWeight: 500 }}>{TRUE_AUTUMN[0].name}</span>
-              <span className="font-mono uppercase" style={{ fontSize: '0.6875rem', color: 'rgba(24,18,16,0.5)' }}>{TRUE_AUTUMN[0].hex}</span>
-            </div>
-          </div>
-
-          {/* Remaining swatches */}
-          {TRUE_AUTUMN.slice(1).map((s) => (
-            <div key={s.hex} className="md:col-span-3 group">
-              <div className="relative h-28 md:h-32 border transition-transform duration-500 group-hover:-translate-y-1" style={{ backgroundColor: s.hex, borderColor: 'rgba(24,18,16,0.16)' }} />
-              <div className="mt-2 flex flex-col">
-                <span className="font-sans" style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{s.name}</span>
-                <span className="font-mono uppercase" style={{ fontSize: '0.625rem', color: 'rgba(24,18,16,0.5)' }}>{s.hex}</span>
+        <Reveal delay={0.1} className="grid lg:grid-cols-2 gap-3 mb-10">
+          <div className="relative aspect-[3/4] lg:aspect-auto lg:h-[64vh]">
+            <div className="absolute inset-0" style={{ background: `linear-gradient(165deg, ${DARKWARM1}, ${DARKWARM2})` }}>
+              <div
+                className="absolute inset-0 transition-opacity duration-500"
+                style={{ backgroundColor: active.hex, opacity: 0.38, mixBlendMode: 'soft-light' }}
+              />
+              <div
+                className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 16px)',
+                }}
+              />
+              <SilhouetteMark className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[62%]" color={WHITE} opacity={0.22} />
+              <div className="absolute top-5 left-5 font-sans uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.55)' }}>
+                Preview · {active.name}
               </div>
             </div>
+          </div>
+
+          <div className="flex flex-col justify-between p-7 md:p-10 border" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
+            <div>
+              <span className="font-sans block mb-3" style={{ fontSize: '0.75rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)' }}>
+                Image requirement: full-body photo
+              </span>
+              <p className="font-sans leading-relaxed mb-8" style={{ fontSize: '0.9375rem', color: 'rgba(255,255,255,0.72)', fontWeight: 300 }}>
+                Swipe or pick a shade below — the render updates instantly so you can compare fit and colour before you commit.
+              </p>
+              <div className="flex items-center gap-3 mb-10">
+                <button
+                  onClick={() => setVerdict('yes')}
+                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 border transition-colors"
+                  style={{ borderColor: verdict === 'yes' ? LIME : 'rgba(255,255,255,0.3)', color: verdict === 'yes' ? LIME : WHITE }}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="font-sans font-semibold" style={{ fontSize: '0.8125rem' }}>
+                    Yes
+                  </span>
+                </button>
+                <button
+                  onClick={() => setVerdict('no')}
+                  className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 border transition-colors"
+                  style={{ borderColor: verdict === 'no' ? '#E0556A' : 'rgba(255,255,255,0.3)', color: verdict === 'no' ? '#E0556A' : WHITE }}
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span className="font-sans font-semibold" style={{ fontSize: '0.8125rem' }}>
+                    No
+                  </span>
+                </button>
+                {verdict && (
+                  <span className="font-sans" style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
+                    {verdict === 'yes' ? 'Saved to your shortlist.' : 'Noted — showing fewer like this.'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={onUseDemoPersona}
+              className="group inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 w-full sm:w-auto transition-transform hover:-translate-y-0.5"
+              style={{ backgroundColor: LIME, color: INK }}
+            >
+              <span className="font-sans font-bold" style={{ fontSize: '0.875rem' }}>
+                Try with AI
+              </span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.16} className="flex items-center gap-3 overflow-x-auto pb-2">
+          {TRUE_AUTUMN.map((s, i) => (
+            <button
+              key={s.hex}
+              onClick={() => setSelected(i)}
+              className="relative shrink-0 w-20 h-20 transition-transform hover:-translate-y-1"
+              style={{
+                background: `linear-gradient(160deg, ${s.hex}, ${INK})`,
+                outline: selected === i ? `2px solid ${LIME}` : '2px solid transparent',
+                outlineOffset: '2px',
+              }}
+              aria-label={`Preview ${s.name}`}
+            >
+              {selected === i && <span className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full" style={{ backgroundColor: LIME }} />}
+            </button>
+          ))}
+        </Reveal>
+      </div>
+    </section>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  7 — GARMENT CARDS GRID                                              */
+/* ------------------------------------------------------------------ */
+
+const GarmentGrid = () => {
+  const [curated, setCurated] = useState(true);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const dotColors = [LIME, WINE, INK];
+
+  const toggleFav = (i: number) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  };
+
+  const visible = curated ? GARMENTS.slice(0, 4) : GARMENTS;
+
+  return (
+    <section id="garments" style={{ backgroundColor: WHITE }}>
+      <div className="px-6 md:px-10 lg:px-16 py-20 md:py-28">
+        <Reveal className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 mb-12">
+          <h2 className="font-sans tracking-[-0.03em]" style={{ fontSize: 'clamp(1.75rem,3.5vw,2.5rem)', fontWeight: 700, color: INK }}>
+            Garments Graded For You
+          </h2>
+          <div className="flex items-center gap-3">
+            {curated ? (
+              <>
+                <span className="inline-flex items-center rounded-full px-4 py-2" style={{ backgroundColor: LIME, color: INK }}>
+                  <span className="font-sans font-bold" style={{ fontSize: '0.75rem' }}>
+                    Best for your palette
+                  </span>
+                </span>
+                <button onClick={() => setCurated(false)} className="font-sans" style={{ fontSize: '0.75rem', color: inkAlpha(0.5) }}>
+                  Remove filter ×
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setCurated(true)}
+                className="inline-flex items-center rounded-full px-4 py-2 border"
+                style={{ borderColor: inkAlpha(0.25) }}
+              >
+                <span className="font-sans font-semibold" style={{ fontSize: '0.75rem', color: INK }}>
+                  Show best matches only
+                </span>
+              </button>
+            )}
+          </div>
+        </Reveal>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
+          {visible.map((g, i) => (
+            <Reveal key={g.name} delay={i * 0.05}>
+              <div className="group relative mb-4 overflow-hidden" style={{ height: '300px' }}>
+                <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]" style={{ background: g.gradient }}>
+                  <div
+                    className="absolute inset-0 opacity-[0.06]"
+                    style={{ backgroundImage: 'repeating-linear-gradient(135deg, #000 0px, #000 1px, transparent 1px, transparent 16px)' }}
+                  />
+                  <SilhouetteMark className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[55%]" color={WHITE} opacity={0.2} />
+                </div>
+                <button
+                  onClick={() => toggleFav(i)}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
+                  aria-label={`Favourite ${g.name}`}
+                >
+                  <Heart className="w-4 h-4" style={{ color: favorites.has(i) ? WINE : INK, fill: favorites.has(i) ? WINE : 'none' }} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between mb-1.5">
+                <h3 className="font-sans" style={{ fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
+                  {g.name}
+                </h3>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {dotColors.map((c, di) => (
+                  <span key={di} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c }} />
+                ))}
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -517,245 +798,306 @@ const PaletteAnatomy = () => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  6 — PROOF : edge-to-edge, vertical divider, DARK                   */
+/*  8 — MEASUREMENT DATA                                                */
 /* ------------------------------------------------------------------ */
 
-const Proof = () => {
-  return (
-    <section className="relative" style={{ backgroundColor: INK, color: PAPER }}>
-      {/* Header */}
-      <div className="px-6 md:px-12 lg:px-20 pt-24 md:pt-32 pb-12 md:pb-16 text-center">
-        <Eyebrow accent={CYAN} className="mb-7 justify-center" >
-          Evidence
-        </Eyebrow>
-        <h2 className="font-sans leading-[0.98] tracking-[-0.03em] mb-6" style={{ fontSize: 'clamp(2.25rem,6vw,4.75rem)', fontWeight: 600 }}>
-          Same silhouette. <span className="font-serif italic" style={{ fontWeight: 500, color: WINE }}>Two colours.</span> One verdict.
+const MeasurementData = () => (
+  <section id="measurement-data" style={{ backgroundColor: OFFWHITE }}>
+    <div className="px-6 md:px-10 lg:px-16 py-20 md:py-28">
+      <Reveal>
+        <SectionTag tone="lime" className="mb-6">
+          About The Analysis
+        </SectionTag>
+        <h2 className="font-sans tracking-[-0.03em] mb-14 max-w-2xl" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', fontWeight: 700, color: INK }}>
+          Measurement Data
         </h2>
-        <p className="font-sans font-light max-w-2xl mx-auto leading-relaxed" style={{ fontSize: '1.0625rem', color: 'rgba(245,240,235,0.66)' }}>
-          The identical garment projected in your worst and best palette shades. This is product
-          proof, not a decorative comparison — the visual evidence is the whole argument.
-        </p>
-      </div>
+      </Reveal>
 
-      {/* Edge-to-edge comparison */}
-      <div className="relative grid grid-cols-1 md:grid-cols-2">
-        {/* WRONG — cool/muted cast */}
-        <div className="relative h-[70vh] md:h-[88vh] overflow-hidden group">
-          <img src={DEMO_PERSONA_FULL_BODY_URL} alt="Wrong palette colour" className="absolute inset-0 w-full h-full object-cover object-[center_18%] grayscale-[60%] transition-transform duration-[1200ms] group-hover:scale-105 origin-top" />
-          <div className="absolute inset-0 mix-blend-multiply" style={{ backgroundColor: '#2E4A63', opacity: 0.55 }} />
-          <div className="absolute inset-0 mix-blend-color" style={{ backgroundColor: '#3B6E8C', opacity: 0.25 }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(24,18,16,0) 45%, rgba(24,18,16,0.85) 100%)' }} />
-          <div className="absolute top-5 left-5 font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(245,240,235,0.6)' }}>
-            A · COOL SUMMER SHADE
-          </div>
-          {/* Verdict card */}
-          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
-            <div className="border p-5 md:p-6" style={{ borderColor: 'rgba(245,240,235,0.18)', backgroundColor: 'rgba(24,18,16,0.55)', backdropFilter: 'blur(6px)' }}>
-              <div className="flex items-center justify-between pb-3 mb-3 border-b" style={{ borderColor: 'rgba(245,240,235,0.18)' }}>
-                <span className="font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.2em', color: 'rgba(245,240,235,0.6)' }}>ΔE 41.6 · OFF-PALETTE</span>
-                <span className="font-mono uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.18em', color: '#E0556A', fontWeight: 600 }}>SCORE 32 / 100</span>
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Left column — large card + hex panel */}
+        <div className="flex flex-col gap-8">
+          <Reveal>
+            <article className="border" style={{ borderColor: inkAlpha(0.14), backgroundColor: WHITE }}>
+              <div className="relative" style={{ height: '340px', background: `linear-gradient(160deg, #E6B99E, ${SIENNA})` }}>
+                <SilhouetteMark className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[55%]" color={INK} opacity={0.14} />
+                <span className="absolute top-4 left-4 inline-flex items-center rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(13,13,13,0.82)' }}>
+                  <span className="font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.14em', color: WHITE, fontWeight: 700 }}>
+                    Skin Channel
+                  </span>
+                </span>
               </div>
-              <div className="flex items-center gap-2 mb-2">
-                <X className="w-4 h-4" style={{ color: '#E0556A' }} />
-                <h3 className="font-sans" style={{ fontSize: '1.25rem', fontWeight: 600 }}>Verdict — Avoid</h3>
+              <div className="p-7">
+                <div className="flex items-center justify-between gap-4 mb-3">
+                  <h3 className="font-sans" style={{ fontSize: '1.25rem', fontWeight: 700, color: INK }}>
+                    Skin: L* 79.4 · #E6B99E
+                  </h3>
+                  <span className="w-6 h-6 border shrink-0" style={{ backgroundColor: '#E6B99E', borderColor: inkAlpha(0.2) }} />
+                </div>
+                <p className="font-sans leading-relaxed" style={{ fontSize: '0.9375rem', color: inkAlpha(0.62), fontWeight: 300 }}>
+                  Measured from your photo. Lightness and undertone extracted directly in CIELAB space — the anchor
+                  value everything else compares against.
+                </p>
               </div>
-              <p className="font-sans font-light" style={{ fontSize: '0.875rem', color: 'rgba(245,240,235,0.68)' }}>
-                Cool cast washes out warm undertones; fabric fights the skin instead of flattering it.
-              </p>
+            </article>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <div className="border" style={{ borderColor: inkAlpha(0.14) }}>
+              <div className="flex items-center justify-between px-5 py-3" style={{ backgroundColor: INK }}>
+                <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.16em', color: LIME, fontWeight: 700 }}>
+                  Instrument Output
+                </span>
+                <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.5)' }}>
+                  ΔE 0.4
+                </span>
+              </div>
+              <div>
+                {[
+                  { l: 'Skin', v: '#E6B99E' },
+                  { l: 'Hair', v: '#4A3B32' },
+                  { l: 'Eye', v: '#5C4D3C' },
+                ].map((row, idx) => (
+                  <div
+                    key={row.l}
+                    className="flex items-center justify-between px-5 py-3"
+                    style={{ borderBottom: idx < 2 ? `1px solid ${inkAlpha(0.1)}` : 'none', backgroundColor: WHITE }}
+                  >
+                    <span className="font-sans" style={{ fontSize: '0.8125rem', color: inkAlpha(0.6) }}>
+                      {row.l}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border" style={{ backgroundColor: row.v, borderColor: inkAlpha(0.2) }} />
+                      <span style={{ fontFamily: MONO, fontSize: '0.8125rem', fontWeight: 700, color: INK }}>{row.v}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
 
-        {/* Vertical divider */}
-        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px z-20" style={{ backgroundColor: 'rgba(245,240,235,0.25)' }}>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 border flex items-center justify-center" style={{ backgroundColor: INK, borderColor: 'rgba(245,240,235,0.3)' }}>
-            <span className="font-mono" style={{ fontSize: '0.5625rem', letterSpacing: '0.18em', color: CYAN }}>VS</span>
-          </div>
-        </div>
+        {/* Right column — two supporting cards */}
+        <div className="flex flex-col gap-8">
+          <Reveal delay={0.14}>
+            <article className="flex border" style={{ borderColor: inkAlpha(0.14), backgroundColor: WHITE }}>
+              <div className="w-28 sm:w-36 h-32 shrink-0" style={{ background: `linear-gradient(160deg, #4A3B32, ${CHOCOLATE})` }} />
+              <div className="p-6">
+                <h3 className="font-sans mb-2" style={{ fontSize: '1.0625rem', fontWeight: 700, color: INK }}>
+                  Hair: L* 31.6 · #4A3B32
+                </h3>
+                <p className="font-sans leading-relaxed" style={{ fontSize: '0.875rem', color: inkAlpha(0.6), fontWeight: 300 }}>
+                  Depth anchor. Sets the contrast ceiling your whole palette is built around.
+                </p>
+              </div>
+            </article>
+          </Reveal>
 
-        {/* RIGHT — natural warm / correct palette */}
-        <div className="relative h-[70vh] md:h-[88vh] overflow-hidden group">
-          <img src={DEMO_PERSONA_FULL_BODY_URL} alt="Correct palette colour" className="absolute inset-0 w-full h-full object-cover object-[center_18%] transition-transform duration-[1200ms] group-hover:scale-105 origin-top" />
-          <div className="absolute inset-0 mix-blend-soft-light" style={{ backgroundColor: '#B85B42', opacity: 0.4 }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(24,18,16,0) 45%, rgba(24,18,16,0.8) 100%)' }} />
-          <div className="absolute top-5 right-5 font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(245,240,235,0.6)' }}>
-            B · TRUE AUTUMN SHADE
-          </div>
-          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
-            <div className="border p-5 md:p-6" style={{ borderColor: 'rgba(31,200,214,0.35)', backgroundColor: 'rgba(24,18,16,0.55)', backdropFilter: 'blur(6px)' }}>
-              <div className="flex items-center justify-between pb-3 mb-3 border-b" style={{ borderColor: 'rgba(245,240,235,0.18)' }}>
-                <span className="font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.2em', color: 'rgba(245,240,235,0.6)' }}>ΔE 1.2 · ON-PALETTE</span>
-                <span className="font-mono uppercase" style={{ fontSize: '0.6875rem', letterSpacing: '0.18em', color: CYAN, fontWeight: 600 }}>SCORE 98 / 100</span>
+          <Reveal delay={0.2}>
+            <article className="flex border" style={{ borderColor: inkAlpha(0.14), backgroundColor: WHITE }}>
+              <div className="w-28 sm:w-36 h-32 shrink-0 flex flex-wrap">
+                {TRUE_AUTUMN.slice(0, 4).map((s) => (
+                  <span key={s.hex} className="w-1/2 h-1/2" style={{ backgroundColor: s.hex }} />
+                ))}
               </div>
-              <div className="flex items-center gap-2 mb-2">
-                <Check className="w-4 h-4" style={{ color: CYAN }} />
-                <h3 className="font-sans" style={{ fontSize: '1.25rem', fontWeight: 600 }}>Verdict — Flawless</h3>
+              <div className="p-6">
+                <h3 className="font-sans mb-2" style={{ fontSize: '1.0625rem', fontWeight: 700, color: INK }}>
+                  Season: True Autumn
+                </h3>
+                <p className="font-sans leading-relaxed" style={{ fontSize: '0.875rem', color: inkAlpha(0.6), fontWeight: 300 }}>
+                  Classification result. Warm, muted, deep — the 12-season group your measurements landed in.
+                </p>
               </div>
-              <p className="font-sans font-light" style={{ fontSize: '0.875rem', color: 'rgba(245,240,235,0.68)' }}>
-                Warm hue harmonizes with natural contrast; skin reads clearer, the garment recedes.
-              </p>
-            </div>
-          </div>
+            </article>
+          </Reveal>
         </div>
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 /* ------------------------------------------------------------------ */
-/*  7 — TRUST / REFUSAL : light, open whitespace, centered             */
+/*  9 — CTA SECTION                                                     */
 /* ------------------------------------------------------------------ */
 
-const Trust = () => {
-  return (
-    <section className="relative" style={{ backgroundColor: PAPER }}>
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.5]"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(24,18,16,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(24,18,16,0.04) 1px, transparent 1px)',
-          backgroundSize: '56px 56px',
-        }}
-      />
-      <div className="relative px-6 md:px-12 py-32 md:py-44 max-w-3xl mx-auto text-center">
-        <div className="w-16 h-16 mx-auto border flex items-center justify-center mb-10" style={{ borderColor: 'rgba(24,18,16,0.16)', backgroundColor: PAPER_2 }}>
-          <ShieldCheck className="w-7 h-7" style={{ color: WINE, strokeWidth: 1.5 }} />
-        </div>
-        <Eyebrow accent={CYAN} className="mb-8 justify-center">
-          The Refusal Principle
-        </Eyebrow>
-        <h2 className="font-sans leading-[1.02] tracking-[-0.03em] mb-10" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', fontWeight: 600 }}>
-          A refusal to guess is a feature, not a flaw.
+const FinalCTA = ({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) => (
+  <section id="final-cta" style={{ backgroundColor: WHITE }}>
+    <div className="px-6 md:px-10 lg:px-16 py-20 md:py-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <Reveal>
+        <SectionTag tone="outline" className="mb-6">
+          Your Verdict
+        </SectionTag>
+        <h2 className="font-sans tracking-[-0.04em] leading-[0.94] mb-7" style={{ fontSize: 'clamp(2.5rem,5.5vw,4.5rem)', fontWeight: 800, color: INK }}>
+          Ready for your verdict?
         </h2>
-        <span className="block w-16 h-px mx-auto mb-10" style={{ backgroundColor: 'rgba(24,18,16,0.25)' }} />
-        <p className="font-sans font-light leading-relaxed max-w-2xl mx-auto" style={{ fontSize: '1.1875rem', color: 'rgba(24,18,16,0.7)' }}>
-          EventReady does not invent a colour answer when a photo cannot be measured reliably.
-          If measurement fails, we say so. Most tools hide this.
-          <span className="font-sans" style={{ fontWeight: 600, color: INK }}> We don&apos;t.</span>
+        <p className="font-sans leading-relaxed mb-10 max-w-md" style={{ fontSize: '1.0625rem', color: inkAlpha(0.62), fontWeight: 300 }}>
+          One photo. A measured palette. Garments graded, not guessed. See exactly which colours work before you
+          spend a cent.
         </p>
 
-        {/* contrast row vs outfit generators */}
-        <div className="grid sm:grid-cols-2 gap-px mt-16 text-left border" style={{ backgroundColor: 'rgba(24,18,16,0.12)', borderColor: 'rgba(24,18,16,0.12)' }}>
-          <div className="p-7 md:p-9" style={{ backgroundColor: PAPER }}>
-            <span className="font-mono uppercase block mb-3" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.45)' }}>OUTFIT GENERATORS</span>
-            <p className="font-sans font-light leading-relaxed" style={{ fontSize: '0.9375rem', color: 'rgba(24,18,16,0.7)' }}>
-              Tag-matched suggestions. Trend feeds. &ldquo;AI vibes.&rdquo; No measurement, no proof,
-              no accountability when it looks wrong on you.
-            </p>
-          </div>
-          <div className="p-7 md:p-9" style={{ backgroundColor: PAPER }}>
-            <span className="font-mono uppercase block mb-3" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: WINE }}>EVENTREADY AI</span>
-            <p className="font-sans font-light leading-relaxed" style={{ fontSize: '0.9375rem', color: 'rgba(24,18,16,0.7)' }}>
-              CIELAB measurement, 12-season classification, ΔE-graded scoring, and a same-silhouette
-              proof shot. If it can&apos;t measure, it refuses — visibly.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  8 — FINAL CTA : clean centered conversion, warm neutral            */
-/* ------------------------------------------------------------------ */
-
-const FinalCTA = ({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) => {
-  return (
-    <section className="relative overflow-hidden" style={{ backgroundColor: PAPER_2 }}>
-      {/* subtle corner instrument marks */}
-      <div className="absolute top-8 left-8 font-mono uppercase hidden md:block" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.35)' }}>
-        ◢ READY
-      </div>
-      <div className="absolute top-8 right-8 font-mono uppercase hidden md:block" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.35)' }}>
-        READY ◣
-      </div>
-
-      <div className="px-6 md:px-12 py-28 md:py-40 max-w-3xl mx-auto text-center">
-        <Eyebrow accent={CYAN} className="mb-8 justify-center">
-          Three ways to begin
-        </Eyebrow>
-        <h2 className="font-sans leading-[0.98] tracking-[-0.03em] mb-5" style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', fontWeight: 600 }}>
-          Find out what actually suits you.
-        </h2>
-        <p className="font-sans font-light leading-relaxed mb-14 max-w-xl mx-auto" style={{ fontSize: '1.0625rem', color: 'rgba(24,18,16,0.66)' }}>
-          One photo. A measured verdict. The proof on your own body. No filter, no guesswork.
-        </p>
-
-        {/* Primary + secondary */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch justify-center mb-10 max-w-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <button
             onClick={onStart}
             data-testid="button-start-flow-final"
-            className="group flex-1 flex items-center justify-between px-8 py-6 transition-all hover:-translate-y-0.5"
-            style={{ backgroundColor: WINE, color: PAPER, boxShadow: '0 14px 36px -14px rgba(124,31,51,0.65)' }}
+            className="group inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 transition-transform hover:-translate-y-0.5"
+            style={{ backgroundColor: LIME, color: INK }}
           >
-            <span className="font-mono uppercase" style={{ letterSpacing: '0.16em', fontSize: '0.8125rem', fontWeight: 600 }}>
-              Start My Styling
+            <span className="font-sans font-bold" style={{ fontSize: '0.875rem' }}>
+              Explore Collections
             </span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
           <button
             onClick={onUseDemoPersona}
             data-testid="button-use-demo-persona-final"
-            className="group flex-1 flex items-center justify-center gap-3 px-8 py-6 border transition-all hover:bg-white/40"
-            style={{ borderColor: 'rgba(24,18,16,0.22)', color: INK }}
+            className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 border transition-colors hover:bg-black/[0.03]"
+            style={{ borderColor: inkAlpha(0.28), color: INK }}
           >
-            <span className="font-mono uppercase" style={{ letterSpacing: '0.14em', fontSize: '0.75rem', fontWeight: 500 }}>
+            <span className="font-sans font-semibold" style={{ fontSize: '0.8125rem' }}>
               Try Demo — No photos needed
             </span>
           </button>
         </div>
 
-        {/* Tertiary */}
-        <div className="flex items-center justify-center max-w-md mx-auto mb-10">
-          <span className="h-px flex-1" style={{ backgroundColor: 'rgba(24,18,16,0.18)' }} />
-          <span className="px-5 font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.24em', color: 'rgba(24,18,16,0.4)' }}>Or</span>
-          <span className="h-px flex-1" style={{ backgroundColor: 'rgba(24,18,16,0.18)' }} />
-        </div>
-
-        <button
-          onClick={onStartCustom}
-          data-testid="button-start-custom-final"
-          className="group inline-flex flex-col items-center text-center"
-        >
-          <span className="font-sans mb-2 transition-colors group-hover:text-[#7C1F33]" style={{ fontSize: '1.1875rem', color: INK }}>
+        <button onClick={onStartCustom} data-testid="button-start-custom-final" className="group block text-left">
+          <span className="block font-sans mb-1" style={{ fontSize: '0.9375rem', color: inkAlpha(0.7) }}>
             Already have something in mind?
           </span>
           <span
-            className="font-mono uppercase underline underline-offset-[7px] decoration-1 group-hover:decoration-2 transition-all"
-            style={{ letterSpacing: '0.14em', fontSize: '0.75rem', textDecorationColor: CYAN_DIM, color: 'rgba(24,18,16,0.7)' }}
+            className="font-sans font-semibold underline underline-offset-4 decoration-1 group-hover:decoration-2 transition-all"
+            style={{ fontSize: '0.9375rem', color: INK, textDecorationColor: WINE }}
           >
             Check it before you buy
           </span>
         </button>
+      </Reveal>
+
+      <Reveal delay={0.12} className="grid grid-cols-2 gap-3">
+        <div className="relative aspect-[3/4]">
+          <PlaceholderBlock gradient={`linear-gradient(170deg, #6B7280, ${DARKWARM2})`} className="absolute inset-0" markColor={WHITE} markOpacity={0.18}>
+            <span className="absolute bottom-4 left-4 font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.7)' }}>
+              Off-Palette
+            </span>
+          </PlaceholderBlock>
+        </div>
+        <div className="relative aspect-[3/4] mt-8">
+          <PlaceholderBlock gradient={`linear-gradient(170deg, ${AMBER}, ${TERRACOTTA})`} className="absolute inset-0" markColor={INK} markOpacity={0.16}>
+            <span className="absolute bottom-4 left-4 font-sans uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.12em', color: 'rgba(13,13,13,0.68)' }}>
+              True Autumn Match
+            </span>
+          </PlaceholderBlock>
+        </div>
+      </Reveal>
+    </div>
+  </section>
+);
+
+/* ------------------------------------------------------------------ */
+/*  10 — FOOTER                                                         */
+/* ------------------------------------------------------------------ */
+
+const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) setSubscribed(true);
+  };
+
+  return (
+    <footer style={{ backgroundColor: INK, color: WHITE }}>
+      <div className="px-6 md:px-10 lg:px-16 pt-20 pb-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-16 border-b" style={{ borderColor: 'rgba(255,255,255,0.14)' }}>
+          <div>
+            <div className="flex items-center gap-2 mb-5">
+              <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: LIME }} />
+              <span className="font-sans font-extrabold" style={{ fontSize: '1rem' }}>
+                EventReady AI
+              </span>
+            </div>
+            <p className="font-sans leading-relaxed" style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.55)', fontWeight: 300 }}>
+              214 Grand Street, Floor 3
+              <br />
+              New York, NY 10013
+            </p>
+          </div>
+
+          <div>
+            <span className="block font-sans uppercase mb-5" style={{ fontSize: '0.6875rem', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)' }}>
+              Pages
+            </span>
+            <ul className="space-y-3 font-sans" style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)' }}>
+              {['About', 'Features', 'Pricing', 'Terms', 'Careers', 'Blog', 'Support'].map((p) => (
+                <li key={p}>
+                  <a href="#" className="hover:text-white transition-colors" style={{ color: 'inherit' }}>
+                    {p}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <span className="block font-sans uppercase mb-5" style={{ fontSize: '0.6875rem', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)' }}>
+              Method
+            </span>
+            <ul className="space-y-3 font-sans" style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)' }}>
+              {['Colour Science', '12-Season Guide', 'ΔE Scoring', 'API for Stylists'].map((p) => (
+                <li key={p}>
+                  <a href="#" className="hover:text-white transition-colors" style={{ color: 'inherit' }}>
+                    {p}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <span className="block font-sans uppercase mb-5" style={{ fontSize: '0.6875rem', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)' }}>
+              Stay Measured
+            </span>
+            {subscribed ? (
+              <p className="font-sans" style={{ fontSize: '0.875rem', color: LIME }}>
+                Thanks — we will be in touch.
+              </p>
+            ) : (
+              <form onSubmit={handleSubscribe} className="flex items-center border-b pb-2" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter Your Email"
+                  className="flex-1 min-w-0 bg-transparent outline-none font-sans placeholder:text-white/40"
+                  style={{ fontSize: '0.875rem', color: WHITE }}
+                />
+                <button type="submit" className="font-sans font-bold shrink-0" style={{ fontSize: '0.75rem', color: LIME }}>
+                  Subscribe
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        <div className="py-12 md:py-16 overflow-hidden">
+          <span
+            className="block font-sans font-extrabold tracking-[-0.04em] whitespace-nowrap"
+            style={{ fontSize: 'clamp(2.25rem,12vw,9rem)', color: WHITE, lineHeight: 1 }}
+          >
+            EventReady AI <span style={{ color: LIME }}>®</span>
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.14)' }}>
+          <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.6875rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)' }}>
+            Style Guide · Changelog · Password/Product · License
+          </span>
+          <span className="uppercase" style={{ fontFamily: MONO, fontSize: '0.6875rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)' }}>
+            © {new Date().getFullYear()} EventReady AI
+          </span>
+        </div>
       </div>
-    </section>
+    </footer>
   );
 };
-
-/* ------------------------------------------------------------------ */
-/*  9 — FOOTER : near-black, instrument sign-off                       */
-/* ------------------------------------------------------------------ */
-
-const Footer = () => (
-  <footer className="px-6 md:px-12 py-12" style={{ backgroundColor: INK, color: PAPER }}>
-    <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-      <div className="flex items-center gap-3">
-        <Crosshair className="w-4 h-4" style={{ color: CYAN }} />
-        <span className="font-mono uppercase" style={{ letterSpacing: '0.28em', fontSize: '0.75rem', fontWeight: 600 }}>
-          EventReady AI
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono uppercase" style={{ fontSize: '0.625rem', letterSpacing: '0.2em', color: 'rgba(245,240,235,0.45)' }}>
-        <span>Not a filter. A verdict.</span>
-        <span className="hidden md:inline">·</span>
-        <span>CIELAB · 12-Season</span>
-        <span className="hidden md:inline">·</span>
-        <span>&copy; {new Date().getFullYear()} EventReady AI</span>
-      </div>
-    </div>
-  </footer>
-);
 
 export default StartScreen;
