@@ -21,3 +21,10 @@ uri = "file://attached_assets/eventready_website_context.md"
 type = "text"
 title = "EventReady AI — Product & Design Context"
 description = "Full context pack for UI/UX generation: positioning, exact colour tokens and type scale, screen-by-screen specs with verbatim copy, motion vocabulary, voice rules and failure states."
+
+[[outputs]]
+id = "sol2IkgCJZwaLOqCzQmkI"
+uri = "file://DEVPOST_SUBMISSION.md"
+type = "text"
+title = "EventReady AI — Devpost Submission Copy"
+description = "Every Devpost field ready to paste: elevator pitch, full project story, 25 built-with tags, judges'-page description, and all three narrative answers. Bracketed items are yours to fill."

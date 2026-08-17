@@ -47,17 +47,6 @@ const TRUE_AUTUMN = [
   { name: 'Mustard', hex: MUSTARD },
 ];
 
-const GARMENTS: { name: string; gradient: string }[] = [
-  { name: 'Terracotta Wrap Dress', gradient: `linear-gradient(160deg, ${TERRACOTTA}, ${CHOCOLATE})` },
-  { name: 'Rust Midi Skirt', gradient: `linear-gradient(160deg, ${RUST}, ${CHOCOLATE})` },
-  { name: 'Olive Blazer', gradient: `linear-gradient(160deg, ${OLIVE}, ${FOREST})` },
-  { name: 'Amber Maxi Dress', gradient: `linear-gradient(160deg, ${AMBER}, ${RUST})` },
-  { name: 'Sienna Trench Coat', gradient: `linear-gradient(160deg, ${SIENNA}, ${CHOCOLATE})` },
-  { name: 'Forest Slip Dress', gradient: `linear-gradient(160deg, ${FOREST}, ${CHOCOLATE})` },
-  { name: 'Mustard Knit Cardigan', gradient: `linear-gradient(160deg, ${MUSTARD}, ${RUST})` },
-  { name: 'Chocolate Tailored Trousers', gradient: `linear-gradient(160deg, ${CHOCOLATE}, #000000)` },
-];
-
 export function StartScreen({ onStart, onUseDemoPersona, onStartCustom }: StartScreenProps) {
   return (
     <div className="flex flex-col font-sans" style={{ backgroundColor: WHITE, color: INK }}>
@@ -90,49 +79,6 @@ const GrainOverlay = () => (
   />
 );
 
-/** Abstract mannequin mark used in every placeholder — never a photo. */
-const SilhouetteMark: React.FC<{ className?: string; opacity?: number; color?: string }> = ({
-  className = '',
-  opacity = 0.16,
-  color = INK,
-}) => (
-  <svg viewBox="0 0 100 160" className={className} style={{ opacity }} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="22" r="14" fill={color} />
-    <path
-      d="M50 38 C24 38 14 58 14 90 L14 150 C14 155 18 159 24 159 L76 159 C82 159 86 155 86 150 L86 90 C86 58 76 38 50 38Z"
-      fill={color}
-    />
-  </svg>
-);
-
-/** Gradient-fill placeholder standing in for photography, with a subtle diagonal texture. */
-const PlaceholderBlock: React.FC<{
-  gradient: string;
-  className?: string;
-  children?: React.ReactNode;
-  showMark?: boolean;
-  markOpacity?: number;
-  markColor?: string;
-}> = ({ gradient, className = '', children, showMark = true, markOpacity = 0.16, markColor = INK }) => (
-  <div className={`overflow-hidden ${className}`} style={{ background: gradient }}>
-    <div
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        backgroundImage:
-          'repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 16px)',
-      }}
-    />
-    {showMark && (
-      <SilhouetteMark
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[58%]"
-        opacity={markOpacity}
-        color={markColor}
-      />
-    )}
-    {children}
-  </div>
-);
-
 const SectionTag: React.FC<{
   children: React.ReactNode;
   tone?: 'lime' | 'dark' | 'outline';
@@ -158,27 +104,6 @@ const SectionTag: React.FC<{
     </span>
   );
 };
-
-const FilterChip: React.FC<{ label: string; active?: boolean; dark?: boolean; onClick?: () => void }> = ({
-  label,
-  active,
-  dark,
-  onClick,
-}) => (
-  <button
-    onClick={onClick}
-    className="rounded-full px-4 py-2 font-sans transition-all"
-    style={{
-      fontSize: '0.75rem',
-      fontWeight: 700,
-      backgroundColor: active ? LIME : 'transparent',
-      color: active ? INK : dark ? 'rgba(255,255,255,0.75)' : inkAlpha(0.65),
-      border: active ? '1.5px solid transparent' : `1.5px solid ${dark ? 'rgba(255,255,255,0.28)' : inkAlpha(0.22)}`,
-    }}
-  >
-    {label}
-  </button>
-);
 
 /** Scroll-triggered reveal — transform/opacity only, skipped for reduced motion. */
 const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({
