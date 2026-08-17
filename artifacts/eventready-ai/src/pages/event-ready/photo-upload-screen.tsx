@@ -1,8 +1,12 @@
 import React, { useRef } from 'react';
 import type { PhotoUploadScreenProps } from '@/types/screen-props';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Camera, Upload, Shirt, User, Loader2 } from 'lucide-react';
+import { Camera, Upload, Shirt, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from './page-header';
+
+const LIME = '#C1FF4D';
+const INK = '#0D0D0D';
 
 const GARMENT_CATEGORIES: { value: PhotoUploadScreenProps['garmentCategory']; label: string }[] = [
   { value: 'full_body', label: 'Full outfit / dress' },
@@ -43,37 +47,30 @@ export function PhotoUploadScreen({
 
   const isCustom = flow === 'custom';
 
+  const rightSlot = !isCustom ? (
+    <button
+      onClick={onUseDemoPersona}
+      data-testid="button-use-demo-persona-alt"
+      className="text-xs font-mono uppercase tracking-widest flex items-center gap-2 transition-colors hover:opacity-70"
+      style={{ color: 'rgba(0,0,0,0.45)', letterSpacing: '0.1em' }}
+      disabled={isSubmitting}
+    >
+      <User className="w-3.5 h-3.5" />
+      Skip with Demo
+    </button>
+  ) : undefined;
+
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
-      <header className="px-6 py-8 flex items-center justify-between max-w-2xl w-full mx-auto">
-        <button 
-          onClick={onBack}
-          data-testid="button-back"
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-          disabled={isSubmitting}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        {!isCustom && (
-          <button
-            onClick={onUseDemoPersona}
-            data-testid="button-use-demo-persona-alt"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-            disabled={isSubmitting}
-          >
-            <User className="w-4 h-4" />
-            Skip with Demo Persona
-          </button>
-        )}
-      </header>
+      <PageHeader onBack={onBack} backDisabled={isSubmitting} rightSlot={rightSlot} />
 
-      <main className="flex-1 max-w-2xl w-full mx-auto px-6 pb-32">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-6 pb-32 pt-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-4xl font-serif mb-2">{isCustom ? 'Upload your photos & garment' : 'Upload your photos'}</h1>
+          <h1 className="text-4xl font-bold mb-2">{isCustom ? 'Upload your photos & garment' : 'Upload your photos'}</h1>
           <p className="text-muted-foreground text-lg mb-10">
             {isCustom
               ? "We need a close-up to analyze your complexion, a full-body shot to preview it on you, and a photo of the piece you're considering."
@@ -225,24 +222,26 @@ export function PhotoUploadScreen({
         </motion.div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-xl border-t border-border z-20">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="text-sm text-muted-foreground hidden sm:block">
-            {canContinue ? "Ready to process" : isCustom ? "Upload your photos and the garment to continue" : "Upload both photos to continue"}
+      <footer className="fixed bottom-0 left-0 right-0 p-6 backdrop-blur-xl border-t z-20"
+        style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderColor: 'rgba(0,0,0,0.08)' }}>
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+          <div className="text-[11px] font-mono uppercase tracking-widest hidden sm:block" style={{ color: 'rgba(0,0,0,0.38)' }}>
+            {canContinue ? "Ready to process" : isCustom ? "Upload photos & garment to continue" : "Upload both photos to continue"}
           </div>
           <button
             onClick={onContinue}
             disabled={!canContinue || isSubmitting}
             data-testid="button-continue-upload"
-            className="w-full sm:w-auto h-14 px-10 bg-primary text-primary-foreground font-medium disabled:opacity-50 disabled:cursor-not-allowed hover-elevate transition-all ml-auto flex items-center justify-center"
+            className="w-full sm:w-auto h-12 px-10 font-bold tracking-wide transition-all ml-auto flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: LIME, color: INK, fontSize: '13px', letterSpacing: '0.06em' }}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Processing...
               </>
             ) : (
-              "Analyze & Style"
+              "Analyze & Style →"
             )}
           </button>
         </div>

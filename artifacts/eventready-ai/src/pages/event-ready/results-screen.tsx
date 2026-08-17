@@ -4,6 +4,10 @@ import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from './page-header';
+
+const LIME = '#C1FF4D';
+const INK = '#0D0D0D';
 import { CustomGarmentResultsScreen } from './custom-garment-results-screen';
 import { MeasurementNoticeBanner } from './measurement-notice-banner';
 import { OutfitVideoSection } from './outfit-video-section';
@@ -58,9 +62,21 @@ export function ResultsScreen({
   const heroTryOnUnavailable = Boolean(heroVto) && heroVto?.status !== "success";
 
   return (
-    <div className="min-h-[100dvh] bg-background pt-16 pb-24 font-sans">
+    <div className="min-h-[100dvh] bg-background pb-24 font-sans">
+      <PageHeader
+        rightSlot={
+          <button
+            onClick={onStartOver}
+            className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest transition-opacity hover:opacity-60"
+            style={{ color: 'rgba(0,0,0,0.4)', letterSpacing: '0.1em' }}
+          >
+            <RotateCcw className="w-3 h-3" />
+            Start over
+          </button>
+        }
+      />
       
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-6 pt-12">
         
         {/* Above the header on purpose: this changes how everything below it
             should be read, so it cannot sit further down the page. */}
@@ -81,7 +97,7 @@ export function ResultsScreen({
             <Star className="w-3.5 h-3.5" />
             Your Curation
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">The Perfect Match</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">The Perfect Match</h1>
           <p className="text-lg text-muted-foreground">
             {report.colorAnalysis
               ? 'Based on the colouring measured from your photo, your style, and the occasion.'
@@ -153,7 +169,7 @@ export function ResultsScreen({
             <div className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-widest">
               Featured Piece
             </div>
-            <h2 className="text-3xl md:text-4xl font-serif mb-8 text-foreground">{heroOutfit.item.name}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-foreground">{heroOutfit.item.name}</h2>
             
             <div className="space-y-6 mb-10">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Why it works</h3>
@@ -230,12 +246,13 @@ export function ResultsScreen({
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-1 bg-primary text-primary-foreground p-8 relative overflow-hidden"
+            className="lg:col-span-1 p-8 relative overflow-hidden"
+            style={{ backgroundColor: INK, color: '#FFFFFF' }}
             data-testid="prep-tips"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: LIME, opacity: 0.08 }} />
             
-            <h3 className="text-2xl font-serif mb-8 relative z-10">Event Prep</h3>
+            <h3 className="text-2xl font-bold mb-8 relative z-10" style={{ color: '#FFFFFF' }}>Event Prep</h3>
             <ul className="space-y-6 relative z-10">
               {report.prepTips.map((tip, idx) => (
                 <li key={idx} className="flex items-start gap-4 border-b border-white/10 pb-6 last:border-0 last:pb-0" data-testid={`prep-tip-${idx}`}>
@@ -248,7 +265,7 @@ export function ResultsScreen({
 
           {/* Alternatives */}
           <div className="lg:col-span-2">
-            <h3 className="text-2xl font-serif mb-8 pl-4 lg:pl-0">Other strong matches</h3>
+            <h3 className="text-2xl font-bold mb-8 pl-4 lg:pl-0">Other strong matches</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {altOutfits.map((alt, idx) => {
                 const altVto = report.vtoResults.find(v => v.catalogItemId === alt.item.id);

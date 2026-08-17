@@ -2,8 +2,12 @@ import React from 'react';
 import type { PreferencesScreenProps } from '@/types/screen-props';
 import { StyleVibe, TimeOfDay, TraditionPreference } from '@workspace/api-client-react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Sparkles, Globe, Sun, Moon } from 'lucide-react';
+import { Check, Sparkles, Globe, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from './page-header';
+
+const LIME = '#C1FF4D';
+const INK = '#0D0D0D';
 
 export function PreferencesScreen({
   styleVibe,
@@ -37,24 +41,15 @@ export function PreferencesScreen({
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
-      <header className="px-6 py-8 flex items-center">
-        <button 
-          onClick={onBack}
-          data-testid="button-back"
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-      </header>
+      <PageHeader onBack={onBack} />
 
-      <main className="flex-1 max-w-2xl w-full mx-auto px-6 pb-24">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-6 pb-24 pt-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-4xl font-serif mb-2">How do you want to show up?</h1>
+          <h1 className="text-4xl font-bold mb-2">How do you want to show up?</h1>
           <p className="text-muted-foreground text-lg mb-12">
             Your colors come from your photo. This is the one thing we can't measure — the mood you're going for.
           </p>
@@ -180,17 +175,19 @@ export function PreferencesScreen({
         </motion.div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-xl border-t border-border z-20">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="text-sm text-muted-foreground hidden sm:block">
+      <footer className="fixed bottom-0 left-0 right-0 p-6 backdrop-blur-xl border-t z-20"
+        style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderColor: 'rgba(0,0,0,0.08)' }}>
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+          <div className="text-sm font-mono hidden sm:block" style={{ color: 'rgba(0,0,0,0.4)', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {wantsDemoPersona ? "Using demo photos next" : "Next: Photo upload"}
           </div>
           <button
             onClick={onContinue}
             data-testid="button-continue-preferences"
-            className="w-full sm:w-auto h-12 px-8 bg-primary text-primary-foreground font-medium hover-elevate transition-all ml-auto"
+            className="w-full sm:w-auto h-12 px-10 font-bold tracking-wide transition-all ml-auto flex items-center justify-center gap-2"
+            style={{ backgroundColor: LIME, color: INK, fontSize: '13px', letterSpacing: '0.08em' }}
           >
-            Continue
+            Continue →
           </button>
         </div>
       </footer>

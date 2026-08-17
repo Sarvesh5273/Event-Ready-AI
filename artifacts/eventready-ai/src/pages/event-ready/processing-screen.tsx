@@ -3,6 +3,10 @@ import type { ProcessingScreenProps } from '@/types/screen-props';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Circle, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from './page-header';
+
+const LIME = '#C1FF4D';
+const INK = '#0D0D0D';
 
 export function ProcessingScreen({
   steps,
@@ -27,22 +31,16 @@ export function ProcessingScreen({
   }, [currentStep, visibleStep]);
 
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col items-center justify-center p-6 relative">
+    <div className="min-h-[100dvh] bg-background flex flex-col relative">
       
-      {/* Abstract background animation to make it feel alive */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div 
-          animate={{ 
-            rotate: 360,
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ 
-            rotate: { duration: 40, repeat: Infinity, ease: "linear" },
-            scale: { duration: 10, repeat: Infinity, ease: "easeInOut" }
-          }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-primary/5 to-secondary/10 rounded-full blur-[120px]"
-        />
-      </div>
+      <PageHeader onBack={onBack} />
+
+      <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Subtle grid background */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)',
+        backgroundSize: '40px 40px'
+      }} />
 
       <div className="w-full max-w-md z-10">
         
@@ -56,7 +54,7 @@ export function ProcessingScreen({
             <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
-            <h2 className="text-2xl font-serif mb-3">Unable to process</h2>
+            <h2 className="text-2xl font-bold mb-3">Unable to process</h2>
             <p className="text-muted-foreground mb-8">
               {errorMessage}
             </p>
@@ -148,6 +146,7 @@ export function ProcessingScreen({
         )}
 
       </div>
+      </div>{/* end flex-1 */}
     </div>
   );
 }

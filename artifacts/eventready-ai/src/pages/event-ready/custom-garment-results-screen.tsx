@@ -4,6 +4,10 @@ import type { OutfitVideoProps } from '@/types/screen-props';
 import { resolveDemoAssetUrl } from '@/lib/demoAssets';
 import { motion } from 'framer-motion';
 import { RotateCcw, Check, Info, Shirt } from 'lucide-react';
+import { PageHeader } from './page-header';
+
+const LIME = '#C1FF4D';
+const INK = '#0D0D0D';
 import { MeasurementNoticeBanner } from './measurement-notice-banner';
 import { OutfitVideoSection } from './outfit-video-section';
 import { PaletteReveal } from './palette-reveal';
@@ -46,8 +50,20 @@ export function CustomGarmentResultsScreen({
   const heroImageUrl = tryOnSucceeded ? resolveDemoAssetUrl(garment.vtoResultImageUrl as string) : garment.imageUrl;
 
   return (
-    <div className="min-h-[100dvh] bg-background pt-16 pb-24 font-sans">
-      <div className="max-w-6xl mx-auto px-6">
+    <div className="min-h-[100dvh] bg-background pb-24 font-sans">
+      <PageHeader
+        rightSlot={
+          <button
+            onClick={onStartOver}
+            className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest transition-opacity hover:opacity-60"
+            style={{ color: 'rgba(0,0,0,0.4)', letterSpacing: '0.1em' }}
+          >
+            <RotateCcw className="w-3 h-3" />
+            Start over
+          </button>
+        }
+      />
+      <div className="max-w-6xl mx-auto px-6 pt-12">
         {/* Same reasoning as the catalog flow: this reframes everything below. */}
         {report.measurementNotice && (
           <div className="mb-10">
@@ -65,7 +81,7 @@ export function CustomGarmentResultsScreen({
             <Shirt className="w-3.5 h-3.5" />
             Your Garment
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-4">Is it right for you?</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Is it right for you?</h1>
           <p className="text-lg text-muted-foreground">
             {report.colorAnalysis
               ? 'A read on how this piece works with the colouring measured from your photo.'
@@ -136,7 +152,7 @@ export function CustomGarmentResultsScreen({
             <div className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-widest">
               Skin & Color Compatibility
             </div>
-            <h2 className="text-3xl md:text-4xl font-serif mb-8 text-foreground capitalize">
+            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-foreground capitalize">
               {garment.colorFamily.replace('_', ' ')} · {garment.undertone} undertone
             </h2>
 
@@ -227,11 +243,12 @@ export function CustomGarmentResultsScreen({
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-primary text-primary-foreground p-8 relative overflow-hidden max-w-2xl mx-auto"
+            className="p-8 relative overflow-hidden max-w-2xl mx-auto"
+            style={{ backgroundColor: INK, color: '#FFFFFF' }}
             data-testid="prep-tips"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-            <h3 className="text-2xl font-serif mb-8 relative z-10">Event Prep</h3>
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[30px] -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: LIME, opacity: 0.08 }} />
+            <h3 className="text-2xl font-bold mb-8 relative z-10" style={{ color: '#FFFFFF' }}>Event Prep</h3>
             <ul className="space-y-6 relative z-10">
               {report.prepTips.map((tip, idx) => (
                 <li key={idx} className="flex items-start gap-4 border-b border-white/10 pb-6 last:border-0 last:pb-0" data-testid={`prep-tip-${idx}`}>
