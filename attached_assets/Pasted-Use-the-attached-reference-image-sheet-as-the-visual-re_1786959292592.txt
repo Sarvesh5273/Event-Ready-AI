@@ -1,0 +1,200 @@
+Use the attached reference image sheet as the visual reference for this redesign.
+
+You already have the full EventReady AI product context and existing codebase, so do not invent a new product, change the existing product flow, or replace real functionality with mock content.
+
+Your task is to substantially recompose the EXISTING EventReady homepage so its visual quality and design language are closer to the attached reference, while making the result unmistakably EventReady.
+
+Study the reference for its visual principles only:
+
+* modern fashion-tech aesthetic
+* strong photography / visual surfaces
+* asymmetric compositions
+* sophisticated whitespace
+* contemporary typography
+* clear visual hierarchy
+* layered UI over imagery
+* varied section compositions
+* strong transitions between sections
+* restrained but distinctive accent colour
+* premium product presentation
+* visual storytelling rather than repeated card layouts
+
+Do NOT copy the reference's branding, exact layouts, colours, text, imagery, or components.
+
+### Keep the EventReady product strategy
+
+The homepage must continue to communicate:
+
+“Not a filter. A verdict.”
+
+EventReady helps a wedding guest decide what to wear by measuring relevant colour information from their photos, interpreting that information, comparing outfit options, and giving a recommendation.
+
+The three existing entry paths must remain prominent and functional:
+
+* Start My Styling
+* Check an Outfit
+* Try Demo Persona
+
+Do not remove or hide these flows.
+
+### Major visual changes
+
+The current EventReady homepage feels too editorial, too serif-heavy, too monochromatic, and too repetitive.
+
+Move it toward a contemporary fashion-tech product experience.
+
+Change the visual system substantially:
+
+* reduce reliance on Bordeaux as the dominant colour
+* establish a sophisticated neutral foundation
+* introduce a distinctive accent colour used sparingly
+* make typography substantially more contemporary
+* use a modern sans-serif as the dominant type treatment
+* use display typography only where it genuinely improves hierarchy
+* avoid making every section look like a luxury magazine spread
+* introduce stronger image-to-UI relationships
+* introduce more asymmetry and visual tension
+* vary the composition of sections instead of repeating the same structure
+
+Do not simply recolour the current page.
+
+### Keep the product evidence as the central story
+
+The strongest product narrative is:
+
+MEASURE → INTERPRET → COMPARE → VERDICT
+
+Make that sequence visually obvious.
+
+The measurement experience should feel like actual product technology.
+
+Use real EventReady concepts such as:
+
+* measured skin / hair / eye values
+* colour swatches
+* hex values
+* palette classification
+* confidence / scoring
+* outfit comparison
+* match / verdict
+
+Keep “Measured from your photo” visually distinct from “Your Palette” / interpretation.
+
+### Make the comparison proof much stronger
+
+The “same outfit, two colours” concept should become one of the most visually important parts of the homepage.
+
+Show the same silhouette in two colour treatments.
+
+The visitor should immediately understand:
+
+one colour works better,
+one colour works worse,
+and EventReady can explain why.
+
+Treat this as product proof rather than a normal information card.
+
+### Pseudo-3D / cinematic direction
+
+Keep the pseudo-3D / scroll-driven concept, but do NOT generate the final video assets yet.
+
+Create the visual and structural framework so the hero can later be replaced by a Scroll World-style scroll-scrubbed cinematic sequence.
+
+The future sequence should communicate:
+
+PERSON
+→ MEASUREMENT
+→ COLOUR DATA
+→ PALETTE
+→ OUTFIT COMPARISON
+→ VERDICT
+
+The cinematic section should feel like a fashion-analysis environment, not a generic 3D demo.
+
+Use real HTML/UI overlays for important text and data.
+
+For now, use placeholders or existing visual assets so we can evaluate the composition and interaction before producing the final AI video.
+
+### Important: do not overdo the pseudo-3D
+
+The homepage should NOT become a “3D website”.
+
+The cinematic experience should be one major storytelling layer within a broader modern product website.
+
+After the cinematic section, use normal high-quality product UI, visual storytelling, proof, and conversion sections.
+
+### Layout
+
+Move away from repeated:
+
+eyebrow → heading → paragraph → card grid
+
+layouts.
+
+Use combinations of:
+
+* full-bleed imagery
+* split-screen compositions
+* asymmetric grids
+* floating panels
+* overlays
+* large visual canvases
+* product UI embedded into imagery
+* occasional bento structures
+* horizontal visual sections
+* large whitespace
+
+Do not make every section bento.
+
+### Conversion
+
+This is a SaaS acquisition page.
+
+The design should make the visitor understand quickly:
+
+What EventReady does.
+Why it is different.
+What they can do next.
+
+Keep the existing three paths and make “Start My Styling” the dominant CTA.
+
+Do not allow visual effects to overpower conversion.
+
+### Preserve real functionality
+
+Do not break existing routes, flows, buttons, API integrations, demo mode, styling flow, outfit-check flow, or existing product functionality.
+
+Modify the presentation layer and page composition rather than rewriting working product logic unnecessarily.
+
+Reuse existing components and assets where appropriate.
+
+### Responsive design
+
+The revised design must remain strong on desktop and mobile.
+
+Do not simply shrink the desktop layout.
+
+For the future cinematic section, leave a clean architecture so a desktop scroll-scrubbed video and a mobile-friendly alternative can be added later.
+
+### Final quality bar
+
+The result should feel like:
+
+CONTEMPORARY FASHION-TECH
++
+PREMIUM PRODUCT UI
++
+CINEMATIC STORYTELLING
++
+CLEAR SAAS CONVERSION
+
+It should not feel like:
+
+* a generic AI SaaS template
+* a luxury fashion magazine
+* a generic ecommerce store
+* a Dribbble animation experiment
+
+Use the attached reference to guide the visual direction, but make the final experience clearly belong to EventReady.
+
+Before finishing, inspect the full homepage from top to bottom and make sure the sections feel like one intentional journey rather than independently designed blocks.
